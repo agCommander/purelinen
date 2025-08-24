@@ -1,45 +1,48 @@
-import React, { useState, useEffect } from 'react'
 import { defineWidgetConfig } from "@medusajs/admin-sdk"
 import { 
   Button, 
   Badge, 
   Select, 
-  TextInput,
-  Heading,
+  Container,
   Text,
-  Container
-} from '@medusajs/ui'
+  Heading
+} from "@medusajs/ui"
+import { useState, useEffect } from "react"
 
-interface ProductTypeWidgetProps {
-  product: any
+interface ProductTypeData {
+  type: 'simple' | 'configurable' | 'grouped' | 'bundle'
+  attributes?: string[]
+  variantMatrix?: any[]
 }
 
-const ProductTypeWidget = ({ product }: ProductTypeWidgetProps) => {
-  const [productType, setProductType] = useState('simple')
+const ProductTypesWidget = ({ product }: { product: any }) => {
+  const [productType, setProductType] = useState<ProductTypeData | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showConfigModal, setShowConfigModal] = useState(false)
 
   useEffect(() => {
-    if (product?.metadata?.product_type?.type) {
-      setProductType(product.metadata.product_type.type)
+    if (product?.metadata?.product_type) {
+      setProductType(product.metadata.product_type)
     }
   }, [product])
 
   const updateProductType = async (type: string) => {
     setLoading(true)
     try {
-      await fetch(`/admin/products/${product.id}`, {
+      const response = await fetch(`/api/enhanced/product-types/${product.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          metadata: {
-            ...product.metadata,
-            product_type: { type }
-          }
-        })
+        body: JSON.stringify({ type })
       })
-      setProductType(type)
+      
+      if (response.ok) {
+        const data = await response.json()
+        setProductType(data.data)
+        // Refresh the product data
+        window.location.reload()
+      }
     } catch (error) {
       console.error('Error updating product type:', error)
     } finally {
@@ -54,61 +57,61 @@ const ProductTypeWidget = ({ product }: ProductTypeWidgetProps) => {
       grouped: 'orange',
       bundle: 'purple'
     } as const
+    
     return <Badge color={colors[type as keyof typeof colors] || 'grey'}>{type}</Badge>
   }
 
+  if (!product) return null
+
   return (
-    <Container className="p-4 border rounded-lg bg-white">
-      <div className="flex items-center gap-2 mb-4">
-        <Heading level="h3">Product Type</Heading>
+    <Container className="p-4 border border-gray-200 rounded-lg">
+      <div className="flex items-center justify-between mb-4">
+        <Heading level="h3" className="text-lg font-semibold">
+          Product Type Management
+        </Heading>
+        {productType?.type === 'configurable' && (
+          <Button 
+            variant="secondary" 
+            size="small"
+            onClick={() => setShowConfigModal(true)}
+          >
+            Configure Variants
+          </Button>
+        )}
       </div>
-      
+
       <div className="space-y-4">
-        <div>
-          <Text className="text-sm text-gray-600 mb-2">Current Type</Text>
-          {getTypeBadge(productType)}
+        <div className="flex items-center gap-3">
+          <Text className="font-medium">Current Type:</Text>
+          {productType ? getTypeBadge(productType.type) : <Badge color="grey">Not Set</Badge>}
         </div>
-        
-        <div>
-          <Text className="text-sm text-gray-600 mb-2">Change Type</Text>
+
+        <div className="flex items-center gap-3">
+          <Text className="font-medium">Change Type:</Text>
           <Select
-            value={productType}
+            value={productType?.type || 'simple'}
             onValueChange={updateProductType}
             disabled={loading}
           >
-            <Select.Trigger>
-              <Select.Value />
-            </Select.Trigger>
-            <Select.Content>
-              <Select.Item value="simple">Simple Product</Select.Item>
-              <Select.Item value="configurable">Configurable Product</Select.Item>
-              <Select.Item value="grouped">Grouped Product</Select.Item>
-              <Select.Item value="bundle">Bundle Product</Select.Item>
-            </Select.Content>
+            <option value="simple">Simple</option>
+            <option value="configurable">Configurable</option>
+            <option value="grouped">Grouped</option>
+            <option value="bundle">Bundle</option>
           </Select>
         </div>
 
-        {productType === 'configurable' && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <Text className="text-sm text-blue-800">
-              This product can have multiple variants with different attributes (size, color, etc.)
+        {productType?.type === 'configurable' && productType.attributes && (
+          <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+            <Text className="text-sm font-medium text-blue-800 mb-2">
+              Configurable Product Attributes:
             </Text>
-          </div>
-        )}
-
-        {productType === 'grouped' && (
-          <div className="mt-4 p-3 bg-orange-50 rounded-lg">
-            <Text className="text-sm text-orange-800">
-              This product is a bundle of multiple simple products
-            </Text>
-          </div>
-        )}
-
-        {productType === 'bundle' && (
-          <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-            <Text className="text-sm text-purple-800">
-              This product allows customers to choose from multiple options
-            </Text>
+            <div className="space-y-1">
+              {productType.attributes.map((attr, index) => (
+                <Text key={index} className="text-sm text-blue-700">
+                  • {attr}
+                </Text>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -116,6 +119,8 @@ const ProductTypeWidget = ({ product }: ProductTypeWidgetProps) => {
   )
 }
 
-export const config = defineWidgetConfig({ 
-  zone: "product.details.after" 
-}) 
+export const config = defineWidgetConfig({
+  zone: "product.details.after",
+})
+
+export default ProductTypesWidget 

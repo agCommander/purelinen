@@ -1,179 +1,178 @@
-import React, { useState, useEffect } from 'react'
 import { defineWidgetConfig } from "@medusajs/admin-sdk"
 import { 
   Button, 
-  Badge, 
-  TextInput,
-  Heading,
-  Text,
   Container,
+  Text,
+  Heading,
+  Input,
   Switch
-} from '@medusajs/ui'
+} from "@medusajs/ui"
+import { useState, useEffect } from "react"
 
-interface SharedStockWidgetProps {
-  product: any
-}
-
-interface StockData {
-  store_id: string
-  stock_quantity: number
+interface StoreStock {
   enabled: boolean
   min_stock: number
 }
 
-const SharedStockWidget = ({ product }: SharedStockWidgetProps) => {
-  const [stockData, setStockData] = useState<StockData[]>([])
+interface ProductStock {
+  shared_stock: number
+  store_stocks: {
+    purelinen: StoreStock
+    linenthings: StoreStock
+  }
+  updated_at: string
+}
+
+const SharedStockWidget = ({ product }: { product: any }) => {
+  const [stockData, setStockData] = useState<ProductStock | null>(null)
   const [loading, setLoading] = useState(false)
+  const [sharedStock, setSharedStock] = useState(0)
+  const [storeSettings, setStoreSettings] = useState({
+    purelinen: { enabled: true, min_stock: 10 },
+    linenthings: { enabled: true, min_stock: 10 }
+  })
 
   useEffect(() => {
-    if (product?.metadata?.shared_stock) {
-      const sharedStock = product.metadata.shared_stock
-      const stores = [
-        { store_id: 'purelinen', name: 'Pure Linen' },
-        { store_id: 'linenthings', name: 'Linen Things' }
-      ]
-      
-      const initialStockData = stores.map(store => ({
-        store_id: store.store_id,
-        stock_quantity: sharedStock.total_stock || 0,
-        enabled: sharedStock.store_stocks?.[store.store_id]?.enabled !== false,
-        min_stock: sharedStock.store_stocks?.[store.store_id]?.min_stock || 10
-      }))
-      
-      setStockData(initialStockData)
+    if (product?.metadata?.stock_management) {
+      setStockData(product.metadata.stock_management)
+      setSharedStock(product.metadata.stock_management.shared_stock || 0)
+      setStoreSettings(product.metadata.stock_management.store_stocks || {
+        purelinen: { enabled: true, min_stock: 10 },
+        linenthings: { enabled: true, min_stock: 10 }
+      })
     }
   }, [product])
 
-  const updateSharedStock = async (stock: number) => {
+  const updateSharedStock = async () => {
     setLoading(true)
     try {
-      const updatedMetadata = {
-        ...product.metadata,
-        shared_stock: {
-          ...product.metadata?.shared_stock,
-          total_stock: stock
-        }
-      }
-      
-      await fetch(`/admin/products/${product.id}`, {
+      const response = await fetch(`/api/enhanced/stock/${product.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          metadata: updatedMetadata
+        body: JSON.stringify({ 
+          shared_stock: sharedStock,
+          store_stocks: storeSettings
         })
       })
       
-      setStockData(prev => prev.map(item => ({ ...item, stock_quantity: stock })))
+      if (response.ok) {
+        const data = await response.json()
+        setStockData(data.data)
+        // Refresh the product data
+        window.location.reload()
+      }
     } catch (error) {
-      console.error('Error updating shared stock:', error)
+      console.error('Error updating stock:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const updateStoreStatus = async (storeId: string, enabled: boolean) => {
-    setLoading(true)
-    try {
-      const updatedMetadata = {
-        ...product.metadata,
-        shared_stock: {
-          ...product.metadata?.shared_stock,
-          store_stocks: {
-            ...product.metadata?.shared_stock?.store_stocks,
-            [storeId]: {
-              ...product.metadata?.shared_stock?.store_stocks?.[storeId],
-              enabled
-            }
-          }
-        }
+  const toggleStoreStatus = async (store: string) => {
+    const newSettings = {
+      ...storeSettings,
+      [store]: {
+        ...storeSettings[store as keyof typeof storeSettings],
+        enabled: !storeSettings[store as keyof typeof storeSettings].enabled
       }
-      
-      await fetch(`/admin/products/${product.id}`, {
+    }
+    
+    setStoreSettings(newSettings)
+    
+    try {
+      await fetch(`/api/enhanced/stock/${product.id}/toggle-store`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          metadata: updatedMetadata
+        body: JSON.stringify({ 
+          store,
+          enabled: newSettings[store as keyof typeof storeSettings].enabled
         })
       })
-      
-      setStockData(prev => prev.map(item => 
-        item.store_id === storeId ? { ...item, enabled } : item
-      ))
     } catch (error) {
-      console.error('Error updating store status:', error)
-    } finally {
-      setLoading(false)
+      console.error('Error toggling store status:', error)
     }
   }
 
-  const getStockStatus = (stock: number) => {
-    if (stock === 0) return { status: 'Out of Stock', color: 'red' as const }
-    if (stock <= 10) return { status: 'Low Stock', color: 'orange' as const }
-    return { status: 'In Stock', color: 'green' as const }
-  }
-
-  const totalStock = stockData.reduce((sum, item) => sum + item.stock_quantity, 0)
-  const stockStatus = getStockStatus(totalStock)
+  if (!product) return null
 
   return (
-    <Container className="p-4 border rounded-lg bg-white">
-      <div className="flex items-center gap-2 mb-4">
-        <Heading level="h3">Shared Stock Management</Heading>
-      </div>
-      
+    <Container className="p-4 border border-gray-200 rounded-lg">
+      <Heading level="h3" className="text-lg font-semibold mb-4">
+        Shared Stock Management
+      </Heading>
+
       <div className="space-y-4">
-        <div>
-          <Text className="text-sm text-gray-600 mb-2">Total Shared Stock</Text>
-          <div className="flex items-center gap-3">
-            <TextInput
-              type="number"
-              value={totalStock}
-              onChange={(e) => updateSharedStock(parseInt(e.target.value) || 0)}
-              disabled={loading}
-              className="w-24"
+        {/* Shared Stock Input */}
+        <div className="flex items-center gap-3">
+          <Text className="font-medium w-24">Shared Stock:</Text>
+          <Input
+            type="number"
+            value={sharedStock}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSharedStock(parseInt(e.target.value) || 0)}
+            className="w-32"
+            min="0"
+          />
+          <Button 
+            onClick={updateSharedStock}
+            disabled={loading}
+            size="small"
+          >
+            Update
+          </Button>
+        </div>
+
+        {/* Store Status */}
+        <div className="space-y-3">
+          <Text className="font-medium">Store Status:</Text>
+          
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+            <div>
+              <Text className="font-medium">Pure Linen (B2B)</Text>
+              <Text className="text-sm text-gray-600">
+                Min Stock: {storeSettings.purelinen.min_stock}
+              </Text>
+            </div>
+            <Switch
+              checked={storeSettings.purelinen.enabled}
+              onCheckedChange={() => toggleStoreStatus('purelinen')}
             />
-            <Badge color={stockStatus.color}>{stockStatus.status}</Badge>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded border">
+            <div>
+              <Text className="font-medium">Linen Things (B2C)</Text>
+              <Text className="text-sm text-gray-600">
+                Min Stock: {storeSettings.linenthings.min_stock}
+              </Text>
+            </div>
+            <Switch
+              checked={storeSettings.linenthings.enabled}
+              onCheckedChange={() => toggleStoreStatus('linenthings')}
+            />
           </div>
         </div>
 
-        <div>
-          <Text className="text-sm text-gray-600 mb-2">Store Availability</Text>
-          <div className="space-y-2">
-            {stockData.map((store) => (
-              <div key={store.store_id} className="flex items-center justify-between p-2 border rounded">
-                <div>
-                  <Text className="font-medium capitalize">{store.store_id}</Text>
-                  <Text className="text-sm text-gray-500">
-                    Stock: {store.stock_quantity} | Min: {store.min_stock}
-                  </Text>
-                </div>
-                <Switch
-                  checked={store.enabled}
-                  onCheckedChange={(checked) => updateStoreStatus(store.store_id, checked)}
-                  disabled={loading}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {stockStatus.color === 'red' && (
-          <div className="p-3 bg-red-50 rounded-lg">
-            <Text className="text-sm text-red-800">
-              ⚠️ This product is out of stock across all stores
+        {/* Current Stock Display */}
+        {stockData && (
+          <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+            <Text className="text-sm font-medium text-blue-800 mb-2">
+              Current Stock Status:
             </Text>
-          </div>
-        )}
-
-        {stockStatus.color === 'orange' && (
-          <div className="p-3 bg-orange-50 rounded-lg">
-            <Text className="text-sm text-orange-800">
-              ⚠️ Low stock alert - consider restocking soon
-            </Text>
+            <div className="space-y-1">
+              <Text className="text-sm text-blue-700">
+                • Shared Stock: {stockData.shared_stock} units
+              </Text>
+              <Text className="text-sm text-blue-700">
+                • Pure Linen: {stockData.store_stocks.purelinen.enabled ? 'Enabled' : 'Disabled'}
+              </Text>
+              <Text className="text-sm text-blue-700">
+                • Linen Things: {stockData.store_stocks.linenthings.enabled ? 'Enabled' : 'Disabled'}
+              </Text>
+            </div>
           </div>
         )}
       </div>
@@ -181,6 +180,8 @@ const SharedStockWidget = ({ product }: SharedStockWidgetProps) => {
   )
 }
 
-export const config = defineWidgetConfig({ 
-  zone: "product.details.after" 
-}) 
+export const config = defineWidgetConfig({
+  zone: "product.details.after",
+})
+
+export default SharedStockWidget 

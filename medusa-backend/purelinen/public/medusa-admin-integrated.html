@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medusa Admin - Enhanced Features</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <style>
+        .widget-card { @apply bg-white border border-gray-200 rounded-lg p-4 shadow-sm; }
+        .btn-primary { @apply bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium; }
+        .btn-secondary { @apply bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md text-sm font-medium; }
+        .input-field { @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500; }
+        .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
+        .badge-green { @apply bg-green-100 text-green-800; }
+        .badge-blue { @apply bg-blue-100 text-blue-800; }
+        .badge-orange { @apply bg-orange-100 text-orange-800; }
+        .badge-purple { @apply bg-purple-100 text-purple-800; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div x-data="adminApp()" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center py-4">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-bold text-gray-900">Medusa Admin</h1>
+                        <span class="ml-3 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Enhanced</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-500">Connected to Enhanced Backend</span>
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="bg-white border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex space-x-8">
+                    <button 
+                        @click="activeTab = 'products'"
+                        :class="activeTab === 'products' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                    >
+                        Products
+                    </button>
+                    <button 
+                        @click="activeTab = 'stock'"
+                        :class="activeTab === 'stock' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                    >
+                        Stock Management
+                    </button>
+                    <button 
+                        @click="activeTab = 'discounts'"
+                        :class="activeTab === 'discounts' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                    >
+                        Discounts
+                    </button>
+                    <button 
+                        @click="activeTab = 'swatches'"
+                        :class="activeTab === 'swatches' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                        class="py-4 px-1 border-b-2 font-medium text-sm"
+                    >
+                        Swatch Database
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <!-- Products Tab -->
+            <div x-show="activeTab === 'products'" class="space-y-6">
+                <div class="widget-card">
+                    <h2 class="text-lg font-semibold mb-4">Product Management</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="p-4 border border-gray-200 rounded-lg">
+                            <h3 class="font-medium mb-2">Product Types</h3>
+                            <p class="text-sm text-gray-600 mb-3">Manage product types and configurations</p>
+                            <button @click="showProductTypeModal = true" class="btn-primary w-full">
+                                Configure Product Types
+                            </button>
+                        </div>
+                        <div class="p-4 border border-gray-200 rounded-lg">
+                            <h3 class="font-medium mb-2">Stock Overview</h3>
+                            <p class="text-sm text-gray-600 mb-3">View shared stock across stores</p>
+                            <button @click="loadStockSummary()" class="btn-secondary w-full">
+                                View Stock Summary
+                            </button>
+                        </div>
+                        <div class="p-4 border border-gray-200 rounded-lg">
+                            <h3 class="font-medium mb-2">Discounts</h3>
+                            <p class="text-sm text-gray-600 mb-3">Manage product discounts</p>
+                            <button @click="loadDiscountSummary()" class="btn-secondary w-full">
+                                View Discounts
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product List -->
+                <div class="widget-card">
+                    <h2 class="text-lg font-semibold mb-4">Recent Products</h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <template x-for="product in products" :key="product.id">
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="text-sm font-medium text-gray-900" x-text="product.title"></div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="badge" :class="getTypeBadgeClass(product.metadata?.product_type?.type || 'simple')" 
+                                                  x-text="product.metadata?.product_type?.type || 'simple'"></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" 
+                                            x-text="product.metadata?.stock_management?.shared_stock || 0"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button @click="editProduct(product)" class="text-blue-600 hover:text-blue-900">Edit</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Management Tab -->
+            <div x-show="activeTab === 'stock'" class="space-y-6">
+                <div class="widget-card">
+                    <h2 class="text-lg font-semibold mb-4">Shared Stock Management</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-medium mb-3">Store Status</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                                    <div>
+                                        <div class="font-medium">Pure Linen (B2B)</div>
+                                        <div class="text-sm text-gray-600">Min Stock: 10</div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded border">
+                                    <div>
+                                        <div class="font-medium">Linen Things (B2C)</div>
+                                        <div class="text-sm text-gray-600">Min Stock: 10</div>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox" checked class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="font-medium mb-3">Stock Summary</h3>
+                            <div class="p-4 bg-blue-50 rounded border border-blue-200">
+                                <div class="text-sm text-blue-800">
+                                    <div class="mb-2"><strong>Total Products:</strong> <span x-text="stockSummary.total_products || 0"></span></div>
+                                    <div class="mb-2"><strong>Low Stock Items:</strong> <span x-text="stockSummary.low_stock || 0"></span></div>
+                                    <div><strong>Out of Stock:</strong> <span x-text="stockSummary.out_of_stock || 0"></span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Discounts Tab -->
+            <div x-show="activeTab === 'discounts'" class="space-y-6">
+                <div class="widget-card">
+                    <h2 class="text-lg font-semibold mb-4">Discount Management</h2>
+                    <button @click="showDiscountModal = true" class="btn-primary mb-4">Create New Discount</button>
+                    
+                    <div class="space-y-4">
+                        <template x-for="discount in discounts" :key="discount.id">
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded border">
+                                <div>
+                                    <div class="font-medium" x-text="discount.type === 'percentage' ? discount.value + '% off' : '$' + discount.value + ' off'"></div>
+                                    <div class="text-sm text-gray-600" x-text="formatDate(discount.start_date) + ' - ' + formatDate(discount.end_date)"></div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="badge badge-green" x-show="isDiscountActive(discount)">Active</span>
+                                    <button @click="deleteDiscount(discount.id)" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Swatches Tab -->
+            <div x-show="activeTab === 'swatches'" class="space-y-6">
+                <div class="widget-card">
+                    <h2 class="text-lg font-semibold mb-4">Swatch Database</h2>
+                    
+                    <!-- Search and Categories -->
+                    <div class="flex gap-3 mb-4">
+                        <input type="text" placeholder="Search swatches..." x-model="swatchSearch" 
+                               class="input-field flex-1">
+                        <button @click="searchSwatches()" class="btn-primary">Search</button>
+                    </div>
+
+                    <div class="flex gap-2 mb-4">
+                        <template x-for="category in Object.keys(swatches)" :key="category">
+                            <button @click="selectedSwatchCategory = category" 
+                                    :class="selectedSwatchCategory === category ? 'btn-primary' : 'btn-secondary'"
+                                    class="capitalize">
+                                <span x-text="category"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <!-- Swatches Grid -->
+                    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        <template x-for="swatch in getCategorySwatches()" :key="swatch.id">
+                            <div class="p-3 border rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-6 h-6 rounded border" 
+                                         :style="swatch.hex ? 'background-color: ' + swatch.hex : 'background-color: #ccc'"></div>
+                                    <div class="font-medium text-sm" x-text="swatch.name"></div>
+                                </div>
+                                <div class="text-xs text-gray-500" x-text="swatch.hex || ''"></div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Product Type Modal -->
+        <div x-show="showProductTypeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg w-96 max-w-full">
+                <h3 class="text-lg font-semibold mb-4">Configure Product Type</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Product Type</label>
+                        <select x-model="newProductType.type" class="input-field">
+                            <option value="simple">Simple</option>
+                            <option value="configurable">Configurable</option>
+                            <option value="grouped">Grouped</option>
+                            <option value="bundle">Bundle</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2 pt-4">
+                        <button @click="createProductType()" class="btn-primary flex-1">Create</button>
+                        <button @click="showProductTypeModal = false" class="btn-secondary flex-1">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Discount Modal -->
+        <div x-show="showDiscountModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg w-96 max-w-full">
+                <h3 class="text-lg font-semibold mb-4">Create New Discount</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Discount Type</label>
+                        <select x-model="newDiscount.type" class="input-field">
+                            <option value="percentage">Percentage</option>
+                            <option value="fixed">Fixed Amount</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                            <span x-text="newDiscount.type === 'percentage' ? 'Percentage' : 'Amount'"></span>
+                        </label>
+                        <input type="number" x-model="newDiscount.value" class="input-field" 
+                               :max="newDiscount.type === 'percentage' ? 100 : undefined">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input type="date" x-model="newDiscount.start_date" class="input-field">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <input type="date" x-model="newDiscount.end_date" class="input-field">
+                    </div>
+                    <div class="flex gap-2 pt-4">
+                        <button @click="createDiscount()" class="btn-primary flex-1">Create Discount</button>
+                        <button @click="showDiscountModal = false" class="btn-secondary flex-1">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function adminApp() {
+            return {
+                activeTab: 'products',
+                products: [],
+                discounts: [],
+                swatches: {},
+                stockSummary: {},
+                selectedSwatchCategory: 'color',
+                swatchSearch: '',
+                showProductTypeModal: false,
+                showDiscountModal: false,
+                newProductType: { type: 'simple' },
+                newDiscount: { type: 'percentage', value: 0, start_date: '', end_date: '' },
+
+                async init() {
+                    await this.loadProducts();
+                    await this.loadSwatches();
+                    await this.loadStockSummary();
+                    await this.loadDiscountSummary();
+                },
+
+                async loadProducts() {
+                    try {
+                        const response = await fetch('/api/enhanced/product-types');
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.products = data.data || [];
+                        }
+                    } catch (error) {
+                        console.error('Error loading products:', error);
+                    }
+                },
+
+                async loadSwatches() {
+                    try {
+                        const response = await fetch('/api/enhanced/swatches');
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.swatches = data.data || {};
+                        }
+                    } catch (error) {
+                        console.error('Error loading swatches:', error);
+                    }
+                },
+
+                async loadStockSummary() {
+                    try {
+                        const response = await fetch('/api/enhanced/stock/summary');
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.stockSummary = data.data || {};
+                        }
+                    } catch (error) {
+                        console.error('Error loading stock summary:', error);
+                    }
+                },
+
+                async loadDiscountSummary() {
+                    try {
+                        const response = await fetch('/api/enhanced/discounts/summary');
+                        if (response.ok) {
+                            const data = await response.json();
+                            this.discounts = data.data || [];
+                        }
+                    } catch (error) {
+                        console.error('Error loading discounts:', error);
+                    }
+                },
+
+                async searchSwatches() {
+                    if (!this.swatchSearch.trim()) {
+                        await this.loadSwatches();
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch(`/api/enhanced/swatches/search?query=${encodeURIComponent(this.swatchSearch)}`);
+                        if (response.ok) {
+                            const data = await response.json();
+                            // Group search results by category
+                            const grouped = data.data.reduce((acc, swatch) => {
+                                const category = Object.keys(this.swatches).find(cat => 
+                                    this.swatches[cat]?.some(s => s.id === swatch.id)
+                                ) || 'other';
+                                if (!acc[category]) acc[category] = [];
+                                acc[category].push(swatch);
+                                return acc;
+                            }, {});
+                            this.swatches = grouped;
+                        }
+                    } catch (error) {
+                        console.error('Error searching swatches:', error);
+                    }
+                },
+
+                getCategorySwatches() {
+                    return this.swatches[this.selectedSwatchCategory] || [];
+                },
+
+                getTypeBadgeClass(type) {
+                    const classes = {
+                        simple: 'badge-green',
+                        configurable: 'badge-blue',
+                        grouped: 'badge-orange',
+                        bundle: 'badge-purple'
+                    };
+                    return classes[type] || 'badge-green';
+                },
+
+                formatDate(dateString) {
+                    return new Date(dateString).toLocaleDateString();
+                },
+
+                isDiscountActive(discount) {
+                    const now = new Date();
+                    const start = new Date(discount.start_date);
+                    const end = new Date(discount.end_date);
+                    return now >= start && now <= end;
+                },
+
+                async createProductType() {
+                    // Implementation for creating product type
+                    this.showProductTypeModal = false;
+                },
+
+                async createDiscount() {
+                    try {
+                        const response = await fetch('/api/enhanced/discounts', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(this.newDiscount)
+                        });
+                        
+                        if (response.ok) {
+                            await this.loadDiscountSummary();
+                            this.showDiscountModal = false;
+                            this.newDiscount = { type: 'percentage', value: 0, start_date: '', end_date: '' };
+                        }
+                    } catch (error) {
+                        console.error('Error creating discount:', error);
+                    }
+                },
+
+                async deleteDiscount(discountId) {
+                    try {
+                        await fetch(`/api/enhanced/discounts/${discountId}`, { method: 'DELETE' });
+                        await this.loadDiscountSummary();
+                    } catch (error) {
+                        console.error('Error deleting discount:', error);
+                    }
+                },
+
+                editProduct(product) {
+                    // Implementation for editing product
+                    console.log('Edit product:', product);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
