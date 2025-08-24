@@ -1,0 +1,18 @@
+{
+  "name": "medusa-admin",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "medusa develop",
+    "start": "medusa start",
+    "build": "medusa build",
+    "seed": "medusa exec ./src/scripts/seed.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@medusajs/admin": "^7.1.18"
+  }
+}

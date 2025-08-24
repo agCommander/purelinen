@@ -1,0 +1,538 @@
+[
+  {
+    "id": "1",
+    "name": "Root Catalog",
+    "handle": "root-catalog",
+    "description": "",
+    "parent_category_id": "0",
+    "is_active": true
+  },
+  {
+    "id": "2",
+    "name": "Root",
+    "handle": "root",
+    "description": "",
+    "parent_category_id": null,
+    "is_active": true
+  },
+  {
+    "id": "4",
+    "name": "Bathroom",
+    "handle": "bathroom",
+    "description": "",
+    "parent_category_id": "48",
+    "is_active": true
+  },
+  {
+    "id": "5",
+    "name": "Children's Bathroom Linens",
+    "handle": "children-s-bathroom-linens",
+    "description": "",
+    "parent_category_id": "4",
+    "is_active": true
+  },
+  {
+    "id": "6",
+    "name": "Laundry Bags",
+    "handle": "laundry-bags",
+    "description": "",
+    "parent_category_id": "4",
+    "is_active": true
+  },
+  {
+    "id": "7",
+    "name": "Terry Bath Towels & Accessories",
+    "handle": "terry-bath-towels-accessories",
+    "description": "",
+    "parent_category_id": "4",
+    "is_active": true
+  },
+  {
+    "id": "9",
+    "name": "Bath Towels and Accessories",
+    "handle": "bath-towels-and-accessories",
+    "description": "",
+    "parent_category_id": "4",
+    "is_active": true
+  },
+  {
+    "id": "10",
+    "name": "Bedroom",
+    "handle": "bedroom",
+    "description": "",
+    "parent_category_id": "48",
+    "is_active": true
+  },
+  {
+    "id": "11",
+    "name": "Pure Linen Bed Linen",
+    "handle": "pure-linen-bed-linen",
+    "description": "",
+    "parent_category_id": "10",
+    "is_active": true
+  },
+  {
+    "id": "13",
+    "name": "Children's Bed Linen",
+    "handle": "children-s-bed-linen",
+    "description": "",
+    "parent_category_id": "10",
+    "is_active": true
+  },
+  {
+    "id": "18",
+    "name": "Home Decor",
+    "handle": "home-decor",
+    "description": "",
+    "parent_category_id": "48",
+    "is_active": true
+  },
+  {
+    "id": "19",
+    "name": "Linen Curtains",
+    "handle": "linen-curtains",
+    "description": "",
+    "parent_category_id": "18",
+    "is_active": true
+  },
+  {
+    "id": "20",
+    "name": "Linen Cushion Covers",
+    "handle": "linen-cushion-covers",
+    "description": "",
+    "parent_category_id": "18",
+    "is_active": true
+  },
+  {
+    "id": "21",
+    "name": "Throws and Bed Runners",
+    "handle": "throws-and-bed-runners",
+    "description": "",
+    "parent_category_id": "18",
+    "is_active": true
+  },
+  {
+    "id": "22",
+    "name": "Kitchen ",
+    "handle": "kitchen-",
+    "description": "",
+    "parent_category_id": "48",
+    "is_active": true
+  },
+  {
+    "id": "24",
+    "name": "Linen Aprons",
+    "handle": "linen-aprons",
+    "description": "",
+    "parent_category_id": "22",
+    "is_active": true
+  },
+  {
+    "id": "25",
+    "name": "Linen Tea Towels",
+    "handle": "linen-tea-towels",
+    "description": "",
+    "parent_category_id": "22",
+    "is_active": true
+  },
+  {
+    "id": "26",
+    "name": "Table ",
+    "handle": "table-",
+    "description": "",
+    "parent_category_id": "48",
+    "is_active": true
+  },
+  {
+    "id": "27",
+    "name": "Fabrics",
+    "handle": "fabrics",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "28",
+    "name": "Formal",
+    "handle": "formal",
+    "description": "",
+    "parent_category_id": "26",
+    "is_active": true
+  },
+  {
+    "id": "30",
+    "name": "Our Fabric Collection",
+    "handle": "our-fabric-collection",
+    "description": "",
+    "parent_category_id": "27",
+    "is_active": true
+  },
+  {
+    "id": "35",
+    "name": "Casual",
+    "handle": "casual",
+    "description": "",
+    "parent_category_id": "26",
+    "is_active": true
+  },
+  {
+    "id": "46",
+    "name": "What's New ",
+    "handle": "what-s-new-",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "48",
+    "name": "Products",
+    "handle": "products",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "49",
+    "name": "About Us",
+    "handle": "about-us",
+    "description": "",
+    "parent_category_id": "51",
+    "is_active": true
+  },
+  {
+    "id": "50",
+    "name": "Our Stockists",
+    "handle": "our-stockists",
+    "description": "",
+    "parent_category_id": "49",
+    "is_active": true
+  },
+  {
+    "id": "51",
+    "name": "About",
+    "handle": "about",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "52",
+    "name": "In The Media",
+    "handle": "in-the-media",
+    "description": "",
+    "parent_category_id": "51",
+    "is_active": true
+  },
+  {
+    "id": "54",
+    "name": "Press Releases",
+    "handle": "press-releases",
+    "description": "",
+    "parent_category_id": "52",
+    "is_active": true
+  },
+  {
+    "id": "58",
+    "name": "Testimonials",
+    "handle": "testimonials",
+    "description": "",
+    "parent_category_id": "49",
+    "is_active": true
+  },
+  {
+    "id": "59",
+    "name": "Our Story",
+    "handle": "our-story",
+    "description": "",
+    "parent_category_id": "49",
+    "is_active": true
+  },
+  {
+    "id": "60",
+    "name": "Wholesale Log In | Register",
+    "handle": "wholesale-log-in-register",
+    "description": "",
+    "parent_category_id": "61",
+    "is_active": true
+  },
+  {
+    "id": "61",
+    "name": "Wholesale",
+    "handle": "wholesale",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "62",
+    "name": "Hospitality Industry Enquiry Form",
+    "handle": "hospitality-industry-enquiry-form",
+    "description": "",
+    "parent_category_id": "61",
+    "is_active": true
+  },
+  {
+    "id": "63",
+    "name": "Hire Companies using PURE LINEN products",
+    "handle": "hire-companies-using-pure-linen-products",
+    "description": "",
+    "parent_category_id": "49",
+    "is_active": true
+  },
+  {
+    "id": "64",
+    "name": "Contact Us",
+    "handle": "contact-us",
+    "description": "",
+    "parent_category_id": "51",
+    "is_active": true
+  },
+  {
+    "id": "65",
+    "name": "About Linen",
+    "handle": "about-linen",
+    "description": "",
+    "parent_category_id": "51",
+    "is_active": true
+  },
+  {
+    "id": "66",
+    "name": "Legal",
+    "handle": "legal",
+    "description": "",
+    "parent_category_id": "51",
+    "is_active": true
+  },
+  {
+    "id": "67",
+    "name": "Privacy Statement",
+    "handle": "privacy-statement",
+    "description": "",
+    "parent_category_id": "66",
+    "is_active": true
+  },
+  {
+    "id": "68",
+    "name": "Terms and Conditions",
+    "handle": "terms-and-conditions",
+    "description": "",
+    "parent_category_id": "66",
+    "is_active": true
+  },
+  {
+    "id": "69",
+    "name": "Linen Facts",
+    "handle": "linen-facts",
+    "description": "",
+    "parent_category_id": "65",
+    "is_active": true
+  },
+  {
+    "id": "70",
+    "name": "Caring for linen",
+    "handle": "caring-for-linen",
+    "description": "",
+    "parent_category_id": "65",
+    "is_active": true
+  },
+  {
+    "id": "71",
+    "name": "Trade Shows We're Attending",
+    "handle": "trade-shows-we-re-attending",
+    "description": "",
+    "parent_category_id": "49",
+    "is_active": true
+  },
+  {
+    "id": "72",
+    "name": "Sample Books and Fabric Information",
+    "handle": "sample-books-and-fabric-information",
+    "description": "",
+    "parent_category_id": "27",
+    "is_active": true
+  },
+  {
+    "id": "73",
+    "name": "Bed Linen Catalogues With Fabric Samples",
+    "handle": "bed-linen-catalogues-with-fabric-samples",
+    "description": "",
+    "parent_category_id": "10",
+    "is_active": true
+  },
+  {
+    "id": "74",
+    "name": "Returns & Claims Policy",
+    "handle": "returns-claims-policy",
+    "description": "",
+    "parent_category_id": "66",
+    "is_active": true
+  },
+  {
+    "id": "77",
+    "name": "Custom Made",
+    "handle": "custom-made",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "78",
+    "name": "Linen Napkins",
+    "handle": "linen-napkins",
+    "description": "",
+    "parent_category_id": "26",
+    "is_active": true
+  },
+  {
+    "id": "79",
+    "name": "Linen Runners",
+    "handle": "linen-runners",
+    "description": "",
+    "parent_category_id": "26",
+    "is_active": true
+  },
+  {
+    "id": "80",
+    "name": "Linen Placemats",
+    "handle": "linen-placemats",
+    "description": "",
+    "parent_category_id": "26",
+    "is_active": true
+  },
+  {
+    "id": "81",
+    "name": "Download our Table Linen Catalogue",
+    "handle": "download-our-table-linen-catalogue",
+    "description": "",
+    "parent_category_id": "26",
+    "is_active": true
+  },
+  {
+    "id": "82",
+    "name": "Download our Bed Linen Catalogue",
+    "handle": "download-our-bed-linen-catalogue",
+    "description": "",
+    "parent_category_id": "10",
+    "is_active": true
+  },
+  {
+    "id": "83",
+    "name": "GIFT CARDS",
+    "handle": "gift-cards",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "89",
+    "name": "Hospitality Napery",
+    "handle": "hospitality-napery",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "90",
+    "name": "SUPER SPECIALS",
+    "handle": "super-specials",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "91",
+    "name": "Amalfi - Custom made table linen",
+    "handle": "amalfi-custom-made-table-linen",
+    "description": "",
+    "parent_category_id": "26",
+    "is_active": true
+  },
+  {
+    "id": "92",
+    "name": "ONE OFF & SAMPLES",
+    "handle": "one-off-samples",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "93",
+    "name": "Press Coverage",
+    "handle": "press-coverage",
+    "description": "",
+    "parent_category_id": "52",
+    "is_active": true
+  },
+  {
+    "id": "94",
+    "name": "Hospitality Napery",
+    "handle": "hospitality-napery",
+    "description": "",
+    "parent_category_id": "89",
+    "is_active": true
+  },
+  {
+    "id": "95",
+    "name": "Hospitality Aprons",
+    "handle": "hospitality-aprons",
+    "description": "",
+    "parent_category_id": "89",
+    "is_active": true
+  },
+  {
+    "id": "96",
+    "name": "Download our Hospitality Industry Catalog",
+    "handle": "download-our-hospitality-industry-catalog",
+    "description": "",
+    "parent_category_id": "89",
+    "is_active": true
+  },
+  {
+    "id": "97",
+    "name": "Round Tablecloths",
+    "handle": "round-tablecloths",
+    "description": "",
+    "parent_category_id": "26",
+    "is_active": true
+  },
+  {
+    "id": "98",
+    "name": "Coasters",
+    "handle": "coasters",
+    "description": "",
+    "parent_category_id": "89",
+    "is_active": true
+  },
+  {
+    "id": "99",
+    "name": "Hospitality Cocktail Napkins",
+    "handle": "hospitality-cocktail-napkins",
+    "description": "",
+    "parent_category_id": "89",
+    "is_active": true
+  },
+  {
+    "id": "100",
+    "name": "Hospitality Uniforms",
+    "handle": "hospitality-uniforms",
+    "description": "",
+    "parent_category_id": "89",
+    "is_active": true
+  },
+  {
+    "id": "101",
+    "name": "ACCESSORIES",
+    "handle": "accessories",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  },
+  {
+    "id": "102",
+    "name": "Christmas Gifts",
+    "handle": "christmas-gifts",
+    "description": "",
+    "parent_category_id": "2",
+    "is_active": true
+  }
+]
