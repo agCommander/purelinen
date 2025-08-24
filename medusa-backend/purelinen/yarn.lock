@@ -2340,7 +2340,7 @@
     tailwindcss "^3.3.6"
     vite "^5.4.14"
 
-"@medusajs/admin-sdk@^2.9.0":
+"@medusajs/admin-sdk@^2.8.2", "@medusajs/admin-sdk@^2.9.0":
   version "2.9.0"
   resolved "https://registry.npmjs.org/@medusajs/admin-sdk/-/admin-sdk-2.9.0.tgz"
   integrity sha512-7sMunfq2eZa5xNlA3Yo6gL1DYaVl4ycxYDSQnNJk/GUf2wdJM1CKu6QstO2oOG8ebzDCR9cZHFCi5t6ZBXkyaA==
@@ -2429,7 +2429,7 @@
   resolved "https://registry.npmjs.org/@medusajs/cart/-/cart-2.9.0.tgz"
   integrity sha512-8fK424f6KnGHoRhvhE7SMnODx7OqjIuYlJkQ1dPDCgXweRGFNM3aAvXjAXy1TcTaCkId5BA5P6zttb940nOL2A==
 
-"@medusajs/cli@2.9.0":
+"@medusajs/cli@^2.8.2", "@medusajs/cli@2.9.0":
   version "2.9.0"
   resolved "https://registry.npmjs.org/@medusajs/cli/-/cli-2.9.0.tgz"
   integrity sha512-djUwEIB7cWvStC7jK8WtHV1uFCTbrD3rGwBvEt6dswWz45aci5Ae0q8IZ46COAlR3XNYBAtBrNWEnqsNPowArg==
@@ -2553,7 +2553,7 @@
   resolved "https://registry.npmjs.org/@medusajs/file/-/file-2.9.0.tgz"
   integrity sha512-xhRFtRHMxC4XOjdHh+XxSTtJDSLooPm7d0Zjxj/uM/au4Vb1AQZDvIynNVx402kBRHSU6Q9xEElhu8lAFek5uA==
 
-"@medusajs/framework@2.9.0":
+"@medusajs/framework@^2.8.2", "@medusajs/framework@2.9.0":
   version "2.9.0"
   resolved "https://registry.npmjs.org/@medusajs/framework/-/framework-2.9.0.tgz"
   integrity sha512-6NvYCc2BaAKpGw/4l1khpSc5h4t1MceRnJfLcTownp+JYfPuh0LdgScmjaQE2kvz+Anl3fNJoZOM7QanXd/Ndw==
@@ -2593,7 +2593,7 @@
   resolved "https://registry.npmjs.org/@medusajs/fulfillment/-/fulfillment-2.9.0.tgz"
   integrity sha512-Tq5WfVhf71Du77NeNq/RvIB8+NSpCQWawuX4rT0K6uOC8FoTdzT0sfyl8M9GnHioINbbiWeLfZYthKxcEEwZGA==
 
-"@medusajs/icons@2.9.0":
+"@medusajs/icons@^2.8.2", "@medusajs/icons@2.9.0":
   version "2.9.0"
   resolved "https://registry.npmjs.org/@medusajs/icons/-/icons-2.9.0.tgz"
   integrity sha512-qzFyX8f87WjLBFr23aly5F8hmN/camZ2oVcqmP1XBK4HqOWWxrPPjABePomQixwm7XGkfQHZf+B2rnyIyjwfKA==
@@ -2608,7 +2608,7 @@
   resolved "https://registry.npmjs.org/@medusajs/inventory/-/inventory-2.9.0.tgz"
   integrity sha512-85NAzOFOx1vkp/M4zLOwJ1a8Vbe6gi5mqDf8T+KGX917q2pt0wZLFkUXFqFfs0VBMNjx3Ra5Wz7VBvNCeW8S2A==
 
-"@medusajs/js-sdk@2.9.0":
+"@medusajs/js-sdk@^2.8.2", "@medusajs/js-sdk@2.9.0":
   version "2.9.0"
   resolved "https://registry.npmjs.org/@medusajs/js-sdk/-/js-sdk-2.9.0.tgz"
   integrity sha512-5L5dN235k/EyNelAYrUZevjxULfhyswAtRH5oy6PETbb4ExBdFi//vFXSnOuWjj2YnZtrTwymJkeZSOMYuMxSg==
@@ -2639,7 +2639,7 @@
   resolved "https://registry.npmjs.org/@medusajs/locking/-/locking-2.9.0.tgz"
   integrity sha512-sy8npVZQL/rwi9Pkbk3McvPtYtAr+DfQrXdXf9uO1nspxMfUOE7517CiHdtp7Mwr9WvsnZxRHDcUx8VU3bNj0Q==
 
-"@medusajs/medusa@2.9.0":
+"@medusajs/medusa@^2.8.2", "@medusajs/medusa@2.9.0":
   version "2.9.0"
   resolved "https://registry.npmjs.org/@medusajs/medusa/-/medusa-2.9.0.tgz"
   integrity sha512-1LHVQPZxKdPxRaoYCtFxdCHospFuAgq3nb0pL35dr9tqqhaU067cLxu9kV5VeiNDrKkNNiULzeCH3tAGb+8iRg==
@@ -2817,7 +2817,7 @@
     remove-trailing-slash "^0.1.1"
     uuid "^8.3.2"
 
-"@medusajs/test-utils@2.9.0":
+"@medusajs/test-utils@^2.8.2", "@medusajs/test-utils@2.9.0":
   version "2.9.0"
   resolved "https://registry.npmjs.org/@medusajs/test-utils/-/test-utils-2.9.0.tgz"
   integrity sha512-Q4yiRcnvxnI52bVdVyc45CABcWzPABu4obtShJe5raQvm3bbr5GJpUa1rXMqmcf75AYtInxH+uYbDZtwKozp8w==
@@ -2835,7 +2835,7 @@
   dependencies:
     bignumber.js "^9.1.2"
 
-"@medusajs/ui@4.0.19":
+"@medusajs/ui@^4.0.3", "@medusajs/ui@4.0.19":
   version "4.0.19"
   resolved "https://registry.npmjs.org/@medusajs/ui/-/ui-4.0.19.tgz"
   integrity sha512-iDy41IXHpYOLaM8aizZmuQjiQuFf0sKYK1CVwx1nsPvzXuuyJWGiTnoMiAhZ3NWgnf3dNDHFgnHlsU1k4zV2pQ==
@@ -2910,7 +2910,7 @@
     "@medusajs/utils" "2.9.0"
     ulid "^2.3.0"
 
-"@mikro-orm/cli@6.4.3":
+"@mikro-orm/cli@^6.4.3", "@mikro-orm/cli@6.4.3":
   version "6.4.3"
   resolved "https://registry.npmjs.org/@mikro-orm/cli/-/cli-6.4.3.tgz"
   integrity sha512-DWnYNxoyMgU6L90TGBlT0eziTu6yl15ArnnFoq0kyOjp8JEMRjin+8cizSrKyQ3QiQZ5iop5fB0i9Sp+Hbgd8Q==
@@ -2935,7 +2935,7 @@
     mikro-orm "6.4.3"
     reflect-metadata "0.2.2"
 
-"@mikro-orm/knex@6.4.3":
+"@mikro-orm/knex@^6.4.3", "@mikro-orm/knex@6.4.3":
   version "6.4.3"
   resolved "https://registry.npmjs.org/@mikro-orm/knex/-/knex-6.4.3.tgz"
   integrity sha512-gVkRD/cIn6qxk/P9nR+IufZxJwuCCdv0AtcGvShxXXvaoIrQPJYDV7HRxBOHCEyNygr6M3Fqpph1oPoT6aezTQ==
@@ -9698,6 +9698,11 @@ locate-path@^5.0.0:
   dependencies:
     p-locate "^4.1.0"
 
+lodash-es@^4.17.21:
+  version "4.17.21"
+  resolved "https://registry.npmjs.org/lodash-es/-/lodash-es-4.17.21.tgz"
+  integrity sha512-mKnC+QJ9pWVzv+C4/U3rRsHapFfHvQFoFB92e52xeyGMcX6/OlIl78je1u8vePzYZSkkogMPJ2yjxxsb89cxyw==
+
 lodash.debounce@^4.0.8:
   version "4.0.8"
   resolved "https://registry.npmjs.org/lodash.debounce/-/lodash.debounce-4.0.8.tgz"
@@ -9895,6 +9900,13 @@ media-typer@0.3.0:
   version "0.3.0"
   resolved "https://registry.npmjs.org/media-typer/-/media-typer-0.3.0.tgz"
   integrity sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==
+
+medusa-variant-images@^1.1.3:
+  version "1.1.3"
+  resolved "https://registry.npmjs.org/medusa-variant-images/-/medusa-variant-images-1.1.3.tgz"
+  integrity sha512-KebCHk0FUEl9ClZmdQFL8KggVSjBIlkOunXD/WqGb6/q2eNcIPSNePm3B1Meu7ecXwLUDPrn35B3PMiQYkCKXw==
+  dependencies:
+    lodash-es "^4.17.21"
 
 merge-descriptors@1.0.3:
   version "1.0.3"
