@@ -1,0 +1,32 @@
+Medusa Products Import Summary
+Generated: 2025-08-31T07:54:04.664Z
+
+Total Product Groups: 136
+Total Variants: 2854
+Average variants per product: 21.0
+
+Sample Product Groups:
+  • BA_CTT: 83 variants
+  • BA_LBWR: 2 variants
+  • BA_TTA: 8 variants
+  • BL_D: 7 variants
+  • BL_PEL: 34 variants
+  • BL_IMP: 2 variants
+  • BL_ARC: 12 variants
+  • BL_ALX: 5 variants
+  • BL_BAL: 6 variants
+  • BL_FTD: 9 variants
+
+Price Range (AUD):
+  • Retail: $3 - $1700
+
+Stock Range:
+  • Min: 1
+  • Max: 1
+
+CSV Format:
+  • Matches Medusa import template exactly
+  • No extra columns
+  • AUD pricing in Variant Price USD column
+  • Product names and descriptions from Magento
+  • B2B pricing will be added via price lists later

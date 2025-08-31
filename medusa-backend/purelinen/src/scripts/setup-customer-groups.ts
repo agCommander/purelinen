@@ -1,138 +1,35 @@
-import { 
-  CustomerGroupService, 
-  SalesChannelService, 
-  PriceListService,
-  ProductService,
-  ProductCollectionService
-} from "@medusajs/medusa"
-import { Container } from "@medusajs/medusa/dist/types/global"
-
-async function setupCustomerGroups() {
-  const container: Container = global.__MEDUSA_CONTAINER__
-  
-  const customerGroupService: CustomerGroupService = container.resolve("customerGroupService")
-  const salesChannelService: SalesChannelService = container.resolve("salesChannelService")
-  const priceListService: PriceListService = container.resolve("priceListService")
-  const productService: ProductService = container.resolve("productService")
-  const productCollectionService: ProductCollectionService = container.resolve("productCollectionService")
+export default async function setupCustomerGroups() {
+  const container = global.__MEDUSA_CONTAINER__
+  const customerGroupService = container.resolve("customerGroupService")
 
   try {
-    console.log("🚀 Setting up Customer Groups and Sales Channels...")
-
-    // 1. Create Customer Groups
-    console.log("📋 Creating Customer Groups...")
-    
+    // Create B2B Customer Group
     const b2bGroup = await customerGroupService.create({
-      name: "B2B Clients",
-      handle: "b2b-clients",
+      name: "B2B - Pure Linen",
       metadata: {
         type: "b2b",
-        requires_login: true,
-        hide_prices: true,
-        hide_cart: true
+        description: "Wholesale customers for Pure Linen",
+        pricing_tier: "wholesale"
       }
     })
     console.log("✅ Created B2B Customer Group:", b2bGroup.name)
 
+    // Create Retail Customer Group
     const retailGroup = await customerGroupService.create({
-      name: "Retail Customers", 
-      handle: "retail-customers",
+      name: "Retail - Linen Things", 
       metadata: {
         type: "retail",
-        requires_login: false,
-        hide_prices: false,
-        hide_cart: false
+        description: "Retail customers for Linen Things",
+        pricing_tier: "retail"
       }
     })
     console.log("✅ Created Retail Customer Group:", retailGroup.name)
 
-    // 2. Create Sales Channels
-    console.log("🏪 Creating Sales Channels...")
-    
-    const pureLinenChannel = await salesChannelService.create({
-      name: "Pure Linen B2B",
-      handle: "purelinen-b2b",
-      description: "B2B wholesale channel for Pure Linen",
-      is_disabled: false,
-      metadata: {
-        customer_group: "b2b-clients",
-        hide_prices: true,
-        hide_cart: true,
-        requires_login: true
-      }
-    })
-    console.log("✅ Created Pure Linen B2B Channel:", pureLinenChannel.name)
-
-    const linenThingsChannel = await salesChannelService.create({
-      name: "Linen Things Retail",
-      handle: "linenthings-retail", 
-      description: "Retail channel for Linen Things",
-      is_disabled: false,
-      metadata: {
-        customer_group: "retail-customers",
-        hide_prices: false,
-        hide_cart: false,
-        requires_login: false
-      }
-    })
-    console.log("✅ Created Linen Things Retail Channel:", linenThingsChannel.name)
-
-    // 3. Create Price Lists for different customer groups
-    console.log("💰 Creating Price Lists...")
-    
-    const b2bPriceList = await priceListService.create({
-      name: "B2B Wholesale Pricing",
-      description: "Wholesale pricing for B2B clients",
-      type: "sale",
-      status: "active",
-      customer_groups: [b2bGroup.id],
-      metadata: {
-        customer_group: "b2b-clients",
-        pricing_type: "wholesale"
-      }
-    })
-    console.log("✅ Created B2B Price List:", b2bPriceList.name)
-
-    const retailPriceList = await priceListService.create({
-      name: "Retail Pricing",
-      description: "Standard retail pricing",
-      type: "sale", 
-      status: "active",
-      customer_groups: [retailGroup.id],
-      metadata: {
-        customer_group: "retail-customers",
-        pricing_type: "retail"
-      }
-    })
-    console.log("✅ Created Retail Price List:", retailPriceList.name)
-
-    console.log("\n🎉 Setup Complete!")
-    console.log("\n📊 Summary:")
-    console.log(`   • B2B Customer Group: ${b2bGroup.name} (${b2bGroup.id})`)
-    console.log(`   • Retail Customer Group: ${retailGroup.name} (${retailGroup.id})`)
-    console.log(`   • Pure Linen B2B Channel: ${pureLinenChannel.name} (${pureLinenChannel.id})`)
-    console.log(`   • Linen Things Retail Channel: ${linenThingsChannel.name} (${linenThingsChannel.id})`)
-    console.log(`   • B2B Price List: ${b2bPriceList.name} (${b2bPriceList.id})`)
-    console.log(`   • Retail Price List: ${retailPriceList.name} (${retailPriceList.id})`)
-    
-    console.log("\n🔧 Next Steps:")
-    console.log("   1. Assign products to appropriate sales channels")
-    console.log("   2. Set up pricing rules in each price list")
-    console.log("   3. Configure your storefronts to check customer groups")
-    console.log("   4. Use metadata to control UI elements (hide prices/cart)")
+    console.log("\n🎉 Customer Groups setup complete!")
+    console.log("B2B Group ID:", b2bGroup.id)
+    console.log("Retail Group ID:", retailGroup.id)
 
   } catch (error) {
-    console.error("❌ Error setting up customer groups:", error)
-    throw error
+    console.error("❌ Error creating customer groups:", error)
   }
 }
-
-setupCustomerGroups()
-  .then(() => {
-    console.log("✅ Script completed successfully")
-    process.exit(0)
-  })
-  .catch((error) => {
-    console.error("❌ Script failed:", error)
-    process.exit(1)
-  })
