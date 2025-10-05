@@ -19,7 +19,82 @@ module.exports = defineConfig({
       options: {
         // Plugin options can be configured here
       }
-    }
+    },
+    // MeiliSearch plugin disabled for development - uncomment when needed
+    // {
+    //   resolve: "@rokmohar/medusa-plugin-meilisearch",
+    //   options: {
+    //     config: {
+    //       host: process.env.MEILISEARCH_HOST || "http://127.0.0.1:7700",
+    //       apiKey: process.env.MEILISEARCH_API_KEY || "ms",
+    //     },
+    //     settings: {
+    //       products: {
+    //         type: "products",
+    //         enabled: true,
+    //         fields: [
+    //           "id",
+    //           "title",
+    //           "description",
+    //           "handle",
+    //           "status",
+    //           "created_at",
+    //           "updated_at",
+    //           "published_at",
+    //           "thumbnail",
+    //           "collection_id",
+    //           "type_id",
+    //           "tags",
+    //           "options",
+    //           "variants",
+    //           "categories",
+    //         ],
+    //         indexSettings: {
+    //           searchableAttributes: [
+    //             "title",
+    //             "description",
+    //             "handle",
+    //             "tags",
+    //             "variants.title",
+    //             "variants.sku",
+    //           ],
+    //           displayedAttributes: [
+    //             "id",
+    //             "title",
+    //             "description",
+    //             "handle",
+    //             "status",
+    //             "thumbnail",
+    //             "collection_id",
+    //             "type_id",
+    //             "tags",
+    //             "variants",
+    //             "categories",
+    //           ],
+    //           filterableAttributes: [
+    //             "id",
+    //             "handle",
+    //             "status",
+    //             "collection_id",
+    //             "type_id",
+    //             "tags",
+    //             "variants.inventory_quantity",
+    //             "variants.manage_inventory",
+    //             "categories.id",
+    //             "categories.handle",
+    //           ],
+    //           sortableAttributes: [
+    //             "created_at",
+    //             "updated_at",
+    //             "published_at",
+    //             "variants.calculated_price",
+    //           ],
+    //         },
+    //         primaryKey: "id",
+    //       },
+    //     },
+    //   },
+    // },
   ],
   modules: [
     {

@@ -1,0 +1,14 @@
+services:
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    ports:
+      - '7700:7700'
+    volumes:
+      - ~/data.ms:/data.ms
+    environment:
+      - MEILI_MASTER_KEY=ms
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:7700']
+      interval: 10s
+      timeout: 5s
+      retries: 5

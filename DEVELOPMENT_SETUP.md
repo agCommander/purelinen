@@ -59,7 +59,7 @@
 
 ```bash
 # Start Medusa backend
-cd medusa-backend/purelinen
+ry 
 yarn dev
 
 # Check server health
