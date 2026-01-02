@@ -6,7 +6,7 @@ import { Layout, LayoutColumn } from "@/components/Layout"
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Learn more about Sofa Society",
+  description: "Learn more about PURE LINEN",
 }
 
 export async function generateStaticParams() {
@@ -35,111 +35,122 @@ export default function AboutPage() {
     <>
       <div className="max-md:pt-18">
         <Image
-          src="/images/content/living-room-gray-three-seater-sofa.png"
+         src="/images/content/CustomMade.jpg" 
           width={2880}
           height={1500}
-          alt="Living room with gray three-seater sofa"
+          alt="Custom Made Linen"  
           className="md:h-screen md:object-cover"
         />
       </div>
       <div className="pt-8 md:pt-26 pb-26 md:pb-36">
         <Layout>
           <LayoutColumn start={1} end={{ base: 13, lg: 7 }}>
-            <h3 className="text-md max-lg:mb-6 md:text-2xl">
-              At Sofa Society, we believe that a sofa is the heart of every
-              home.
+            <h3 className="text-md max-lg:mb-16 md:text-2xl">
+            Welcome to the Home of Quality European Linen in Australia.
             </h3>
           </LayoutColumn>
-          <LayoutColumn start={{ base: 1, lg: 8 }} end={13}>
-            <div className="md:text-md lg:mt-18">
-              <p className="mb-5 lg:mb-9">
-                Welcome to Sofa Society, where we believe that comfort and style
-                should be effortlessly intertwined. Our mission is to help you
-                create beautiful, functional spaces that bring warmth and
-                relaxation into your home.
+         {/* <LayoutColumn start={{ base: 1, lg: 8 }} end={{ base: 13, lg: 12 }}> */}
+            <div className="mb-16 lg:mb-10 col-span-full">
+            <p className="mb-5 lg:mb-1">
+              Our high-quality European linens are sought-after by the high-end hospitality industry to the discerning homeowner and specialist companies with linen needs. 
+              We pride ourselves on sourcing the very best linens from France, Belgium, Lithuania & Italy. 
+              We make to order the majority of our products, while lengths and rolls of fabrics are available to those who wish to produce themselves. 
+              We also carry a large range of pre-finished linen products. Our linen products are designed in Australia and crafted by trusted sewing teams in Belgium, France, Italy and Lithuania, while 40% of our ready-made pieces are proudly made in Australia by our experienced teams in Perth. With a passion for linen and a lifetime of using linen products in the bedroom, bathroom, kitchen, living area and more, we know and understand our product. We extend our knowledge and experience to all our clients, so please call or email and we are happy to help and guide you through your choices..
               </p>
-              <p>
-                Every piece in our collection is designed with care, blending
-                timeless craftsmanship with modern aesthetics to offer you the
-                perfect balance between form and function.
-              </p>
+ 
             </div>
-          </LayoutColumn>
+          {/* </LayoutColumn> */}
           <LayoutColumn>
             <Image
-              src="/images/content/living-room-black-armchair-dark-gray-sofa.png"
-              width={2496}
-              height={1404}
-              alt="Living room with black armchair and dark gray sofa"
+              src="/images/content/AboutPL.jpg"
+              width={900}
+              height={600}
+              alt="About PURE LINEN Founder"
               className="mt-26 lg:mt-36 mb-8 lg:mb-26"
             />
           </LayoutColumn>
           <LayoutColumn start={1} end={{ base: 13, lg: 8 }}>
             <h3 className="text-md lg:mb-10 mb-6 md:text-2xl">
-              We are here to make your living space a true reflection of your
-              personal style.
-            </h3>
-          </LayoutColumn>
-          <LayoutColumn start={1} end={{ base: 13, lg: 6 }}>
-            <div className="mb-16 lg:mb-26">
-              <p className="mb-5 md:mb-9">
-                At the heart of our brand is a deep commitment to quality. We
-                understand that a sofa isn&apos;t just another piece of
-                furniture; it&apos;s where you unwind, gather with loved ones,
-                and make memories. That&apos;s why we source only the finest
-                materials and fabrics, ensuring that every sofa we offer is
-                built to last.
-              </p>
-              <p>
-                From luxurious leathers and soft linens to high-performance
-                textiles, each fabric is carefully selected for its durability
-                and beauty. Our attention to detail extends to every stitch and
-                seam, guaranteeing that your sofa will not only look stunning
-                but will also withstand the test of time.
-              </p>
+            Our Founder</h3>
+            </LayoutColumn>
+            <div className="mb-16 lg:mb-10 col-span-full">
+            <p className="mb-5 lg:mb-1">
+            <b>Marina Wiese says</b> “I’m not just selling a product. 
+            <br />I am producing something I love. My experience and what I love has become one picture. And I believe in my product; it talks for itself,” she says. 
+            <br />“I still get really excited when people buy my product; it means they understand the beauty of this natural fibre and appreciate the resulting folds, touch and patterns as I do.”
+
+            </p>
             </div>
-          </LayoutColumn>
+            <LayoutColumn start={1} end={{ base: 13, lg: 8 }}>
+            <h3 className="text-md lg:mb-10 mb-6 md:text-2xl">
+            PURE LINEN & Our Inspiration</h3>
+            </LayoutColumn>
+            <div className="mb-16 lg:mb-10 col-span-full">
+            <p className="mb-5 lg:mb-1">
+            WHO WE ARE </p><p>We are a globally sourced, 40% locally made linen wholesaler to the design, retail and hospitality industries of Australia and New Zealand. Founder/director Marina Wiese has researched and sourced the best linens from throughout the world since 2006. It is sold as cut fabric lengths and rolls, plus custom made for bed, table, kitchen and body, so traditional and custom sizes can be ordered. The sewing teams are long-time professionals who have honed their craft over many years and understand the beauty and nuances of natural linens, so transform our fabrics into products with their experience, understanding and passion. PURE LINEN is also now home to the 2015 Gala Gift & Life Instyle Awards Eco Product of the Year (the PLANET EARTH COLLECTION of Stone Washed Belgium Linen for the bed).
+            Integrity, honesty, passion and a light touch that accentuates the beauty of natural linen are hallmarks of PURE LINEN products
+            </p>
+            </div>
+
           <LayoutColumn start={{ base: 2, lg: 1 }} end={{ base: 12, lg: 7 }}>
             <Image
-              src="/images/content/gray-one-seater-sofa-wooden-coffee-table.png"
-              width={1200}
-              height={1600}
-              alt="Gray one-seater sofa and wooden coffee table"
+              src="/images/content/hd_irma_01.jpg"
+              width={1000}
+              height={1500}
+              alt="IRMA"
               className="mb-16 lg:mb-46"
             />
           </LayoutColumn>
           <LayoutColumn start={{ base: 1, lg: 8 }} end={13}>
             <div className="mb-6 lg:mb-20 xl:mb-36">
               <p>
-                Our design philosophy revolves around creating pieces that are
-                both beautiful and practical. Inspired by Scandinavian
-                simplicity, modern luxury, and timeless classics, our
-                collections are curated to suit a wide variety of tastes and
-                lifestyles. We understand that every home is different, so we
-                offer a diverse range of styles, colors, and textures to help
-                you find the perfect fit. Whether you prefer sleek modern lines
-                or soft, inviting silhouettes, we have something to suit every
-                space and personality.
+              Our Products
+
+              <br /><br />
+
+              <b>Upholstery fabrics:</b> readymade and custom service for soft furnishings, including cushions, curtains, lampshades and more.
+
+              <br /><br /><b>Table linen:</b>  readymade and custom service for domestic and hospitality napery. PURE LINEN also carries a huge range of matching and contrasting tablecloths, napkins, runners and tea towels to suit any home and style. Plus, PURE LINEN supplies commercial linen napery to linen hire companies, event stylists, restaurants, eco-resorts, bistros, cafes and bars. PURE LINEN also offers custom-made tablecloths and napkins to suit your needs.
+
+              <br /><br /><b>Bed linen:</b> PURE LINEN has a wide range of made-to-order bed linen. Choose from a our award-winning Planet Earth collection of stonewashed Belgian linen, to the rustic raw-linen Casablanca bedcover and beautiful colours in our Arctic range of 100% linen bedding. Products include duvet covers, top sheets, fitted sheets and a range of pillowcases. PURE LINEN also works with hospitality clients for special orders.
+
+              <br /><br /><b>Home decor:</b> PURE LINEN offers a range of ready-made cushion covers, throws and curtains. We also offer a custom service for those who want specific sizes, prints or details (embroidery, hemstitch, monograms, etc).
+
+              <br /><br /><b>Extras:</b> Also ask about our screen and hand-printing, embroidery and fashion (women’s and men’s clothing, sleepwear and children’s clothing).
+
+              <br /><br />PURE LINEN is an Australian business. Wholly owned and operated by Australians. The products are either manufactured in Europe by manufacturers who maintain high ethical standards under our PURE LINEN label to our specifications and designs or increasingly, made in Australia by our own sewing teams. To see and feel our products, and for ease of ordering, you’ll find us at the Life InStyle trade fair or you can visit our showroom (by appointment).
               </p>
             </div>
-            <div className="md:text-md max-lg:mb-26">
-              <p>
-                We believe that great design should be environmentally
-                conscious, which is why we strive to minimise our environmental
-                footprint through responsible sourcing and production practices.
-                Our commitment to sustainability ensures that our products are
-                not only beautiful but also kind to the planet.
-              </p>
-            </div>
+          
           </LayoutColumn>
-        </Layout>
-        <Image
-          src="/images/content/living-room-gray-three-seater-puffy-sofa.png"
-          width={2880}
-          height={1618}
-          alt="Living room with gray three-seater puffy sofa"
-          className="mb-8 lg:mb-26"
-        />
+
+        <LayoutColumn start={1} end={{ base: 13, lg: 8 }}>
+            <h3 className="text-md lg:mb-10 mb-6 md:text-2xl">
+            Why Choose PURE LINEN?</h3>
+            </LayoutColumn>
+            <LayoutColumn start={{ base: 1, lg: 8 }} end={13}>
+            <div className="mb-6 lg:mb-20 xl:mb-36">
+            <p className="mb-5 lg:mb-1">
+
+            <ul>
+              <li>Exclusive - PURE LINEN has exclusive rights to Australia and New Zealand from our European manufacturers – all products are made to our design. We can offer you exclusive designs as well, if your order is large enough.</li>
+
+            <li>Eco Friendly - Did you know that linen uses five to twenty times less water and energy than cotton. </li>
+
+            <li>Award Winning - Our suppliers are proud of their commitment to theenvironment – wining awards for their "Ecologically pure and safe production" </li>
+
+            <li>Sell, buy, use and wear our linen with great pride in the knowledge that you are doing “your bit” for the environment!</li>
+
+            <li>Can you imagine the ultimate luxury of sleeping between pure linen sheets; serving dinner on a pure linen table cloth?</li>
+
+            <li>Spoil yourself and your friends and loved ones with classical, classy, environmentally friendly, pure linen.</li>
+            </ul>
+            </p>
+            </div>
+          
+    </LayoutColumn>
+    </Layout>
+      
         <Layout>
           <LayoutColumn start={1} end={{ base: 13, lg: 7 }}>
             <h3 className="text-md max-lg:mb-6 md:text-2xl">
@@ -147,16 +158,16 @@ export default function AboutPage() {
             </h3>
           </LayoutColumn>
           <LayoutColumn start={{ base: 1, lg: 8 }} end={13}>
-            <div className="md:text-md lg:mt-18">
+          <div className="mb-6 lg:mb-20 xl:mb-36">
               <p className="mb-5 lg:mb-9">
                 Our team is here to help guide you through the process, offering
                 personalised support to ensure that you find exactly what
                 you&apos;re looking for.
               </p>
               <p>
-                We&apos;re not just selling sofas - we&apos;re helping you
+                We&apos;re not just selling linens - we&apos;re helping you
                 create spaces where you can relax, recharge, and make lasting
-                memories. Thank you for choosing Sofa Society to be a part of
+                memories. Thank you for choosing PURE LINEN to be a part of
                 your home!
               </p>
             </div>

@@ -14,43 +14,91 @@ export async function GET(
   req: MedusaRequest,
   res: MedusaResponse,
 ): Promise<void> {
-  const { categoryId } = req.params;
-  const productTypeService = req.scope.resolve('productTypeService') as any;
-  const category = await productTypeService.retrieve(categoryId);
+  try {
+    const { categoryId } = req.params;
+    const query = req.scope.resolve("query");
+    
+    const productTypes = await query({
+      entity: "product_type",
+      fields: ["id", "value", "metadata"],
+      filters: { id: categoryId },
+    });
 
-  res.json({
-    image: category.metadata?.image || null,
-    description: category.metadata?.description || '',
-    description_html: category.metadata?.description_html || '',
-  });
+    if (!productTypes || productTypes.length === 0) {
+      res.status(404).json({ error: "Product type not found" });
+      return;
+    }
+
+    const productType = productTypes[0];
+
+    res.json({
+      image: productType.metadata?.image || null,
+      description: productType.metadata?.description || '',
+      description_html: productType.metadata?.description_html || '',
+    });
+  } catch (error) {
+    console.error('Error fetching product type:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch product type',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
 }
 
 export async function POST(
   req: MedusaRequest<typeof categoryFieldsMetadataSchema>,
   res: MedusaResponse,
 ): Promise<void> {
-  const { categoryId } = req.params;
-  const validatedData = req.validatedBody as any;
-  const image = validatedData.image;
-  const description = validatedData.description;
-  const description_html = validatedData.description_html;
+  try {
+    const { categoryId } = req.params;
+    const validatedData = req.validatedBody as any;
+    const image = validatedData.image;
+    const description = validatedData.description;
+    const description_html = validatedData.description_html;
 
-  const productTypeService = req.scope.resolve('productTypeService') as any;
+    console.log('Product Type update request:', { categoryId, image, description, description_html });
 
-  // Get current category to preserve existing metadata
-  const currentCategory = await productTypeService.retrieve(categoryId);
-  const currentMetadata = currentCategory.metadata || {};
+    // Use query to update product type metadata
+    const query = req.scope.resolve("query");
+    
+    // Get current product type to preserve existing metadata
+    const productTypes = await query({
+      entity: "product_type",
+      fields: ["id", "value", "metadata"],
+      filters: { id: categoryId },
+    });
 
-  const metadata = {
-    ...currentMetadata,
-    image,
-    description,
-    description_html,
-  };
+    if (!productTypes || productTypes.length === 0) {
+      res.status(404).json({ error: "Product type not found" });
+      return;
+    }
 
-  await productTypeService.update(categoryId, {
-    metadata,
-  });
+    const currentProductType = productTypes[0];
+    const currentMetadata = currentProductType.metadata || {};
 
-  res.json({ success: true });
+    const metadata = {
+      ...currentMetadata,
+      image,
+      description,
+      description_html,
+    };
+
+    // Use manager to update product type directly in database
+    const manager = req.scope.resolve("manager");
+    const productTypeRepository = manager.getRepository("product_type");
+    
+    await productTypeRepository.update(
+      { id: categoryId },
+      { metadata }
+    );
+
+    console.log('Product type updated successfully:', categoryId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating product type:', error);
+    res.status(500).json({ 
+      error: 'Failed to update product type',
+      details: error instanceof Error ? error.message : String(error)
+    });
+  }
 }

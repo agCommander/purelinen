@@ -60,10 +60,10 @@ const CategoryDetailsWidget = ({ data }: DetailWidgetProps<AdminProductType>) =>
       <div className="flex items-center justify-between">
         <div>
           <Heading level="h2" className="text-base-semi">
-            Category Image & Description
+            Product Type Image & Description
           </Heading>
           <Text className="text-small text-gray-500 mt-1">
-            Add an image and description for this category
+            Add an image and description for this product type
           </Text>
         </div>
         <Button
@@ -77,11 +77,11 @@ const CategoryDetailsWidget = ({ data }: DetailWidgetProps<AdminProductType>) =>
       </div>
 
       <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <Drawer.Content>
-          <div className="max-w-lg">
-            <Drawer.Header>
-              <Drawer.Title>Edit Category Details</Drawer.Title>
-            </Drawer.Header>
+        <Drawer.Content className="max-w-lg max-h-[90vh] flex flex-col">
+          <Drawer.Header className="flex-shrink-0">
+            <Drawer.Title>Edit Product Type Details</Drawer.Title>
+          </Drawer.Header>
+          <Drawer.Body className="flex-1 overflow-y-auto p-4">
             <Form
               schema={categoryFieldsMetadataSchema}
               onSubmit={onSubmit}
@@ -94,7 +94,7 @@ const CategoryDetailsWidget = ({ data }: DetailWidgetProps<AdminProductType>) =>
               <div className="space-y-6">
                 <div>
                   <Label className="text-base-regular text-gray-900">
-                    Category Image
+                    Product Type Image
                   </Label>
                   <ImageField
                     name="image"
@@ -127,32 +127,31 @@ const CategoryDetailsWidget = ({ data }: DetailWidgetProps<AdminProductType>) =>
                 </div>
               </div>
 
-              <Drawer.Footer>
-                <div className="flex items-center justify-end gap-x-2">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setIsDrawerOpen(false)}
-                    disabled={isLoading}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    isLoading={isLoading}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Saving..." : "Save Changes"}
-                  </Button>
+              <div className="flex items-center justify-end gap-x-2 mt-6 pt-4 border-t">
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={() => setIsDrawerOpen(false)}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  isLoading={isLoading}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+              {isSuccess && (
+                <div className="mt-2 text-sm text-green-600 font-medium">
+                  ✅ Changes saved successfully!
                 </div>
-                {isSuccess && (
-                  <div className="mt-2 text-sm text-green-600 font-medium">
-                    ✅ Changes saved successfully!
-                  </div>
-                )}
-              </Drawer.Footer>
+              )}
             </Form>
-          </div>
+          </Drawer.Body>
         </Drawer.Content>
       </Drawer>
     </Container>

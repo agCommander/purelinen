@@ -15,7 +15,7 @@ export default function RegisterLoadingPage() {
       />
       <div className="shrink-0 max-w-100 lg:max-w-96 w-full mx-auto pt-30 lg:pt-37 pb-16 max-sm:px-4">
         <h1 className="text-xl md:text-2xl mb-10 md:mb-16">
-          Hey, welcome to Sofa Society!
+          Hey, welcome to PURE LINEN!
         </h1>
         <form className="flex flex-col gap-6 md:gap-8 mb-8 md:mb-16">
           <div className="flex gap-4 md:gap-6">

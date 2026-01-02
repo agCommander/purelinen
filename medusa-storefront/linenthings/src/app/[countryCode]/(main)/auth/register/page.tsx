@@ -33,7 +33,7 @@ export default async function RegisterPage({
       />
       <div className="shrink-0 max-w-100 lg:max-w-96 w-full mx-auto pt-30 lg:pt-37 pb-16 max-sm:px-4">
         <h1 className="text-xl md:text-2xl mb-10 md:mb-16">
-          Hey, welcome to Sofa Society!
+          Hey, welcome to Linenthings!
         </h1>
         <SignUpForm />
         <p className="text-grayscale-500">

@@ -92,13 +92,6 @@ const RefinementList = ({
           />
           <MobileSort sortBy={sortBy} setQueryParams={setQueryParams} />
           <div className="flex justify-between gap-4 max-md:hidden">
-            {typeof collections !== "undefined" && (
-              <CollectionFilter
-                collections={collections}
-                collection={collection}
-                setQueryParams={setQueryParams}
-              />
-            )}
             {typeof categories !== "undefined" && (
               <CategoryFilter
                 categories={categories}
@@ -110,6 +103,13 @@ const RefinementList = ({
               <TypeFilter
                 types={types}
                 type={type}
+                setQueryParams={setQueryParams}
+              />
+            )}
+            {typeof collections !== "undefined" && (
+              <CollectionFilter
+                collections={collections}
+                collection={collection}
                 setQueryParams={setQueryParams}
               />
             )}

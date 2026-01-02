@@ -3,7 +3,7 @@ import { Suspense } from "react"
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
 import RefinementList from "@modules/store/components/refinement-list"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
-import { CollectionsSlider } from "@modules/store/components/collections-slider"
+import { CategoriesSlider } from "@modules/store/components/categories-slider"
 
 import { getCollectionsList } from "@lib/data/collections"
 import { getCategoriesList } from "@lib/data/categories"
@@ -15,29 +15,27 @@ const StoreTemplate = async ({
   sortBy,
   collection,
   category,
-  type,
+  // type,
   page,
-  countryCode,
+  countryCode,  
 }: {
   sortBy?: SortOptions
   collection?: string[]
-  category?: string[]
-  type?: string[]
+  category?: string[] 
   page?: string
   countryCode: string
 }) => {
   const pageNumber = page ? parseInt(page, 10) : 1
 
-  const [collections, categories, types, region] = await Promise.all([
+  const [collections, categories, region] = await Promise.all([
     getCollectionsList(0, 100, ["id", "title", "handle"]),
-    getCategoriesList(0, 100, ["id", "name", "handle"]),
-    getProductTypesList(0, 100, ["id", "value"]),
+    getCategoriesList(0, 100, ["id", "name", "handle", "metadata"]),
+    // getProductTypesList(0, 100, ["id", "value"]),
     getRegion(countryCode),
   ])
 
   return (
     <div className="md:pt-47 py-26 md:pb-36">
-      <CollectionsSlider />
       <RefinementList
         collections={Object.fromEntries(
           collections.collections.map((c) => [c.handle, c.title])
@@ -47,12 +45,10 @@ const StoreTemplate = async ({
           categories.product_categories.map((c) => [c.handle, c.name])
         )}
         category={category}
-        types={Object.fromEntries(
-          types.productTypes.map((t) => [t.value, t.value])
-        )}
-        type={type}
-        sortBy={sortBy}
+
+       sortBy={sortBy} 
       />
+      <CategoriesSlider />
       <Suspense fallback={<SkeletonProductGrid />}>
         {region && (
           <PaginatedProducts
@@ -73,13 +69,7 @@ const StoreTemplate = async ({
                     .filter((c) => category.includes(c.handle))
                     .map((c) => c.id)
             }
-            typeId={
-              !type
-                ? undefined
-                : types.productTypes
-                    .filter((t) => type.includes(t.value))
-                    .map((t) => t.id)
-            }
+           
           />
         )}
       </Suspense>

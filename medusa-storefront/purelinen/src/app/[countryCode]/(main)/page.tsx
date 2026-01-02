@@ -24,7 +24,7 @@ const ProductTypesSection: React.FC = async () => {
   }
 
   return (
-    <Layout className="mb-26 md:mb-36 max-md:gap-x-2">
+    <Layout className="mb-26 md:mb-6 max-md:gap-x-2">
       <LayoutColumn>
         <h3 className="text-md md:text-2xl mb-8 md:mb-15">Our products</h3>
       </LayoutColumn>
@@ -69,26 +69,26 @@ export default async function Home({
 
   return (
     <>
-      <div className="max-md:pt-18">
+      <div className="pt-12 md:pt-12">
         <Image
-          src="/images/content/living-room-gray-armchair-two-seater-sofa.png"
+          src="/images/content/home.png"
           width={2880}
           height={1500}
-          alt="Living room with gray armchair and two-seater sofa"
+          alt="PURE LINEN PURE LUXURY"
           className="md:h-screen md:object-cover"
         />
       </div>
-      <div className="pt-8 pb-26 md:pt-26 md:pb-36">
-        <Layout className="mb-26 md:mb-36">
+      <div className="pt-8 pb-6 md:pt-8 md:pb-36">
+        <Layout className="mb-26 md:mb12">
           <LayoutColumn start={1} end={{ base: 13, md: 8 }}>
             <h3 className="text-md max-md:mb-6 md:text-2xl">
-              Elevate Your Living Space with Unmatched Comfort & Style
+            Spoil yourself and your friends and loved ones with classical, classy, environmentally friendly, pure linen.
             </h3>
           </LayoutColumn>
           <LayoutColumn start={{ base: 1, md: 9 }} end={13}>
             <div className="flex items-center h-full">
               <div className="md:text-md">
-                <p>Discover Your Perfect Sofa Today</p>
+                <p>Discover Our Products</p>
                 <LocalizedLink href="/store" variant="underline">
                   Explore Now
                 </LocalizedLink>
@@ -96,24 +96,24 @@ export default async function Home({
             </div>
           </LayoutColumn>
         </Layout>
-        <ProductTypesSection />
-        <CollectionsSection className="mb-22 md:mb-36" />
+        {/* <CollectionsSection className="mb-22 md:mb-36" /> */}
+        {/* <ProductTypesSection /> */}
         <Layout>
           <LayoutColumn className="col-span-full">
             <h3 className="text-md md:text-2xl mb-8 md:mb-16">
-              About Sofa Society
+              About PURE LINEN
             </h3>
             <Image
-              src="/images/content/gray-sofa-against-concrete-wall.png"
-              width={2496}
-              height={1400}
-              alt="Gray sofa against concrete wall"
+              src="/images/content/frenchmotif.jpg"
+              width={1700}
+              height={468}
+              alt="French Motif"
               className="mb-8 md:mb-16 max-md:aspect-[3/2] max-md:object-cover"
             />
           </LayoutColumn>
           <LayoutColumn start={1} end={{ base: 13, md: 7 }}>
             <h2 className="text-md md:text-2xl">
-              At Sofa Society, we believe that a sofa is the heart of every
+              At PURE LINEN, we believe that a linen is the heart of every
               home.
             </h2>
           </LayoutColumn>
@@ -125,14 +125,14 @@ export default async function Home({
             <div className="md:text-md">
               <p className="mb-5 md:mb-9">
                 We are dedicated to delivering high-quality, thoughtfully
-                designed sofas that merge comfort and style effortlessly.
+                designed linens that merge comfort and style effortlessly.
               </p>
               <p className="mb-5 md:mb-3">
-                Our mission is to transform your living space into a sanctuary
+                Our mission is to transform your home into a sanctuary
                 of relaxation and beauty, with products built to last.
               </p>
               <LocalizedLink href="/about" variant="underline">
-                Read more about Sofa Society
+                Read more about PURE LINEN
               </LocalizedLink>
             </div>
           </LayoutColumn>

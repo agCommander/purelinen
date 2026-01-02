@@ -4,7 +4,11 @@
 
 @layer base {
   html {
-    @apply text-black font-normal;
+    @apply text-grayscale-500 font-normal;
+  }
+
+  body {
+    @apply text-grayscale-500 font-normal;
   }
 
   h1,
@@ -13,7 +17,7 @@
   h4,
   h5,
   h6 {
-    @apply font-medium;
+    @apply font-normal;
   }
 }
 

@@ -36,7 +36,7 @@ export default function CookiePolicyPage() {
         end={{ base: 13, lg: 11, xl: 10 }}
       >
         <h1 className="text-lg md:text-2xl mb-16 md:mb-25">
-          Cookie Policy for Sofa Society
+          Cookie Policy for Linenthings
         </h1>
       </LayoutColumn>
       <LayoutColumn
@@ -45,7 +45,7 @@ export default function CookiePolicyPage() {
         className="article"
       >
         <p>
-          This Cookie Policy explains how Sofa Society uses cookies and similar
+          This Cookie Policy explains how Linenthings uses cookies and similar
           technologies on our website. By using our website, you consent to the
           use of cookies as described in this policy.
         </p>
@@ -118,9 +118,9 @@ export default function CookiePolicyPage() {
           contact us at:
         </p>
         <p>
-          Email: privacy@sofasociety.com
+          Email:  info@purelinen.com.au
           <br />
-          Address: Skärgårdsvägen 12, 124 55 Stockholm
+          Address: Unit 16 83 Mell Road Spearwood WA 6163
         </p>
       </LayoutColumn>
     </Layout>

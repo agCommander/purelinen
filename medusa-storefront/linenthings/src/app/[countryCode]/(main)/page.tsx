@@ -101,7 +101,7 @@ export default async function Home({
         <Layout>
           <LayoutColumn className="col-span-full">
             <h3 className="text-md md:text-2xl mb-8 md:mb-16">
-              About Sofa Society
+              About Linenthings
             </h3>
             <Image
               src="/images/content/gray-sofa-against-concrete-wall.png"
@@ -113,7 +113,7 @@ export default async function Home({
           </LayoutColumn>
           <LayoutColumn start={1} end={{ base: 13, md: 7 }}>
             <h2 className="text-md md:text-2xl">
-              At Sofa Society, we believe that a sofa is the heart of every
+              At Linenthings, we believe that a sofa is the heart of every
               home.
             </h2>
           </LayoutColumn>
@@ -132,7 +132,7 @@ export default async function Home({
                 of relaxation and beauty, with products built to last.
               </p>
               <LocalizedLink href="/about" variant="underline">
-                Read more about Sofa Society
+                Read more about Linenthings
               </LocalizedLink>
             </div>
           </LayoutColumn>

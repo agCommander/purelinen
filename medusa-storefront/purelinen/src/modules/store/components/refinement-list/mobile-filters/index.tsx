@@ -69,35 +69,6 @@ export const MobileFilters: React.FC<{
                   close()
                 }}
               >
-                {collections && Object.keys(collections).length > 0 && (
-                  <ReactAria.CheckboxGroup
-                    className="flex flex-col"
-                    name="collection"
-                    defaultValue={collection ?? []}
-                  >
-                    <ReactAria.Label className="block text-md font-semibold mb-3">
-                      Collections
-                    </ReactAria.Label>
-                    {Object.entries(collections).map(([key, value]) => (
-                      <UiCheckbox
-                        key={key}
-                        value={key}
-                        className="justify-between py-3"
-                      >
-                        <UiCheckboxLabel>{value}</UiCheckboxLabel>
-                        <UiCheckboxBox>
-                          <UiCheckboxIcon />
-                        </UiCheckboxBox>
-                      </UiCheckbox>
-                    ))}
-                  </ReactAria.CheckboxGroup>
-                )}
-                {collections &&
-                  Object.keys(collections).length > 0 &&
-                  ((categories && Object.keys(categories).length > 0) ||
-                    (types && Object.keys(types).length > 0)) && (
-                    <hr className="my-3 text-grayscale-200" />
-                  )}
                 {categories && Object.keys(categories).length > 0 && (
                   <ReactAria.CheckboxGroup
                     className="flex flex-col"
@@ -137,6 +108,35 @@ export const MobileFilters: React.FC<{
                       Types
                     </ReactAria.Label>
                     {Object.entries(types).map(([key, value]) => (
+                      <UiCheckbox
+                        key={key}
+                        value={key}
+                        className="justify-between py-3"
+                      >
+                        <UiCheckboxLabel>{value}</UiCheckboxLabel>
+                        <UiCheckboxBox>
+                          <UiCheckboxIcon />
+                        </UiCheckboxBox>
+                      </UiCheckbox>
+                    ))}
+                  </ReactAria.CheckboxGroup>
+                )}
+                {((categories && Object.keys(categories).length > 0) ||
+                  (types && Object.keys(types).length > 0)) &&
+                  collections &&
+                  Object.keys(collections).length > 0 && (
+                    <hr className="my-3 text-grayscale-200" />
+                  )}
+                {collections && Object.keys(collections).length > 0 && (
+                  <ReactAria.CheckboxGroup
+                    className="flex flex-col"
+                    name="collection"
+                    defaultValue={collection ?? []}
+                  >
+                    <ReactAria.Label className="block text-md font-semibold mb-3">
+                      Collections
+                    </ReactAria.Label>
+                    {Object.entries(collections).map(([key, value]) => (
                       <UiCheckbox
                         key={key}
                         value={key}
