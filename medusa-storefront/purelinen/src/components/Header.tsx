@@ -49,10 +49,11 @@ export const Header: React.FC = async () => {
   // Order them as needed (you can customize this list)
   const typeOrder = [
     "Dining",
-    "Kitchen",
     "Bedroom",
     "Home Decor",
     "Bathroom",
+    "Tea Towels",
+    "Aprons",
     "Fabrics",
     "Accessories"
   ]
@@ -72,7 +73,7 @@ export const Header: React.FC = async () => {
             <div className="flex items-center gap-8 flex-shrink-0">
               <Logo />
               {orderedProductTypes.length > 0 && (
-                <div className="max-md:hidden">
+                <div className="max-[1000px]:hidden">
                   <CategoryMenu
                     productTypes={orderedProductTypes}
                     categories={categories?.product_categories || []}
@@ -97,11 +98,14 @@ export const Header: React.FC = async () => {
             </div>
 
             {/* Mobile menu */}
-            <div className="flex items-center gap-4 md:hidden">
-              <LoginLink className="p-1 group-data-[light=true]:md:text-white" />
-              {isLoggedIn && <CartDrawer />}
+            <div className="hidden max-[1000px]:flex items-center gap-4">
               <React.Suspense>
-                <HeaderDrawer countryOptions={countryOptions} />
+                <HeaderDrawer 
+                  countryOptions={countryOptions}
+                  productTypes={orderedProductTypes}
+                  categories={categories?.product_categories || []}
+                  isLoggedIn={isLoggedIn}
+                />
               </React.Suspense>
             </div>
           </div>

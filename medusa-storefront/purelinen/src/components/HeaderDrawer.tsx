@@ -5,9 +5,23 @@ import { Button } from "@/components/Button"
 import { Icon } from "@/components/Icon"
 import { Drawer } from "@/components/Drawer"
 import { LocalizedLink } from "@/components/LocalizedLink"
-import { RegionSwitcher } from "@/components/RegionSwitcher"
 import { SearchField } from "@/components/SearchField"
 import { useSearchParams } from "next/navigation"
+import { HttpTypes } from "@medusajs/types"
+import dynamic from "next/dynamic"
+
+const LoginLink = dynamic(
+  () => import("@modules/header/components/LoginLink"),
+  { loading: () => <></> }
+)
+
+const CartDrawer = dynamic(
+  () => import("@/components/CartDrawer").then((mod) => mod.CartDrawer),
+  { loading: () => <></> }
+)
+
+type ProductType = HttpTypes.StoreProductType
+type Category = HttpTypes.StoreProductCategory
 
 export const HeaderDrawer: React.FC<{
   countryOptions: {
@@ -15,8 +29,12 @@ export const HeaderDrawer: React.FC<{
     region: string
     label: string | undefined
   }[]
-}> = ({ countryOptions }) => {
+  productTypes?: ProductType[]
+  categories?: Category[]
+  isLoggedIn?: boolean
+}> = ({ countryOptions, productTypes = [], categories = [], isLoggedIn = false }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const [selectedProductType, setSelectedProductType] = React.useState<ProductType | null>(null)
 
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get("query")
@@ -24,6 +42,43 @@ export const HeaderDrawer: React.FC<{
   React.useEffect(() => {
     if (searchQuery) setIsMenuOpen(false)
   }, [searchQuery])
+
+  // Reset to main menu when drawer closes
+  React.useEffect(() => {
+    if (!isMenuOpen) {
+      setSelectedProductType(null)
+    }
+  }, [isMenuOpen])
+
+  // Get categories for selected product type
+  const getCategoriesForProductType = (productType: ProductType) => {
+    return categories.filter((category) => {
+      const categoryMetadata = category.metadata as any
+      const categoryProductTypeId = categoryMetadata?.product_type_id
+      return categoryProductTypeId === productType.id
+    }).sort((a, b) => {
+      // Sort by column first, then by menu_order, then alphabetically
+      const aMetadata = a.metadata as any
+      const bMetadata = b.metadata as any
+      const aColumn = aMetadata?.column ?? 999
+      const bColumn = bMetadata?.column ?? 999
+      const aOrder = aMetadata?.menu_order ?? 999
+      const bOrder = bMetadata?.menu_order ?? 999
+      
+      // First sort by column
+      if (aColumn !== bColumn) {
+        return aColumn - bColumn
+      }
+      
+      // Then sort by menu_order
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder
+      }
+      
+      // Finally sort alphabetically
+      return (a.name || '').localeCompare(b.name || '')
+    })
+  }
 
   return (
     <>
@@ -41,47 +96,101 @@ export const HeaderDrawer: React.FC<{
         onOpenChange={setIsMenuOpen}
         className="rounded-none !p-0"
       >
-        {({ close }) => (
-          <>
-            <div className="flex flex-col text-white h-full">
-              <div className="flex items-center justify-between pb-6 mb-8 pt-5 w-full border-b border-white px-8">
+        {({ close }) => {
+          const categoryItems = selectedProductType 
+            ? getCategoriesForProductType(selectedProductType)
+            : []
+
+          return (
+            <div className="flex flex-col h-full bg-white text-black">
+              {/* Header: Logo and Search - always visible */}
+              <div className="flex-shrink-0 border-b border-grayscale-200 px-4 py-4">
+                <div className="flex items-center justify-between mb-4">
+                  <LocalizedLink href="/" onClick={close}>
+                    <img
+                      src="/images/content/PURELINEN-GREY-LOGO.png"
+                      alt="Pure Linen"
+                      width={200}
+                      className="h-auto"
+                    />
+                  </LocalizedLink>
+                  <button onClick={close} aria-label="Close menu" className="p-2">
+                    <Icon name="close" className="w-6 h-6" />
+                  </button>
+                </div>
                 <SearchField
                   countryOptions={countryOptions}
                   isInputAlwaysShown
                 />
-                <button onClick={close} aria-label="Close menu">
-                  <Icon name="close" className="w-6" />
-                </button>
               </div>
-              <div className="text-lg flex flex-col gap-8 font-medium px-8">
-                <LocalizedLink
-                  href="/about"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  About
-                </LocalizedLink>
-                <LocalizedLink
-                  href="/inspiration"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Inspiration
-                </LocalizedLink>
-                <LocalizedLink
-                  href="/store"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  Shop
-                </LocalizedLink>
+
+              {/* Content Area */}
+              <div className="flex-1 overflow-y-auto">
+                {!selectedProductType ? (
+                  /* Main Menu: Product Types */
+                  <div className="flex flex-col">
+                    {productTypes.length > 0 ? (
+                      <div className="flex flex-col">
+                        {productTypes.map((productType) => (
+                          <button
+                            key={productType.id}
+                            onClick={() => setSelectedProductType(productType)}
+                            className="px-4 py-4 text-left border-b border-grayscale-200 hover:bg-grayscale-50 transition-colors flex items-center justify-between"
+                          >
+                            <span className="text-base font-normal">{productType.value}</span>
+                            <Icon name="chevron-right" className="w-5 h-5" />
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-8 text-center text-grayscale-500">
+                        No product types available
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* Category Panel */
+                  <div className="flex flex-col">
+                    {/* Back Button */}
+                    <button
+                      onClick={() => setSelectedProductType(null)}
+                      className="px-4 py-4 text-left border-b border-grayscale-200 hover:bg-grayscale-50 transition-colors flex items-center gap-2"
+                    >
+                      <Icon name="chevron-left" className="w-5 h-5" />
+                      <span className="text-base font-normal">Back</span>
+                    </button>
+
+                    {/* Category Items */}
+                    {categoryItems.length > 0 ? (
+                      <div className="flex flex-col">
+                        {categoryItems.map((category) => (
+                          <LocalizedLink
+                            key={category.id}
+                            href={`/store?type=${selectedProductType.value}&category=${category.handle}`}
+                            onClick={() => setIsMenuOpen(false)}
+                            className="px-4 py-4 text-left border-b border-grayscale-200 hover:bg-grayscale-50 transition-colors"
+                          >
+                            <span className="text-base font-normal">{category.name}</span>
+                          </LocalizedLink>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-8 text-center text-grayscale-500">
+                        No categories available for {selectedProductType.value}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <RegionSwitcher
-                countryOptions={countryOptions}
-                className="mt-auto ml-8 mb-8"
-                selectButtonClassName="max-md:text-base gap-2 p-1 w-auto"
-                selectIconClassName="text-current w-6 h-6"
-              />
+
+              {/* Footer: Login and Cart - always visible */}
+              <div className="flex-shrink-0 border-t border-grayscale-200 px-4 py-4 flex items-center justify-center gap-6">
+                <LoginLink className="p-2" />
+                {isLoggedIn && <CartDrawer />}
+              </div>
             </div>
-          </>
-        )}
+          )
+        }}
       </Drawer>
     </>
   )

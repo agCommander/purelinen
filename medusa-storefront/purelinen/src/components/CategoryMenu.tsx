@@ -43,7 +43,7 @@ export const CategoryMenu: React.FC<{
   }, [])
 
   return (
-    <nav className="flex items-center gap-8">
+    <nav className="flex items-center gap-4">
       {productTypes.map((productType) => {
         const isHovered = hoveredCategory === productType.id
         return (
@@ -55,7 +55,7 @@ export const CategoryMenu: React.FC<{
           >
             <LocalizedLink
               href={`/store?type=${productType.value}`}
-              className="text-xs font-normal hover:underline"
+              className="text-[13px] font-normal hover:underline"
             >
               {productType.value}
             </LocalizedLink>

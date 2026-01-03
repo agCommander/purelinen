@@ -6,6 +6,8 @@ export const categoryFieldsMetadataSchema = z.object({
     id: z.string(),
     url: z.string().url(),
   }).optional().nullable(),
+  menu_images: z.array(z.string()).optional().nullable(),
+  menu_columns: z.number().int().min(1).max(4).optional().nullable(),
   description: z.string().optional().nullable(),
   description_html: z.string().optional().nullable(),
 });
@@ -16,23 +18,22 @@ export async function GET(
 ): Promise<void> {
   try {
     const { categoryId } = req.params;
-    const query = req.scope.resolve("query");
+    const manager = req.scope.resolve("manager") as any;
+    const productTypeRepository = manager.getRepository("product_type");
     
-    const productTypes = await query({
-      entity: "product_type",
-      fields: ["id", "value", "metadata"],
-      filters: { id: categoryId },
+    const productType = await productTypeRepository.findOne({
+      where: { id: categoryId },
     });
 
-    if (!productTypes || productTypes.length === 0) {
+    if (!productType) {
       res.status(404).json({ error: "Product type not found" });
       return;
     }
 
-    const productType = productTypes[0];
-
     res.json({
       image: productType.metadata?.image || null,
+      menu_images: productType.metadata?.menu_images || null,
+      menu_columns: productType.metadata?.menu_columns || null,
       description: productType.metadata?.description || '',
       description_html: productType.metadata?.description_html || '',
     });
@@ -51,46 +52,45 @@ export async function POST(
 ): Promise<void> {
   try {
     const { categoryId } = req.params;
-    const validatedData = req.validatedBody as any;
+    // Parse body manually if validatedBody is not available
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    const validatedData = (req.validatedBody as any) || categoryFieldsMetadataSchema.parse(body);
+    
     const image = validatedData.image;
+    const menu_images = validatedData.menu_images;
+    const menu_columns = validatedData.menu_columns;
     const description = validatedData.description;
     const description_html = validatedData.description_html;
 
-    console.log('Product Type update request:', { categoryId, image, description, description_html });
+    console.log('Product Type update request:', { categoryId, image, menu_images, menu_columns, description, description_html });
 
-    // Use query to update product type metadata
-    const query = req.scope.resolve("query");
-    
     // Get current product type to preserve existing metadata
-    const productTypes = await query({
-      entity: "product_type",
-      fields: ["id", "value", "metadata"],
-      filters: { id: categoryId },
+    const manager = req.scope.resolve("manager") as any;
+    const productTypeRepository = manager.getRepository("product_type");
+    
+    const currentProductType = await productTypeRepository.findOne({
+      where: { id: categoryId },
     });
 
-    if (!productTypes || productTypes.length === 0) {
+    if (!currentProductType) {
       res.status(404).json({ error: "Product type not found" });
       return;
     }
 
-    const currentProductType = productTypes[0];
     const currentMetadata = currentProductType.metadata || {};
 
     const metadata = {
       ...currentMetadata,
       image,
+      menu_images: menu_images || null,
+      menu_columns: menu_columns || null,
       description,
       description_html,
     };
-
-    // Use manager to update product type directly in database
-    const manager = req.scope.resolve("manager");
-    const productTypeRepository = manager.getRepository("product_type");
     
-    await productTypeRepository.update(
-      { id: categoryId },
-      { metadata }
-    );
+    // Use save() instead of update() to properly handle JSON metadata
+    currentProductType.metadata = metadata;
+    await productTypeRepository.save(currentProductType);
 
     console.log('Product type updated successfully:', categoryId);
     res.json({ success: true });

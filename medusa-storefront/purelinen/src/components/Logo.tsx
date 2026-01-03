@@ -48,7 +48,7 @@ export const Logo: React.FC = () => {
         <img
           src={logoSrc}
           alt="Pure Linen"
-          width={250}
+          width={220}
           className="transition-opacity duration-200"
         />
       </LocalizedLink>

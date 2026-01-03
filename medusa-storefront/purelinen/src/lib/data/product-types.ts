@@ -14,8 +14,8 @@ export const getProductTypesList = async function (
       }>
     >("/store/custom/product-types", {
       query: { limit, offset, fields: fields ? fields.join(",") : undefined },
-      next: { tags: ["product-types"] },
-      cache: "force-cache",
+      next: { tags: ["product-types"], revalidate: 0 }, // Revalidate immediately to get fresh data
+      cache: "no-store", // Don't cache - always fetch fresh data
     })
     .then(({ product_types, count }) => ({
       productTypes: product_types,
