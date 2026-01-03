@@ -69,74 +69,296 @@ export default async function Home({
 
   return (
     <>
+      {/* First 2 images section */}
       <div className="pt-12 md:pt-12">
-        <Image
-          src="/images/content/home.png"
-          width={2880}
-          height={1500}
-          alt="PURE LINEN PURE LUXURY"
-          className="md:h-screen md:object-cover"
-        />
+        <div className="flex flex-col md:flex-row gap-0">
+          <div className="w-full md:w-1/2 relative group">
+            <a href="/categories/placeholder-hero-category-1" className="block">
+              <Image
+                src="/images/content/home/home-1.jpg"
+                width={1440}
+                height={1500}
+                alt="Hero Product 1"
+                className="w-full h-full md:h-screen object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3 text-left">
+                <p className="text-xs md:text-xs font-normal">Hero Product Name 1</p>
+              </div>
+            </a>
+          </div>
+          <div className="w-full md:w-1/2 relative group">
+            <a href="/categories/placeholder-hero-category-2" className="block">
+              <Image
+                src="/images/content/home/home-2.jpg"
+                width={1440}
+                height={1500}
+                alt="Hero Product 2"
+                className="w-full h-full md:h-screen object-cover ml-[2px]"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3 text-left">
+                <p className="text-xs md:text-xs font-normal">Hero Product Name 2</p>
+              </div>
+            </a>
+          </div>
+        </div>
       </div>
-      <div className="pt-8 pb-6 md:pt-8 md:pb-36">
-        <Layout className="mb-26 md:mb12">
-          <LayoutColumn start={1} end={{ base: 13, md: 8 }}>
-            <h3 className="text-md max-md:mb-6 md:text-2xl">
-            Spoil yourself and your friends and loved ones with classical, classy, environmentally friendly, pure linen.
-            </h3>
-          </LayoutColumn>
-          <LayoutColumn start={{ base: 1, md: 9 }} end={13}>
-            <div className="flex items-center h-full">
-              <div className="md:text-md">
-                <p>Discover Our Products</p>
-                <LocalizedLink href="/store" variant="underline">
-                  Explore Now
-                </LocalizedLink>
+      {/* 4 images section 1*/}
+      <div className="pt-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-[2px]">
+          <div className="w-full relative group">
+            <div className="relative aspect-[2/3]">
+              {/* Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src="/images/content/home/bedroom.jpg"
+                  alt="Product 1"
+                  className="object-contain"
+                  fill
+                />
+              </div>
+              {/* Overlay with text and button - appears on hover */}
+              <div className="absolute inset-0 bg-grayscale-800 flex flex-col items-center justify-center p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-sm md:text-base mb-4 text-center">
+                  <h2 className="text-base md:text-lg font-medium mb-2">BED LINEN</h2>
+                  <p>PURE LINEN bed linen will change the mood of your rooms instantly. 
+                    It exudes quality - feels and looks unlike anything else around. 
+                    Made from top-notch eco French flax and Belgian linens, it&rsquo;s weighty, robust and for keeps.</p>
+                </div>
+                <a 
+                  href="/categories/placeholder-category-1" 
+                  className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
+                >
+                  READ MORE
+                </a>
               </div>
             </div>
-          </LayoutColumn>
-        </Layout>
-        {/* <CollectionsSection className="mb-22 md:mb-36" /> */}
-        {/* <ProductTypesSection /> */}
-        <Layout>
-          <LayoutColumn className="col-span-full">
-            <h3 className="text-md md:text-2xl mb-8 md:mb-16">
-              About PURE LINEN
-            </h3>
-            <Image
-              src="/images/content/frenchmotif.jpg"
-              width={1700}
-              height={468}
-              alt="French Motif"
-              className="mb-8 md:mb-16 max-md:aspect-[3/2] max-md:object-cover"
-            />
-          </LayoutColumn>
-          <LayoutColumn start={1} end={{ base: 13, md: 7 }}>
-            <h2 className="text-md md:text-2xl">
-              At PURE LINEN, we believe that a linen is the heart of every
-              home.
-            </h2>
-          </LayoutColumn>
-          <LayoutColumn
-            start={{ base: 1, md: 8 }}
-            end={13}
-            className="mt-6 md:mt-19"
-          >
-            <div className="md:text-md">
-              <p className="mb-5 md:mb-9">
-                We are dedicated to delivering high-quality, thoughtfully
-                designed linens that merge comfort and style effortlessly.
-              </p>
-              <p className="mb-5 md:mb-3">
-                Our mission is to transform your home into a sanctuary
-                of relaxation and beauty, with products built to last.
-              </p>
-              <LocalizedLink href="/about" variant="underline">
-                Read more about PURE LINEN
-              </LocalizedLink>
+          </div>
+          <div className="w-full relative group">
+            <div className="relative aspect-[2/3]">
+              {/* Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src="/images/content/home/table-linen.jpg"
+                  alt="Product 2"
+                  className="object-contain"
+                  fill
+                />
+              </div>
+              {/* Overlay with text and button - appears on hover */}
+              <div className="absolute inset-0 bg-grayscale-800 flex flex-col items-center justify-center p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-sm md:text-base mb-4 text-center">
+                  <h2 className="text-base md:text-lg font-medium mb-2">TABLE LINEN</h2>
+                  <p>Modern, trendy, simple, cool, casual, formal, traditional, outdoor, indoor, special occasion. 
+                    PURE LINEN has table linen for every situation, every home and for the hospitality industry.</p>
+                </div>
+                <a 
+                  href="/categories/placeholder-category-2" 
+                  className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
+                >
+                  READ MORE
+                </a>
+              </div>
             </div>
-          </LayoutColumn>
-        </Layout>
+          </div>
+          <div className="w-full relative group">
+            <div className="relative aspect-[2/3]">
+              {/* Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src="/images/content/home/home-decor.jpg"
+                  alt="Product 3"
+                  className="object-contain"
+                  fill
+                />
+              </div>
+              {/* Overlay with text and button - appears on hover */}
+              <div className="absolute inset-0 bg-grayscale-800 flex flex-col items-center justify-center p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-sm md:text-base mb-4 text-center">
+                  <h2 className="text-base md:text-lg font-medium mb-2">LINEN THROWS</h2>
+                  <p>PURE LINEN throws come in various sizes and are perfect for the sofa, table, bed and beach&hellip; 
+                    They are versatile enough to wrap around yourself or drape over your favourite chair. A definite must for all seasons..</p>
+                </div>
+                <a 
+                  href="/categories/placeholder-category-3" 
+                  className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
+                >
+                  READ MORE
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="w-full relative group">
+            <div className="relative aspect-[2/3]">
+              {/* Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src="/images/content/home/cushions.jpg"
+                  alt="Product 4"
+                  className="object-contain"
+                  fill
+                />
+              </div>
+              {/* Overlay with text and button - appears on hover */}
+              <div className="absolute inset-0 bg-grayscale-800 flex flex-col items-center justify-center p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-sm md:text-base mb-4 text-center">
+                  <h2 className="text-base md:text-lg font-medium mb-2">LINEN CUSHION COVERS</h2>
+                  <p>PURE LINEN has linen cushion covers in both casual and formal styles. 
+                    From raw eco-natural linens to embroidered styles on very high quality fabrics to give your decor a classy edge.</p>
+                </div>
+                <a 
+                  href="/categories/placeholder-category-4" 
+                  className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
+                >
+                  READ MORE
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+       {/* 4 images section 2*/}
+       <div className="pt-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-[2px]">
+          <div className="w-full relative group">
+            <div className="relative aspect-[2/3]">
+              {/* Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src="/images/content/home/tea-towels.jpg"
+                  alt="Product 5"
+                  className="object-contain"
+                  fill
+                />
+              </div>
+              {/* Overlay with text and button - appears on hover */}
+              <div className="absolute inset-0 bg-grayscale-800 flex flex-col items-center justify-center p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-sm md:text-base mb-4 text-center">
+                  <h2 className="text-base md:text-lg font-medium mb-2">LINEN TEA TOWELS</h2>
+                  <p>Classy, formal and every-day linen tea towels to liven-up any kitchen. A great range and great prices</p>
+                </div>
+                <a 
+                  href="/categories/placeholder-category-5" 
+                  className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
+                >
+                  READ MORE
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="w-full relative group">
+            <div className="relative aspect-[2/3]">
+              {/* Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src="/images/content/home/aprons.jpg"
+                  alt="Product 6"
+                  className="object-contain"
+                  fill
+                />
+              </div>
+              {/* Overlay with text and button - appears on hover */}
+              <div className="absolute inset-0 bg-grayscale-800 flex flex-col items-center justify-center p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-sm md:text-base mb-4 text-center">
+                  <h2 className="text-base md:text-lg font-medium mb-2">LINEN APRONS</h2>
+                  <p>PURE LINEN's classy "cafe" style aprons, with or without bibs. Home, cafe, bistro, restaurant - all ideal homes for these great looking aprons</p>
+                </div>
+                <a 
+                  href="/categories/placeholder-category-6" 
+                  className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
+                >
+                  READ MORE
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="w-full relative group">
+            <div className="relative aspect-[2/3]">
+              {/* Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src="/images/content/home/bathroom.jpg"
+                  alt="Product 7"
+                  className="object-contain"
+                  fill
+                />
+              </div>
+              {/* Overlay with text and button - appears on hover */}
+              <div className="absolute inset-0 bg-grayscale-800 flex flex-col items-center justify-center p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-sm md:text-base mb-4 text-center">
+                  <h2 className="text-base md:text-lg font-medium mb-2">BATHROOM LINENS</h2>
+                  <p>PURE LINEN 100% linen bathroom hand towels! Once you've tried linen towels you're hooked. They don't just look fabulous, the feel is amazing.</p>
+                </div>
+                <a 
+                  href="/categories/placeholder-category-7" 
+                  className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
+                >
+                  READ MORE
+                </a>
+              </div>
+            </div>
+          </div>
+          <div className="w-full relative group">
+            <div className="relative aspect-[2/3]">
+              {/* Image */}
+              <div className="absolute inset-0">
+                <Image
+                  src="/images/content/home/fabrics.jpg"
+                  alt="Product 8"
+                  className="object-contain"
+                  fill
+                />
+              </div>
+              {/* Overlay with text and button - appears on hover */}
+              <div className="absolute inset-0 bg-grayscale-800 flex flex-col items-center justify-center p-6 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="text-sm md:text-base mb-4 text-center">
+                  <h2 className="text-base md:text-lg font-medium mb-2">LINEN FABRICS</h2>
+                  <p>Linen fabrics are PURE LINEN's specialty. 
+                    We supply manufacturers of clothing, furniture and home wares and fashion designers, retailers, interior designers and decorators. 
+                    Our colours and styles of fabrics are virtually unlimited.</p>
+                </div>
+                <a 
+                  href="/categories/placeholder-category-8" 
+                  className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
+                >
+                  READ MORE
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Final 2 images section */}
+      <div className="pt-0">
+        <div className="flex flex-col md:flex-row gap-0">
+          <div className="w-full md:w-1/2 relative group">
+            <a href="/store?type=placeholder-5" className="block">
+              <Image
+                src="/images/content/home/home-1.jpg"
+                width={1440}
+                height={1500}
+                alt="Product 5"
+                className="w-full h-full md:h-screen object-cover mr-[2px] mt-[2px]"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3 text-left">
+                <p className="text-xs md:text-xs font-normal">Product Name 5</p>
+              </div>
+            </a>
+          </div>
+          <div className="w-full md:w-1/2 relative group">
+            <a href="/store?type=placeholder-6" className="block">
+              <Image
+                src="/images/content/home/home-2.jpg"
+                width={1440}
+                height={1500}
+                alt="Product 6"
+                className="w-full h-full md:h-screen object-cover ml-[2px] mt-[2px]"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3 text-left">
+                <p className="text-xs md:text-xs font-normal">Product Name 6</p>
+              </div>
+            </a>
+          </div>
+        </div>
       </div>
     </>
   )

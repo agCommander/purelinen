@@ -82,22 +82,27 @@ export const getProductsList = async function ({
       nextPage: null,
     }
   }
+  // Debug: Log the query params being sent
+  const finalQuery = {
+    limit,
+    offset,
+    region_id: region.id,
+    fields: "*variants.calculated_price,+variants.inventory_quantity",
+    ...queryParams,
+  }
+  console.log('[getProductsList] Making API request with query:', JSON.stringify(finalQuery, null, 2))
+  
   return sdk.client
     .fetch<{ products: HttpTypes.StoreProduct[]; count: number }>(
       `/store/products`,
       {
-        query: {
-          limit,
-          offset,
-          region_id: region.id,
-          fields: "*variants.calculated_price",
-          ...queryParams,
-        },
+        query: finalQuery,
         next: { tags: ["products"] },
-        cache: "force-cache",
+        cache: "no-store", // Changed to no-store to ensure fresh data after inventory updates
       }
     )
     .then(({ products, count }) => {
+      console.log('[getProductsList] API response:', { productsCount: products?.length || 0, totalCount: count })
       const nextPage = count > offset + limit ? page + 1 : null
 
       return {
@@ -108,6 +113,10 @@ export const getProductsList = async function ({
         nextPage: nextPage,
         queryParams,
       }
+    })
+    .catch((error) => {
+      console.error('[getProductsList] API error:', error)
+      throw error
     })
 }
 

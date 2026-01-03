@@ -17,15 +17,15 @@ export const NewsletterForm: React.FC<{ className?: string }> = ({
 
   return (
     <div className={className}>
-      <h2 className="text-md md:text-lg mb-2 md:mb-1">Join our newsletter</h2>
+      <h3 className="text-xs md:text-sm mb-2 md:mb-4 font-medium">Keep in touch</h3>
       {isSubmitted ? (
-        <p className="max-md:text-xs">
+        <p className="text-xs">
           Thank you for subscribing to our newsletter!
         </p>
       ) : (
         <>
-          <p className="max-md:text-xs mb-4">
-            We will also send you our discount coupons!
+          <p className="text-xs mb-4 md:mb-6">
+            Sign up to our newsletter and receive notifications of our discounted products.
           </p>
           <Form
             onSubmit={() => {
@@ -33,7 +33,7 @@ export const NewsletterForm: React.FC<{ className?: string }> = ({
             }}
             schema={newsletterFormSchema}
           >
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <InputField
                 inputProps={{
                   uiSize: "sm",
@@ -42,25 +42,14 @@ export const NewsletterForm: React.FC<{ className?: string }> = ({
                 }}
                 name="email"
                 type="email"
-                placeholder="Your email"
-                className="mb-4 flex-1"
+                placeholder="Enter your email"
+                className="mb-2"
               />
-              <Button type="submit" size="sm" className="h-9 text-xs">
+              <Button type="submit" size="sm" className="h-9 text-xs w-full md:w-auto">
                 Subscribe
               </Button>
             </div>
           </Form>
-          <p className="text-xs text-grayscale-500">
-            By subscribing you agree to with our{" "}
-            <LocalizedLink
-              href="/privacy-policy"
-              variant="underline"
-              className="!pb-0"
-            >
-              Privacy Policy
-            </LocalizedLink>{" "}
-            and provide consent to receive updates from our company.
-          </p>
         </>
       )}
     </div>

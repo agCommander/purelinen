@@ -84,7 +84,7 @@ export const HeaderDrawer: React.FC<{
     <>
       <Button
         variant="ghost"
-        className="p-1 group-data-[light=true]:md:text-white"
+        className="p-1 md:text-gray-500"
         onPress={() => setIsMenuOpen(true)}
         aria-label="Open menu"
       >
@@ -166,7 +166,7 @@ export const HeaderDrawer: React.FC<{
                         {categoryItems.map((category) => (
                           <LocalizedLink
                             key={category.id}
-                            href={`/store?type=${selectedProductType.value}&category=${category.handle}`}
+                            href={`/categories/${category.handle}`}
                             onClick={() => setIsMenuOpen(false)}
                             className="px-4 py-4 text-left border-b border-grayscale-200 hover:bg-grayscale-50 transition-colors"
                           >

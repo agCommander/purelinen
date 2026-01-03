@@ -33,16 +33,7 @@ export async function generateStaticParams() {
 export default function AboutPage() {
   return (
     <>
-      <div className="max-md:pt-18">
-        <Image
-         src="/images/content/CustomMade.jpg" 
-          width={2880}
-          height={1500}
-          alt="Custom Made Linen"  
-          className="md:h-screen md:object-cover"
-        />
-      </div>
-      <div className="pt-8 md:pt-26 pb-26 md:pb-36">
+      <div className="pt-2 md:pt-26 pb-26 md:pb-36">
         <Layout>
           <LayoutColumn start={1} end={{ base: 13, lg: 7 }}>
             <h3 className="text-md max-lg:mb-16 md:text-2xl">
@@ -66,7 +57,7 @@ export default function AboutPage() {
               width={900}
               height={600}
               alt="About PURE LINEN Founder"
-              className="mt-26 lg:mt-36 mb-8 lg:mb-26"
+              className="mt-8 lg:mt-8 mb-8 lg:mb-8"
             />
           </LayoutColumn>
           <LayoutColumn start={1} end={{ base: 13, lg: 8 }}>
@@ -98,7 +89,7 @@ export default function AboutPage() {
               width={1000}
               height={1500}
               alt="IRMA"
-              className="mb-16 lg:mb-46"
+              className="mb-8 lg:mb-8"
             />
           </LayoutColumn>
           <LayoutColumn start={{ base: 1, lg: 8 }} end={13}>

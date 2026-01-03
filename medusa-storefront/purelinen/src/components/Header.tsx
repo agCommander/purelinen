@@ -93,7 +93,7 @@ export const Header: React.FC = async () => {
               <React.Suspense>
                 <SearchField countryOptions={countryOptions} />
               </React.Suspense>
-              <LoginLink className="p-1 group-data-[light=true]:md:text-white group-data-[sticky=true]:md:text-gray-500" />
+              <LoginLink className="p-1 md:text-gray-500" />
               {isLoggedIn && <CartDrawer />}
             </div>
 

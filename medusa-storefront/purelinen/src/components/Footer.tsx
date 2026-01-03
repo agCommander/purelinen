@@ -16,83 +16,107 @@ export const Footer: React.FC = () => {
   return (
     <div
       className={twMerge(
-        "bg-grayscale-50 py-8 md:py-20",
+        "bg-white border-t border-grayscale-200",
         isAuthPage && "hidden"
       )}
     >
       <Layout>
         <LayoutColumn className="col-span-13">
-          <div className="flex max-lg:flex-col justify-between md:gap-20 max-md:px-4">
-            <div className="flex flex-1 max-lg:w-full max-lg:order-2 max-sm:flex-col justify-between sm:gap-30 lg:gap-20 md:items-center">
-              <div className="max-w-35 md:flex-1 max-md:mb-9">
-                <h1 className="text-lg md:text-xl mb-2 md:mb-6 leading-none md:leading-[0.9]">
-                  PURE LINEN
-                </h1>
-                <p className="text-xs">
-                  &copy; {new Date().getFullYear()}, PURE LINEN
-                </p>
-              </div>
-              <div className="flex gap-10 xl:gap-18 max-md:text-xs flex-1 justify-between lg:justify-center">
-                <ul className="flex flex-col gap-6 md:gap-3.5">
-                  <li>
-                    <LocalizedLink href="/">FAQ</LocalizedLink>
-                  </li>
-                  <li>
-                    <LocalizedLink href="/">Help</LocalizedLink>
-                  </li>
-                  <li>
-                    <LocalizedLink href="/">Delivery</LocalizedLink>
-                  </li>
-                  <li>
-                    <LocalizedLink href="/">Returns</LocalizedLink>
-                  </li>
-                </ul>
-                <ul className="flex flex-col gap-6 md:gap-3.5">
-                  <li>
-                    <a
-                      href="https://www.instagram.com/agiloltd/"
-                      target="_blank"
-                    >
-                      Instagram
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://tiktok.com" target="_blank">
-                      TikTok
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://pinterest.com" target="_blank">
-                      Pinterest
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://facebook.com" target="_blank">
-                      Facebook
-                    </a>
-                  </li>
-                </ul>
-                <ul className="flex flex-col gap-6 md:gap-3.5">
-                  <li>
-                    <LocalizedLink href="/privacy-policy">
-                      Privacy Policy
-                    </LocalizedLink>
-                  </li>
-                  <li>
-                    <LocalizedLink href="/cookie-policy">
-                      Cookie Policy
-                    </LocalizedLink>
-                  </li>
-                  <li>
-                    <LocalizedLink href="/terms-of-use">
-                      Terms of Use
-                    </LocalizedLink>
-                  </li>
-                </ul>
-              </div>
+          {/* 6-column grid layout */}
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-0 max-md:px-4">
+            {/* Newsletter Form - spans 2 columns */}
+            <div className="md:col-span-2 px-4 md:px-6 py-4 md:py-6 md:border-r border-grayscale-200">
+              <NewsletterForm />
             </div>
 
-            <NewsletterForm className="flex-1 max-lg:w-full lg:max-w-90 xl:max-w-96 max-lg:order-1 max-md:mb-16" />
+            {/* Online support - 1 column */}
+            <div className="md:col-span-1 px-4 md:px-6 py-4 md:py-6 md:border-r border-grayscale-200">
+              <h3 className="text-xs md:text-sm mb-4 md:mb-6 font-medium">Online support</h3>
+              <ul className="flex flex-col gap-3 md:gap-2 text-xs">
+                <li>
+                  <LocalizedLink href="/contact">Contact</LocalizedLink>
+                </li>
+                <li>
+                  <LocalizedLink href="/shipping-returns">Shipping and returns</LocalizedLink>
+                </li>
+                <li>
+                  <LocalizedLink href="/care-guide">Care guide</LocalizedLink>
+                </li>
+                <li>
+                  <LocalizedLink href="/gift-card">Gift cards</LocalizedLink>
+                </li>
+              </ul>
+            </div>
+
+            {/* About us - 1 column */}
+            <div className="md:col-span-1 px-4 md:px-6 py-4 md:py-6 md:border-r border-grayscale-200">
+              <h3 className="text-xs md:text-sm mb-4 md:mb-6 font-medium">About us</h3>
+              <ul className="flex flex-col gap-3 md:gap-2 text-xs">
+                <li>
+                  <LocalizedLink href="/about">About PURE LINEN</LocalizedLink>
+                </li>
+                <li>
+                  <LocalizedLink href="/store">Store</LocalizedLink>
+                </li>
+  
+              </ul>
+            </div>
+
+            {/* Connect with PURE LINEN - 1 column */}
+            <div className="md:col-span-1 px-4 md:px-6 py-4 md:py-6 md:border-r border-grayscale-200">
+              <h3 className="text-xs md:text-sm mb-4 md:mb-6 font-medium">Connect with us</h3>
+              <ul className="flex flex-col gap-3 md:gap-2 text-xs">
+                <li>
+                  <a
+                    href="https://www.instagram.com/agiloltd/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Instagram
+                  </a>
+                </li>
+              
+                <li>
+                  <a
+                    href="https://facebook.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Facebook
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="https://linkedin.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    LinkedIn
+                  </a>
+                </li>
+               
+              </ul>
+            </div>
+
+            {/* Legal terms - 1 column */}
+            <div className="md:col-span-1 px-4 md:px-6 py-4 md:py-6">
+              <h3 className="text-xs md:text-sm mb-4 md:mb-6 font-medium">Legal terms</h3>
+              <ul className="flex flex-col gap-3 md:gap-2 text-xs">
+                <li>
+                  <LocalizedLink href="/privacy-policy">Privacy policy</LocalizedLink>
+                </li>
+                <li>
+                  <LocalizedLink href="/terms-of-use">Terms and conditions</LocalizedLink>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="mt-8 md:mt-12 pt-8 md:pt-12 border-t border-grayscale-200 max-md:px-4">
+            <p className="text-xs">
+              &copy; {new Date().getFullYear()}, PURE LINEN
+            </p>
           </div>
         </LayoutColumn>
       </Layout>

@@ -34,13 +34,8 @@ export const Logo: React.FC = () => {
     }
   }, [])
 
-  // Determine which logo to show:
-  // - White logo when on hero image (light=true, sticky=false)
-  // - Grey logo when scrolled (sticky=true) or on non-hero pages
-  const logoSrc =
-    isLight && !isSticky
-      ? "/images/content/PURELINEN-WHITE-LOGO.png"
-      : "/images/content/PURELINEN-GREY-LOGO.png"
+  // Always use grey logo
+  const logoSrc = "/images/content/PURELINEN-GREY-LOGO.png"
 
   return (
     <h1 className="font-medium text-md">

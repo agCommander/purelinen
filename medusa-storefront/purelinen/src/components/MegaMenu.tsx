@@ -143,7 +143,7 @@ export const MegaMenu: React.FC<{
                           {columnCategories.map((category) => (
                             <LocalizedLink
                               key={category.id}
-                              href={`/store?type=${productType.value}&category=${category.handle}`}
+                              href={`/categories/${category.handle}`}
                               className="text-xs font-normal hover:underline block"
                             >
                               {category.name}
