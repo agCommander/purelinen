@@ -34,13 +34,15 @@ export const getRegion = async function (countryCode: string) {
 
     const regions = await listRegions()
 
-    if (!regions) {
+    if (!regions || regions.length === 0) {
       return null
     }
 
     regions.forEach((region) => {
       region.countries?.forEach((c) => {
-        regionMap.set(c?.iso_2 ?? "", region)
+        if (c?.iso_2) {
+          regionMap.set(c.iso_2, region)
+        }
       })
     })
 

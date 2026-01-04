@@ -14,11 +14,11 @@ export const useStoreProducts = ({
   sortBy: SortOptions | undefined
   countryCode: string
 }) => {
-  return useInfiniteQuery({
+  const query = useInfiniteQuery({
     initialPageParam: page,
     queryKey: ["products", queryParams, sortBy, countryCode],
     queryFn: async ({ pageParam }) => {
-      return getProductsListWithSort({
+      return await getProductsListWithSort({
         page: pageParam,
         queryParams,
         sortBy,
@@ -37,5 +37,9 @@ export const useStoreProducts = ({
         Math.ceil(lastPage.nextPage / (lastPage.queryParams?.limit || 12)) + 1
       )
     },
+    staleTime: 1000 * 60, // Consider data fresh for 1 minute
+    gcTime: 1000 * 60 * 5, // Keep inactive queries in cache for 5 minutes
   })
+  
+  return query
 }

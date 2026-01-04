@@ -11,6 +11,7 @@ import ProductInfo from "@modules/products/templates/product-info"
 import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-related-products"
 import { LocalizedLink } from "@/components/LocalizedLink"
 import { Layout, LayoutColumn } from "@/components/Layout"
+import { Breadcrumbs } from "@/components/Breadcrumbs"
 
 type ProductTemplateProps = {
   product: HttpTypes.StoreProduct
@@ -47,6 +48,33 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
     product.collection?.metadata ?? {}
   )
 
+  // Build breadcrumbs: Category > Collection > Product
+  const breadcrumbItems = []
+  
+  // Add first category if available
+  if (product.categories && product.categories.length > 0) {
+    const category = product.categories[0]
+    if (category.handle) {
+      breadcrumbItems.push({
+        label: category.name,
+        href: `/categories/${category.handle}`,
+      })
+    }
+  }
+  
+  // Add collection if available
+  if (product.collection?.handle) {
+    breadcrumbItems.push({
+      label: `${product.collection.title} Collection`,
+      href: `/collections/${product.collection.handle}`,
+    })
+  }
+  
+  // Add current product (not a link)
+  breadcrumbItems.push({
+    label: product.title,
+  })
+
   return (
     <div
       className="pt-18 md:pt-26 lg:pt-37 pb-26 md:pb-36"
@@ -55,12 +83,11 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       <ImageGallery className="md:hidden" images={images} />
       <Layout>
         <LayoutColumn className="mb-26 md:mb-52">
+          <Breadcrumbs items={breadcrumbItems} className="mb-6 md:mb-8" />
           <div className="flex max-lg:flex-col gap-8 xl:gap-27">
-            {hasImages && (
-              <div className="lg:w-1/2 flex flex-1 flex-col gap-8">
-                <ImageGallery className="max-md:hidden" images={images} />
-              </div>
-            )}
+            <div className="lg:w-1/2 flex flex-1 flex-col gap-8">
+              <ImageGallery className="max-md:hidden" images={images} />
+            </div>
             <div className="sticky flex-1 top-0">
               <ProductInfo product={product} />
               <ProductActions
@@ -69,7 +96,6 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
                 region={region}
               />
             </div>
-            {!hasImages && <div className="flex-1" />}
           </div>
         </LayoutColumn>
       </Layout>

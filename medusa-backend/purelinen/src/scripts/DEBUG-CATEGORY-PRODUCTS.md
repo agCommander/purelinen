@@ -77,3 +77,4 @@ ORDER BY p.title;
 - `/medusa-storefront/purelinen/src/modules/store/templates/paginated-products.tsx` - Query params
 - Backend terminal logs - Actual API request/response
 
+

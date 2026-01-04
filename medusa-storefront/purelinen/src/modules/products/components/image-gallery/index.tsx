@@ -9,9 +9,23 @@ type ImageGalleryProps = {
 
 const ImageGallery = ({ images, className }: ImageGalleryProps) => {
   const filteredImages = images.filter((image) => Boolean(image.url))
+  const placeholderPath = "/images/content/placeholder.png"
 
+  // If no images, show placeholder
   if (!filteredImages.length) {
-    return null
+    return (
+      <ProductPageGallery className={className}>
+        <div className="relative aspect-[3/4] w-full overflow-hidden">
+          <Image
+            src={placeholderPath}
+            alt="Product placeholder"
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 589px, (max-width: 1279px) 384px, 456px"
+            className="object-cover"
+          />
+        </div>
+      </ProductPageGallery>
+    )
   }
 
   return (

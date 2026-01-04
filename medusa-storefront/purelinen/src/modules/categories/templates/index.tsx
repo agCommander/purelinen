@@ -19,30 +19,16 @@ export default async function CategoryTemplate({
 
   const region = await getRegion(countryCode)
 
-  // Ensure categoryId is passed as an array (PaginatedProducts expects string | string[])
-  const categoryId = category.id ? [category.id] : undefined
-
-  // Debug: Log category info (server-side, check terminal/backend logs)
-  console.log('[CategoryTemplate Server] Category:', {
-    id: category.id,
-    name: category.name,
-    handle: category.handle,
-    categoryId: categoryId
-  })
+  // Pass categoryId as a single string (Medusa API expects single string, not array)
+  const categoryId = category.id || undefined
 
   return (
     <div className="md:pt-12 py-4 md:pb-6">
-      <Layout className="mb-6 md:mb-8">
+      <Layout className="!max-w-none w-full !px-[20px] mb-6 md:mb-6">
         <LayoutColumn>
-          <h2 className="text-md md:text-2xl mb-6 md:mb-7" id="products">
+          <h2 className="text-md md:text-md mb-6 md:mb-7" id="products">
             {category.name}
           </h2>
-          {/* Temporary debug info - remove after debugging */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mb-4 p-2 bg-yellow-100 text-xs">
-              Debug: Category ID = {category.id || 'MISSING'}, CategoryId Array = {JSON.stringify(categoryId)}
-            </div>
-          )}
           {category.description && (
             <div className="mb-8 text-base-regular">
               <p>{category.description}</p>

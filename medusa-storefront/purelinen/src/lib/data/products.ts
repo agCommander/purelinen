@@ -11,13 +11,21 @@ export const getProductsById = async function ({
   ids: string[]
   regionId: string
 }) {
+  const query: any = {
+    id: ids,
+    region_id: regionId,
+    fields: "*variants.calculated_price,+variants.inventory_quantity",
+  }
+  
+  // Add sales_channel_id if available (required when API key has multiple sales channels)
+  const salesChannelId = process.env.NEXT_PUBLIC_SALES_CHANNEL_ID
+  if (salesChannelId) {
+    query.sales_channel_id = salesChannelId
+  }
+  
   return sdk.client
     .fetch<{ products: HttpTypes.StoreProduct[] }>(`/store/products`, {
-      query: {
-        id: ids,
-        region_id: regionId,
-        fields: "*variants.calculated_price,+variants.inventory_quantity",
-      },
+      query,
       next: { tags: ["products"] },
       cache: "force-cache",
     })
@@ -28,34 +36,50 @@ export const getProductByHandle = async function (
   handle: string,
   regionId: string
 ) {
+  const query: any = {
+    handle,
+    region_id: regionId,
+    fields: "*variants.calculated_price,+variants.inventory_quantity,*categories",
+  }
+  
+  // Add sales_channel_id if available (required when API key has multiple sales channels)
+  const salesChannelId = process.env.NEXT_PUBLIC_SALES_CHANNEL_ID
+  if (salesChannelId) {
+    query.sales_channel_id = salesChannelId
+  }
+  
   return sdk.client
     .fetch<{ products: HttpTypes.StoreProduct[] }>(`/store/products`, {
-      query: {
-        handle,
-        region_id: regionId,
-        fields: "*variants.calculated_price,+variants.inventory_quantity",
-      },
+      query,
       next: { tags: ["products"] },
     })
     .then(({ products }) => products[0])
 }
 
 export const getProductFashionDataByHandle = async function (handle: string) {
-  return sdk.client.fetch<{
-    materials: {
-      id: string
-      name: string
-      colors: {
+  try {
+    return await sdk.client.fetch<{
+      materials: {
         id: string
         name: string
-        hex_code: string
+        colors: {
+          id: string
+          name: string
+          hex_code: string
+        }[]
       }[]
-    }[]
-  }>(`/store/custom/fashion/${handle}`, {
-    method: "GET",
-    next: { tags: ["products"] },
-    cache: "force-cache",
-  })
+    }>(`/store/custom/fashion/${handle}`, {
+      method: "GET",
+      next: { tags: ["products"] },
+      cache: "force-cache",
+    })
+  } catch (error) {
+    // Return empty fashion data if endpoint doesn't exist (404) or fails
+    // This is a custom endpoint that may not be available for all products
+    return {
+      materials: [],
+    }
+  }
 }
 
 export const getProductsList = async function ({
@@ -74,6 +98,7 @@ export const getProductsList = async function ({
   const page = Math.max(1, pageParam || 1)
   const limit = queryParams?.limit || 12
   const offset = (page - 1) * limit
+  
   const region = await getRegion(countryCode)
 
   if (!region) {
@@ -82,15 +107,23 @@ export const getProductsList = async function ({
       nextPage: null,
     }
   }
-  // Debug: Log the query params being sent
-  const finalQuery = {
+  
+  // Get sales channel ID from environment variable if available (optional)
+  // Only needed if the publishable API key is associated with multiple sales channels
+  const salesChannelId = process.env.NEXT_PUBLIC_SALES_CHANNEL_ID
+  
+  const finalQuery: any = {
     limit,
     offset,
     region_id: region.id,
     fields: "*variants.calculated_price,+variants.inventory_quantity",
     ...queryParams,
   }
-  console.log('[getProductsList] Making API request with query:', JSON.stringify(finalQuery, null, 2))
+  
+  // Add sales_channel_id if explicitly provided (optional - API key should be configured with single channel)
+  if (salesChannelId) {
+    finalQuery.sales_channel_id = salesChannelId
+  }
   
   return sdk.client
     .fetch<{ products: HttpTypes.StoreProduct[]; count: number }>(
@@ -102,7 +135,6 @@ export const getProductsList = async function ({
       }
     )
     .then(({ products, count }) => {
-      console.log('[getProductsList] API response:', { productsCount: products?.length || 0, totalCount: count })
       const nextPage = count > offset + limit ? page + 1 : null
 
       return {

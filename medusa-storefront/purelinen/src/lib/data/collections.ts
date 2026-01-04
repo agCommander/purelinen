@@ -82,3 +82,18 @@ export const getCollectionsWithProducts = async (
 
   return collections as unknown as HttpTypes.StoreCollection[]
 }
+
+export const getCollectionsByTypeValue = async function (
+  typeValue: string
+): Promise<{ collections: HttpTypes.StoreCollection[]; count: number }> {
+  return sdk.client
+    .fetch<{
+      collections: HttpTypes.StoreCollection[]
+      count: number
+    }>(`/store/custom/type-collections-by-value/${encodeURIComponent(typeValue)}`, {
+      method: "GET",
+      next: { tags: ["collections"] },
+      cache: "force-cache",
+    })
+    .then(({ collections, count }) => ({ collections, count }))
+}

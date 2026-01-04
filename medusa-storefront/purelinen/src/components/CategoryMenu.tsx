@@ -54,7 +54,7 @@ export const CategoryMenu: React.FC<{
             onMouseLeave={() => handleMouseLeave(productType.id)}
           >
             <LocalizedLink
-              href={`/store?type=${productType.value}`}
+              href={`/types/${productType.value}`}
               className="text-[13px] font-normal hover:underline"
             >
               {productType.value}

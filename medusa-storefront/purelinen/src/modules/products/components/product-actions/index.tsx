@@ -19,6 +19,7 @@ import ProductPrice from "@modules/products/components/product-price"
 import { UiRadioGroup } from "@/components/ui/Radio"
 import { withReactQueryProvider } from "@lib/util/react-query"
 import { useAddLineItem } from "hooks/cart"
+import { useCustomer } from "hooks/customer"
 
 type ProductActionsProps = {
   product: HttpTypes.StoreProduct
@@ -78,6 +79,7 @@ function ProductActions({ product, materials, disabled }: ProductActionsProps) {
   )
   const [quantity, setQuantity] = useState(1)
   const countryCode = useCountryCode()
+  const { data: customer } = useCustomer()
 
   const { mutateAsync, isPending } = useAddLineItem()
 
@@ -162,7 +164,7 @@ function ProductActions({ product, materials, disabled }: ProductActionsProps) {
 
   return (
     <>
-      <ProductPrice product={product} variant={selectedVariant} />
+      {customer && <ProductPrice product={product} variant={selectedVariant} />}
       <div className="max-md:text-xs mb-8 md:mb-16 max-w-120">
         <p>{product.description}</p>
       </div>
@@ -284,31 +286,33 @@ function ProductActions({ product, materials, disabled }: ProductActionsProps) {
             })}
         </div>
       )}
-      <div className="flex max-sm:flex-col gap-4">
-        <NumberField
-          isDisabled={
-            !itemsInStock || !selectedVariant || !!disabled || isPending
-          }
-          value={quantity}
-          onChange={setQuantity}
-          minValue={1}
-          maxValue={itemsInStock}
-          className="w-full sm:w-35 max-md:justify-center max-md:gap-2"
-          aria-label="Quantity"
-        />
-        <Button
-          onPress={handleAddToCart}
-          isDisabled={!itemsInStock || !selectedVariant || !!disabled}
-          isLoading={isPending}
-          className="sm:flex-1"
-        >
-          {!selectedVariant
-            ? "Select variant"
-            : !itemsInStock
-              ? "Out of stock"
-              : "Add to cart"}
-        </Button>
-      </div>
+      {customer && (
+        <div className="flex max-sm:flex-col gap-4">
+          <NumberField
+            isDisabled={
+              !itemsInStock || !selectedVariant || !!disabled || isPending
+            }
+            value={quantity}
+            onChange={setQuantity}
+            minValue={1}
+            maxValue={itemsInStock}
+            className="w-full sm:w-35 max-md:justify-center max-md:gap-2"
+            aria-label="Quantity"
+          />
+          <Button
+            onPress={handleAddToCart}
+            isDisabled={!itemsInStock || !selectedVariant || !!disabled}
+            isLoading={isPending}
+            className="sm:flex-1"
+          >
+            {!selectedVariant
+              ? "Select variant"
+              : !itemsInStock
+                ? "Out of stock"
+                : "Add to cart"}
+          </Button>
+        </div>
+      )}
     </>
   )
 }

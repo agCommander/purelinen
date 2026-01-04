@@ -52,3 +52,4 @@ LEFT JOIN inventory_item ii ON pv.sku = ii.sku
 LEFT JOIN inventory_level il ON ii.id = il.inventory_item_id AND il.location_id = 'sloc_01K3DQ8W9VYSX1ARQJ7J553CQK'
 WHERE pc.handle = :'category_handle';
 
+

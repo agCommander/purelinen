@@ -157,7 +157,7 @@ export const MegaMenu: React.FC<{
               ) : (
                 <div className="px-2 py-4 h-full col-span-4">
                   <LocalizedLink
-                    href={`/store?type=${productType.value}`}
+                    href={`/types/${productType.value}`}
                     className="text-xs font-normal hover:underline block"
                   >
                     View All {productType.value}
@@ -175,7 +175,7 @@ export const MegaMenu: React.FC<{
                     className="col-span-2 p-5 flex flex-col h-full"
                   >
                     <LocalizedLink
-                      href={`/store?type=${productType.value}`}
+                      href={`/types/${productType.value}`}
                       className="flex-1 relative min-h-0 mb-4 overflow-hidden"
                     >
                       <Image

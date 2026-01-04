@@ -34,7 +34,7 @@ const ProductTypesSection: React.FC = async () => {
           start={index % 2 === 0 ? 1 : 7}
           end={index % 2 === 0 ? 7 : 13}
         >
-          <LocalizedLink href={`/store?type=${productType.value}`}>
+          <LocalizedLink href={`/types/${productType.value}`}>
             {typeof productType.metadata?.image === "object" &&
               productType.metadata.image &&
               "url" in productType.metadata.image &&

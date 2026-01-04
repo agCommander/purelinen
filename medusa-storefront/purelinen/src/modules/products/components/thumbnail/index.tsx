@@ -3,8 +3,6 @@ import Image from "next/image"
 import type { HttpTypes } from "@medusajs/types"
 import { twMerge } from "tailwind-merge"
 
-import PlaceholderImage from "@modules/common/icons/placeholder-image"
-
 type ThumbnailProps = {
   thumbnail?: HttpTypes.StoreProduct["thumbnail"]
   images?: HttpTypes.StoreProduct["images"]
@@ -49,9 +47,12 @@ const ImageOrPlaceholder = ({
   image,
   size,
 }: Pick<ThumbnailProps, "size"> & { image?: string }) => {
-  return image ? (
+  const placeholderPath = "/images/content/placeholder.png"
+  const imageSrc = image || placeholderPath
+
+  return (
     <Image
-      src={image}
+      src={imageSrc}
       alt="Thumbnail"
       className="absolute inset-0 object-cover object-center"
       draggable={false}
@@ -59,10 +60,6 @@ const ImageOrPlaceholder = ({
       sizes="(max-width: 576px) 280px, (max-width: 768px) 360px, (max-width: 992px) 480px, 800px"
       fill
     />
-  ) : (
-    <div className="w-full h-full absolute inset-0 flex items-center justify-center">
-      <PlaceholderImage size={size === "small" ? 16 : 24} />
-    </div>
   )
 }
 
