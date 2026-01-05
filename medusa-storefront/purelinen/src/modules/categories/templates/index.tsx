@@ -24,7 +24,7 @@ export default async function CategoryTemplate({
 
   return (
     <div className="md:pt-12 py-4 md:pb-6">
-      <Layout className="!max-w-none w-full !px-[20px] mb-6 md:mb-6">
+      <Layout className="!max-w-none w-full !px-[24px] mb-6 mt-6 md:mt-6 md:mb-6">
         <LayoutColumn>
           <h2 className="text-md md:text-md mb-6 md:mb-7" id="products">
             {category.name}

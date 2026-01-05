@@ -67,7 +67,7 @@ export const Header: React.FC = async () => {
   return (
     <>
       <HeaderWrapper>
-        <div className="w-full px-6">
+        <div className="w-full pl-[10px] pr-5">
           <div className="flex items-center justify-between h-12 md:h-12">
             {/* Logo and Product Types - hard left aligned */}
             <div className="flex items-center gap-8 flex-shrink-0">

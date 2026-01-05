@@ -78,25 +78,25 @@ export default async function Home({
                 src="/images/content/home/home-1.jpg"
                 width={1440}
                 height={1500}
-                alt="Hero Product 1"
+                alt="Bistro Table Linen"
                 className="w-full h-full md:h-screen object-cover"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3 text-left">
-                <p className="text-xs md:text-xs font-normal">Hero Product Name 1</p>
+                <p className="text-xs md:text-xs font-normal">Bistro Table Linen</p>
               </div>
             </a>
           </div>
           <div className="w-full md:w-1/2 relative group">
-            <a href="/categories/placeholder-hero-category-2" className="block">
+            <a href="/au/products/bl-cas-bc" className="block">
               <Image
                 src="/images/content/home/home-2.jpg"
                 width={1440}
                 height={1500}
-                alt="Hero Product 2"
+                alt="Casablanca Bed Cover"
                 className="w-full h-full md:h-screen object-cover ml-[2px]"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-3 text-left">
-                <p className="text-xs md:text-xs font-normal">Hero Product Name 2</p>
+                <p className="text-xs md:text-xs font-normal">Casablanca Bed Cover</p>
               </div>
             </a>
           </div>

@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   )
 
   const metadata = {
-    title: `${collection.title} | Medusa Store`,
+    title: `${collection.title} | PURE LINEN`,
     description:
       collectionDetails.success && collectionDetails.data.description
         ? collectionDetails.data.description
@@ -84,13 +84,9 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   const { handle, countryCode } = await params
   const { sortBy, page, category, type } = await searchParams
 
-  const collection = await getCollectionByHandle(handle, [
-    "id",
-    "title",
-    "metadata",
-  ])
+  const collection = await getCollectionByHandle(handle)
 
-  if (!collection) {
+  if (!collection || !collection.title) {
     notFound()
   }
 

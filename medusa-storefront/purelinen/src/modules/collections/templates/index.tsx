@@ -40,8 +40,8 @@ export default async function CollectionTemplate({
   ])
 
   return (
-    <>
-      <div className="max-md:mt-18 relative aspect-[2/1] md:h-screen w-full max-w-full mb-8 md:mb-19">
+    <div className="md:pt-12 py-4 md:pb-6">
+      {/*<div className="max-md:mt-18 relative aspect-[2/1] md:h-screen w-full max-w-full mb-8 md:mb-19">
         <Image
           src={
             collectionDetails.data?.collection_page_image?.url ||
@@ -51,47 +51,31 @@ export default async function CollectionTemplate({
           alt={collection.title + " image"}
           className="object-cover z-0"
         />
-      </div>
-      {collectionDetails.success &&
-        ((typeof collectionDetails.data.collection_page_heading === "string" &&
-          collectionDetails.data.collection_page_heading.length > 0) ||
-          (typeof collectionDetails.data.collection_page_content === "string" &&
-            collectionDetails.data.collection_page_content.length > 0)) && (
-          <Layout className="mb-26 md:mb-36">
-            {collectionDetails.data.collection_page_heading && (
-              <LayoutColumn start={1} end={{ base: 13, lg: 7 }}>
-                <h3 className="text-md max-md:mb-6 md:text-2xl">
-                  {collectionDetails.data.collection_page_heading}
-                </h3>
-              </LayoutColumn>
+      </div>*/}
+      <Layout className="!max-w-none w-full !px-[24px] mb-6 mt-6 md:mt-6 md:mb-6">
+        <LayoutColumn>
+          <h2 className="text-md md:text-md mb-6 md:mb-7">{collection.title} COLLECTION</h2>
+          {collectionDetails.success &&
+            typeof collectionDetails.data.description === "string" &&
+            collectionDetails.data.description.length > 0 && (
+              <p className="text-xs text-grayscale-500 md:text-md">
+                {collectionDetails.data.description}
+              </p>
             )}
-            {collectionDetails.data.collection_page_content && (
-              <LayoutColumn start={{ base: 1, lg: 8 }} end={13}>
-                <div className="md:text-md md:mt-18 flex flex-col gap-5 md:gap-9">
-                  {collectionDetails.data.collection_page_content
-                    .split("\n")
-                    .map((p) => p.trim())
-                    .filter(Boolean)
-                    .map((p, i) => (
-                      <p key={i}>{p}</p>
-                    ))}
-                </div>
-              </LayoutColumn>
-            )}
-          </Layout>
-        )}
-      <RefinementList
-        sortBy={sortBy}
-        title={collection.title}
-        categories={Object.fromEntries(
-          categories.product_categories.map((c) => [c.handle, c.name])
-        )}
-        category={category}
-        types={Object.fromEntries(
-          types.productTypes.map((t) => [t.value, t.value])
-        )}
+        </LayoutColumn>
+      </Layout>
+      {/*<RefinementList
+        //sortBy={sortBy}
+        //title={collection.title}
+        //categories={Object.fromEntries(
+        //  categories.product_categories.map((c) => [c.handle, c.name])
+        //)}
+        //category={category}
+        //types={Object.fromEntries(
+        //  types.productTypes.map((t) => [t.value, t.value])
+        //)}
         type={type}
-      />
+      />*/}
       <Suspense fallback={<SkeletonProductGrid />}>
         {region && (
           <PaginatedProducts
@@ -117,6 +101,6 @@ export default async function CollectionTemplate({
         )}
       </Suspense>
       <div className="pb-10 md:pb-20" />
-    </>
+    </div>
   )
 }
