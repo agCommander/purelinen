@@ -52,16 +52,48 @@ export default async function CollectionTemplate({
           className="object-cover z-0"
         />
       </div>*/}
-      <Layout className="!max-w-none w-full !px-[24px] mb-6 mt-6 md:mt-6 md:mb-6">
-        <LayoutColumn>
-          <h2 className="text-md md:text-md mb-6 md:mb-7">{collection.title} COLLECTION</h2>
-          {collectionDetails.success &&
-            typeof collectionDetails.data.description === "string" &&
-            collectionDetails.data.description.length > 0 && (
-              <p className="text-xs text-grayscale-500 md:text-md">
-                {collectionDetails.data.description}
-              </p>
-            )}
+      {/* Image and Description Layout */}
+      <Layout className="!max-w-none w-full !px-[20px] mb-6 md:mb-12">
+        <LayoutColumn start={1} end={{ base: 13, md: 7 }}>
+          {(() => {
+            const imageUrl = collectionDetails.success && collectionDetails.data.image?.url
+              ? collectionDetails.data.image.url
+              : (collection.metadata?.image && typeof collection.metadata.image === 'object' && 'url' in collection.metadata.image)
+              ? (collection.metadata.image as { url: string }).url
+              : "/images/content/placeholder.png"
+
+            return (
+              <div className="relative w-full aspect-[3/4] mt-[20px] ml-[20px]">
+                <Image
+                  src={imageUrl}
+                  alt={collection.title + " collection image"}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )
+          })()}
+        </LayoutColumn>
+        <LayoutColumn start={{ base: 1, md: 7 }} end={13}>
+          <h2 className="text-md md:text-md mb-6 md:mb-7 md:mt-6">{collection.title}</h2>
+          {(() => {
+            // Try to get description_html from parsed schema first
+            const descriptionHtml = collectionDetails.success && 
+              typeof collectionDetails.data.description_html === "string" &&
+              collectionDetails.data.description_html.length > 0
+              ? collectionDetails.data.description_html
+              : // Fallback: check raw metadata directly
+              (collection.metadata && typeof collection.metadata.description_html === "string" && collection.metadata.description_html.length > 0)
+              ? collection.metadata.description_html
+              : null
+
+            return descriptionHtml ? (
+              <div 
+                className="text-xs text-grayscale-400 md:text-[14px] md:leading-6"
+                dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+              />
+            ) : null
+          })()}
         </LayoutColumn>
       </Layout>
       {/*<RefinementList

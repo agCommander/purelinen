@@ -8,6 +8,7 @@ export const collectionMetadataCustomFieldsSchema = z.object({
     })
     .optional(),
   description: z.string().optional(),
+  description_html: z.string().optional(),
   collection_page_image: z
     .object({
       id: z.string(),

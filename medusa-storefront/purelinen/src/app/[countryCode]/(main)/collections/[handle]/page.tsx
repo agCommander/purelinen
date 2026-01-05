@@ -84,7 +84,12 @@ export default async function CollectionPage({ params, searchParams }: Props) {
   const { handle, countryCode } = await params
   const { sortBy, page, category, type } = await searchParams
 
-  const collection = await getCollectionByHandle(handle)
+  const collection = await getCollectionByHandle(handle, [
+    "id",
+    "title",
+    "handle",
+    "metadata",
+  ])
 
   if (!collection || !collection.title) {
     notFound()

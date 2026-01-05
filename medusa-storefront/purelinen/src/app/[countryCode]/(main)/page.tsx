@@ -125,10 +125,10 @@ export default async function Home({
                     Made from top-notch eco French flax and Belgian linens, it&rsquo;s weighty, robust and for keeps.</p>
                 </div>
                 <a 
-                  href="/categories/placeholder-category-1" 
+                  href="/au/types/Bedroom" 
                   className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
                 >
-                  READ MORE
+                  VIEW PRODUCTS
                 </a>
               </div>
             </div>
@@ -152,10 +152,10 @@ export default async function Home({
                     PURE LINEN has table linen for every situation, every home and for the hospitality industry.</p>
                 </div>
                 <a 
-                  href="/categories/placeholder-category-2" 
+                  href="/au/types/Table Linen" 
                   className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
                 >
-                  READ MORE
+                  VIEW PRODUCTS
                 </a>
               </div>
             </div>
@@ -179,10 +179,10 @@ export default async function Home({
                     They are versatile enough to wrap around yourself or drape over your favourite chair. A definite must for all seasons..</p>
                 </div>
                 <a 
-                  href="/categories/placeholder-category-3" 
+                  href="/au/categories/throws" 
                   className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
                 >
-                  READ MORE
+                  VIEW PRODUCTS
                 </a>
               </div>
             </div>
@@ -206,10 +206,10 @@ export default async function Home({
                     From raw eco-natural linens to embroidered styles on very high quality fabrics to give your decor a classy edge.</p>
                 </div>
                 <a 
-                  href="/categories/placeholder-category-4" 
+                  href="/au/categories/cushion-covers" 
                   className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
                 >
-                  READ MORE
+                  VIEW PRODUCTS
                 </a>
               </div>
             </div>
@@ -237,10 +237,10 @@ export default async function Home({
                   <p>Classy, formal and every-day linen tea towels to liven-up any kitchen. A great range and great prices</p>
                 </div>
                 <a 
-                  href="/categories/placeholder-category-5" 
+                  href="/au/categories/tea-towels" 
                   className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
                 >
-                  READ MORE
+                  VIEW PRODUCTS
                 </a>
               </div>
             </div>
@@ -263,10 +263,10 @@ export default async function Home({
                   <p>PURE LINEN's classy "cafe" style aprons, with or without bibs. Home, cafe, bistro, restaurant - all ideal homes for these great looking aprons</p>
                 </div>
                 <a 
-                  href="/categories/placeholder-category-6" 
+                  href="/au/categories/aprons" 
                   className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
                 >
-                  READ MORE
+                  VIEW PRODUCTS
                 </a>
               </div>
             </div>
@@ -289,10 +289,10 @@ export default async function Home({
                   <p>PURE LINEN 100% linen bathroom hand towels! Once you've tried linen towels you're hooked. They don't just look fabulous, the feel is amazing.</p>
                 </div>
                 <a 
-                  href="/categories/placeholder-category-7" 
+                  href="/au/types/Bathroom" 
                   className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
                 >
-                  READ MORE
+                  VIEW PRODUCTS
                 </a>
               </div>
             </div>
@@ -317,10 +317,10 @@ export default async function Home({
                     Our colours and styles of fabrics are virtually unlimited.</p>
                 </div>
                 <a 
-                  href="/categories/placeholder-category-8" 
+                  href="/au/types/Fabrics" 
                   className="bg-black text-white px-6 py-3 text-xs md:text-sm font-medium hover:bg-grayscale-900 transition-colors"
                 >
-                  READ MORE
+                  VIEW PRODUCTS
                 </a>
               </div>
             </div>
@@ -333,7 +333,7 @@ export default async function Home({
           <div className="w-full md:w-1/2 relative group">
             <a href="/store?type=placeholder-5" className="block">
               <Image
-                src="/images/content/home/home-1.jpg"
+                src="/images/content/home/home-3.jpg"
                 width={1440}
                 height={1500}
                 alt="Product 5"
@@ -347,7 +347,7 @@ export default async function Home({
           <div className="w-full md:w-1/2 relative group">
             <a href="/store?type=placeholder-6" className="block">
               <Image
-                src="/images/content/home/home-2.jpg"
+                src="/images/content/home/home-4.jpg"
                 width={1440}
                 height={1500}
                 alt="Product 6"

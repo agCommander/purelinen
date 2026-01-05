@@ -42,8 +42,8 @@ export const getCollectionByHandle = async function (
         fields: fields ? fields.join(",") : undefined,
         limit: 1,
       },
-      next: { tags: ["collections"] },
-      cache: "force-cache",
+      next: { tags: ["collections"], revalidate: 0 },
+      cache: "no-store",
     })
     .then(({ collections }) => collections[0])
 }

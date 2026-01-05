@@ -43,13 +43,17 @@ export async function POST(
     const productService = req.scope.resolve(Modules.PRODUCT);
     const collection = await productService.retrieveProductCollection(collectionId);
 
+    // Explicitly include description_html even if it's an empty string
+    const metadata = {
+      ...collection.metadata,
+      ...customFields,
+      description_html: customFields.description_html !== undefined ? customFields.description_html : collection.metadata?.description_html,
+    };
+
     const updatedCollection = await productService.updateProductCollections(
       collectionId,
       {
-        metadata: {
-          ...collection.metadata,
-          ...customFields,
-        },
+        metadata,
       },
     );
 
