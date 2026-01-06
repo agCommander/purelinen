@@ -39,7 +39,7 @@ export const getProductByHandle = async function (
   const query: any = {
     handle,
     region_id: regionId,
-    fields: "*variants.calculated_price,+variants.inventory_quantity,*categories",
+    fields: "*variants.calculated_price,+variants.inventory_quantity,*categories,*variants.images",
   }
   
   // Add sales_channel_id if available (required when API key has multiple sales channels)

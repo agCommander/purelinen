@@ -12,7 +12,7 @@ export async function GET(
     }
 
     // Get database manager to query the view directly
-    const manager = req.scope.resolve("manager");
+    const manager = req.scope.resolve("manager") as any;
     
     // Query the type_collections view using raw SQL
     const collections = await manager.query(

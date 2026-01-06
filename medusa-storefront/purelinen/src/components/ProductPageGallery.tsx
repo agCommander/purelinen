@@ -10,8 +10,8 @@ import { Icon } from "@/components/Icon"
 import { IconCircle } from "@/components/IconCircle"
 
 export const ProductPageGallery: React.FC<
-  React.ComponentPropsWithRef<"div">
-> = ({ children, className }) => {
+  React.ComponentPropsWithRef<"div"> & { resetKey?: string | number }
+> = ({ children, className, resetKey }) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     containScroll: "trimSnaps",
     skipSnaps: true,
@@ -54,6 +54,27 @@ export const ProductPageGallery: React.FC<
     onSelect(emblaApi)
     emblaApi.on("reInit", onInit).on("reInit", onSelect).on("select", onSelect)
   }, [emblaApi, onInit, onSelect])
+
+  // Reset carousel to first slide when resetKey or children change
+  React.useEffect(() => {
+    if (!emblaApi || resetKey === undefined) return
+    
+    // Reset immediately when resetKey changes
+    const resetCarousel = () => {
+      if (emblaApi) {
+        // Jump to first slide without animation
+        emblaApi.scrollTo(0, true)
+      }
+    }
+    
+    // Reset immediately
+    resetCarousel()
+    
+    // Also reset after a short delay to catch any late updates
+    const timeoutId = setTimeout(resetCarousel, 150)
+    
+    return () => clearTimeout(timeoutId)
+  }, [emblaApi, resetKey, children])
 
   return (
     <div className={twMerge("overflow-hidden relative", className)}>

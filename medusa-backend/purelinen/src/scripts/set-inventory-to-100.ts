@@ -1,9 +1,9 @@
-import { ExecArgs } from "@medusajs/framework"
+import { ExecArgs } from "@medusajs/framework/types"
 
 export default async function setInventoryTo100({ container }: ExecArgs) {
-  const inventoryService = container.resolve("inventoryService")
-  const productService = container.resolve("productService")
-  const stockLocationService = container.resolve("stockLocationService")
+  const inventoryService = container.resolve("inventoryService") as any
+  const productService = container.resolve("productService") as any
+  const stockLocationService = container.resolve("stockLocationService") as any
 
   try {
     console.log("🚀 Setting inventory to 100 for all product variants...")

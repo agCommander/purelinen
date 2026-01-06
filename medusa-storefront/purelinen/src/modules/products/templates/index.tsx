@@ -4,10 +4,9 @@ import { HttpTypes } from "@medusajs/types"
 import Image from "next/image"
 
 import { collectionMetadataCustomFieldsSchema } from "@lib/util/collections"
+import ProductVariantImageHandler from "@modules/products/components/product-variant-image-handler"
 import ImageGallery from "@modules/products/components/image-gallery"
-import ProductActions from "@modules/products/components/product-actions"
 import RelatedProducts from "@modules/products/components/related-products"
-import ProductInfo from "@modules/products/templates/product-info"
 import SkeletonRelatedProducts from "@modules/skeletons/templates/skeleton-related-products"
 import { LocalizedLink } from "@/components/LocalizedLink"
 import { Layout, LayoutColumn } from "@/components/Layout"
@@ -80,23 +79,15 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
       className="pt-18 md:pt-26 lg:pt-37 pb-26 md:pb-36"
       data-testid="product-container"
     >
-      <ImageGallery className="md:hidden" images={images} />
       <Layout>
         <LayoutColumn className="mb-26 md:mb-52">
           <Breadcrumbs items={breadcrumbItems} className="mb-6 md:mb-8" />
-          <div className="flex max-lg:flex-col gap-8 xl:gap-27">
-            <div className="lg:w-1/2 flex flex-1 flex-col gap-8">
-              <ImageGallery className="max-md:hidden" images={images} />
-            </div>
-            <div className="sticky flex-1 top-0">
-              <ProductInfo product={product} />
-              <ProductActions
-                product={product}
-                materials={materials}
-                region={region}
-              />
-            </div>
-          </div>
+          <ProductVariantImageHandler
+            product={product}
+            materials={materials}
+            region={region}
+            images={images}
+          />
         </LayoutColumn>
       </Layout>
       {collectionDetails.success &&

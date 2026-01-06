@@ -6,7 +6,7 @@ export async function GET(
 ) {
   try {
     // Query product types directly from the database
-    const query = req.scope.resolve("query");
+    const query = req.scope.resolve("query") as any;
     const productTypes = await query({
       entity: "product_type",
       fields: ["id", "value", "metadata"],

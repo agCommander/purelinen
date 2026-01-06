@@ -4,12 +4,14 @@ export async function GET(
   req: MedusaRequest,
   res: MedusaResponse
 ) {
-  const { pathname } = req.url;
+  // In Medusa 2.12+, req.url is a string, not an object
+  const url = typeof req.url === 'string' ? req.url : String(req.url || '');
+  const pathname = url.includes('?') ? url.split('?')[0] : url;
   
   // Handle product-types endpoint
   if (pathname.includes('/product-types')) {
     try {
-      const productTypeService = req.scope.resolve("productTypeService");
+      const productTypeService = req.scope.resolve("productTypeService") as any;
       const productTypes = await productTypeService.listAndCount({});
       
       res.json({

@@ -34,6 +34,7 @@ type ProductActionsProps = {
   }[]
   region: HttpTypes.StoreRegion
   disabled?: boolean
+  onVariantChange?: (variant: HttpTypes.StoreProductVariant | undefined) => void
 }
 
 const optionsAsKeymap = (
@@ -73,7 +74,7 @@ const getInitialOptions = (product: ProductActionsProps["product"]) => {
   return null
 }
 
-function ProductActions({ product, materials, disabled }: ProductActionsProps) {
+function ProductActions({ product, materials, disabled, onVariantChange }: ProductActionsProps) {
   const [options, setOptions] = useState<Record<string, string | undefined>>(
     getInitialOptions(product) ?? {}
   )
@@ -96,11 +97,65 @@ function ProductActions({ product, materials, disabled }: ProductActionsProps) {
       return
     }
 
-    return product.variants.find((v) => {
+    // First try to find exact match (all options match)
+    const exactMatch = product.variants.find((v) => {
       const variantOptions = optionsAsKeymap(v.options)
-      return isEqual(variantOptions, options)
+      return variantOptions && isEqual(variantOptions, options)
     })
+    
+    if (exactMatch) {
+      return exactMatch
+    }
+
+    // If no exact match, find variants that match the selected options (partial match)
+    // This allows images to update when Color is selected, even if Size isn't selected yet
+    const selectedOptions = Object.entries(options).filter(([_, value]) => value !== undefined)
+    
+    if (selectedOptions.length === 0) {
+      return undefined
+    }
+
+    // Find the Color option if it exists
+    const colorOption = product.options?.find((o) => o.title === "Color")
+    const colorOptionId = colorOption?.id
+    const selectedColor = colorOptionId ? options[colorOptionId] : undefined
+
+    // If Color is selected, prioritize variants that match the Color
+    // Otherwise, find variants that match the most selected options
+    const matchingVariants = product.variants
+      .map((v) => {
+        const variantOptions = optionsAsKeymap(v.options)
+        if (!variantOptions) {
+          return null
+        }
+        const matchCount = selectedOptions.filter(([optionId, value]) => 
+          variantOptions[optionId] === value
+        ).length
+        const colorMatches = selectedColor && colorOptionId 
+          ? variantOptions[colorOptionId] === selectedColor
+          : false
+        return { variant: v, matchCount, colorMatches }
+      })
+      .filter((item): item is { variant: HttpTypes.StoreProductVariant; matchCount: number; colorMatches: boolean } => 
+        item !== null && item.matchCount > 0
+      )
+      .sort((a, b) => {
+        // Prioritize color matches
+        if (a.colorMatches && !b.colorMatches) return -1
+        if (!a.colorMatches && b.colorMatches) return 1
+        // Then by match count
+        return b.matchCount - a.matchCount
+      })
+
+    return matchingVariants[0]?.variant
   }, [product.variants, options])
+
+  // Notify parent component when variant changes
+  useEffect(() => {
+    if (onVariantChange) {
+      onVariantChange(selectedVariant)
+    }
+  }, [selectedVariant, onVariantChange])
 
   // update the options when a variant is selected
   const setOptionValue = (optionId: string, value: string) => {
