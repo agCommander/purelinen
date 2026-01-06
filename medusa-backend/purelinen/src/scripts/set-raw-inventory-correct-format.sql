@@ -42,3 +42,4 @@ WHERE il.location_id = :'location_id'
     AND il.raw_stocked_quantity IS NOT NULL
 LIMIT 3;
 
+

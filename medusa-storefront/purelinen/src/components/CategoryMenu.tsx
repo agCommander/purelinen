@@ -16,28 +16,45 @@ export const CategoryMenu: React.FC<{
     null
   )
 
-  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+  const openTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
+  const closeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
   const handleMouseLeave = (categoryId: string) => {
+    // Clear any pending open timeout if user moves away before menu opens
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current)
+      openTimeoutRef.current = null
+    }
     // Add a small delay before closing to allow movement to mega menu
-    timeoutRef.current = setTimeout(() => {
+    closeTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
     }, 100)
   }
 
   const handleMouseEnter = (categoryId: string) => {
     // Clear any pending close timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-      timeoutRef.current = null
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
     }
-    setHoveredCategory(categoryId)
+    // Clear any existing open timeout
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current)
+    }
+    // Add 500ms delay before opening the menu
+    openTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(categoryId)
+      openTimeoutRef.current = null
+    }, 400)
   }
 
   React.useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
+      if (openTimeoutRef.current) {
+        clearTimeout(openTimeoutRef.current)
+      }
+      if (closeTimeoutRef.current) {
+        clearTimeout(closeTimeoutRef.current)
       }
     }
   }, [])
@@ -65,15 +82,15 @@ export const CategoryMenu: React.FC<{
                 categories={categories}
                 isOpen={true}
                 onMouseEnter={() => {
-                  // Clear timeout when entering mega menu
-                  if (timeoutRef.current) {
-                    clearTimeout(timeoutRef.current)
-                    timeoutRef.current = null
+                  // Clear close timeout when entering mega menu
+                  if (closeTimeoutRef.current) {
+                    clearTimeout(closeTimeoutRef.current)
+                    closeTimeoutRef.current = null
                   }
                 }}
                 onClose={() => {
-                  if (timeoutRef.current) {
-                    clearTimeout(timeoutRef.current)
+                  if (closeTimeoutRef.current) {
+                    clearTimeout(closeTimeoutRef.current)
                   }
                   setHoveredCategory(null)
                 }}

@@ -14,12 +14,6 @@ module.exports = defineConfig({
     }
   },
   plugins: [
-    {
-      resolve: "medusa-variant-images",
-      options: {
-        // Plugin options can be configured here
-      }
-    },
     // MeiliSearch plugin disabled for development - uncomment when needed
     // {
     //   resolve: "@rokmohar/medusa-plugin-meilisearch",
