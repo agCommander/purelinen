@@ -6,6 +6,7 @@ export const categoryTypeSchema = z.object({
   product_type_id: z.string().optional().nullable(),
   menu_order: z.number().int().min(0).optional().nullable(),
   column: z.number().int().min(0).max(3).optional().nullable(),
+  display_mode: z.enum(['products', 'collections']).optional().nullable(),
 });
 
 export async function GET(
@@ -23,6 +24,7 @@ export async function GET(
       product_type_id: metadata.product_type_id || null,
       menu_order: metadata.menu_order !== undefined ? metadata.menu_order : null,
       column: metadata.column !== undefined ? metadata.column : null,
+      display_mode: metadata.display_mode || 'products',
     });
   } catch (error) {
     console.error('Error fetching category product type:', error);
@@ -76,12 +78,14 @@ export async function POST(
     const productTypeId = customFields?.product_type_id ?? null;
     const menuOrder = customFields?.menu_order !== undefined ? customFields.menu_order : null;
     const column = customFields?.column !== undefined ? customFields.column : null;
+    const displayMode = customFields?.display_mode || 'products';
     
     const metadata = {
       ...existingMetadata,
       product_type_id: productTypeId,
       menu_order: menuOrder,
       column: column,
+      display_mode: displayMode,
     };
 
     console.log('Updating with metadata:', metadata);
