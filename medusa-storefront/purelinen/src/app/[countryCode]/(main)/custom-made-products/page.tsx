@@ -34,7 +34,19 @@ export async function generateStaticParams() {
 export default function CustomMadeProductsPage() {
   return (
     <>
-      <Layout className="pt-30 pb-20 md:pt-47 md:pb-32">
+      {/* Full-width hero image */}
+      <div className="relative w-full aspect-[16/9] md:aspect-[2/1] mb-8 md:mb-12">
+        <Image
+          src="/images/content/custom-products-hero.jpg"
+          alt="Custom Made Products"
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+      </div>
+      
+      <Layout className="pt-6 pb-20 md:pt-4 md:pb-32">
         <LayoutColumn
           start={{ base: 1, lg: 2, xl: 3 }}
           end={{ base: 13, lg: 11, xl: 10 }}

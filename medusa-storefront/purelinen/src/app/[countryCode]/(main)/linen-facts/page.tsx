@@ -45,7 +45,7 @@ export default function LinenFactsPage() {
         />
       </div>
       
-      <Layout className="pt-30 pb-20 md:pt-47 md:pb-32">
+      <Layout className="pt-30 pb-20 md:pt-4 md:pb-32">
         <LayoutColumn
           start={{ base: 1, lg: 2, xl: 3 }}
           end={{ base: 13, lg: 11, xl: 10 }}

@@ -2,6 +2,7 @@ import { Metadata } from "next"
 import { StoreRegion } from "@medusajs/types"
 import { listRegions } from "@lib/data/regions"
 import { Layout, LayoutColumn } from "@/components/Layout"
+import Image from "next/image"
 
 export const metadata: Metadata = {
   title: "Care Guide",
@@ -31,13 +32,27 @@ export async function generateStaticParams() {
 
 export default function CareGuidePage() {
   return (
-    <Layout className="pt-30 pb-20 md:pt-47 md:pb-32">
+    <>
+      {/* Full-width hero image */}
+      <div className="relative w-full aspect-[16/9] md:aspect-[2/1] mb-8 md:mb-12">
+        <Image
+          src="/images/content/care-guide-hero.jpg"
+          alt="Caring For Linen"
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+      </div>
+    
+      <Layout className="pt-6 pb-20 md:pt-4 md:pb-32">
+    
       <LayoutColumn
         start={{ base: 1, lg: 2, xl: 3 }}
         end={{ base: 13, lg: 11, xl: 10 }}
       >
         <h1 className="text-lg md:text-2xl mb-16 md:mb-25">
-          Care Guide
+          Caring For Linen
         </h1>
       </LayoutColumn>
       <LayoutColumn
@@ -46,7 +61,7 @@ export default function CareGuidePage() {
         className="prose prose-lg max-w-none"
       >
         <div className="space-y-6">
-          <h1 className="text-2xl md:text-3xl font-bold mb-4">CARING FOR LINEN.</h1>
+        
           
           <div className="mb-6 space-y-2">
             <h2 className="text-lg md:text-xl font-semibold">
@@ -308,5 +323,6 @@ export default function CareGuidePage() {
         </div>
       </LayoutColumn>
     </Layout>
+    </>
   )
 }
