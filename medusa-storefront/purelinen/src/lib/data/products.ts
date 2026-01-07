@@ -184,7 +184,60 @@ export const getProductsListWithSort = async function ({
     countryCode,
   })
 
-  const sortedProducts = sortProducts(products, sortBy)
+  // Fetch position data if categoryId or collectionId is present
+  let positions: Record<string, number> | undefined = undefined
+  
+  try {
+    const queryParamsAny = queryParams as any // Type assertion for category_id/collection_id
+    
+    if (queryParamsAny?.category_id) {
+      const categoryId = Array.isArray(queryParamsAny.category_id) 
+        ? queryParamsAny.category_id[0] 
+        : queryParamsAny.category_id
+      
+      const positionsData = await sdk.client
+        .fetch<{ positions: Record<string, number> }>(
+          `/store/custom/category-products/${categoryId}/positions`,
+          {
+            next: { tags: ["products", "product-positions"] },
+            cache: "no-store", // Don't cache positions as they may change
+          }
+        )
+        .catch(() => null)
+      
+      if (positionsData) {
+        positions = positionsData.positions || {}
+      }
+    } else if (queryParamsAny?.collection_id) {
+      const collectionIds = Array.isArray(queryParamsAny.collection_id)
+        ? queryParamsAny.collection_id
+        : [queryParamsAny.collection_id]
+      
+      // For collections, we need to fetch positions for each collection
+      // For now, let's handle the first collection (most common case)
+      if (collectionIds.length > 0) {
+        const collectionId = collectionIds[0]
+        const positionsData = await sdk.client
+          .fetch<{ positions: Record<string, number> }>(
+            `/store/custom/collections/${collectionId}/positions`,
+            {
+              next: { tags: ["products", "product-positions"] },
+              cache: "no-store", // Don't cache positions as they may change
+            }
+          )
+          .catch(() => null)
+        
+        if (positionsData) {
+          positions = positionsData.positions || {}
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching product positions:', error)
+    // Continue without positions if fetch fails
+  }
+
+  const sortedProducts = sortProducts(products, sortBy, positions)
 
   const pageParam = (page - 1) * limit
 
