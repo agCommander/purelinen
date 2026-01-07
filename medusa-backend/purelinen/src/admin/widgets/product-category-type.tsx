@@ -15,6 +15,7 @@ const categoryTypeFormSchema = z.object({
   menu_order: z.string().optional().nullable(),
   column: z.string().optional().nullable(),
   display_mode: z.enum(['products', 'collections']).optional().nullable(),
+  static_page_path: z.string().optional().nullable(),
 });
 
 type CategoryTypeFormData = z.infer<typeof categoryTypeFormSchema>;
@@ -81,6 +82,10 @@ const ProductCategoryTypeWidget = ({ data }: DetailWidgetProps<AdminProductCateg
     ? (data.metadata as any).display_mode 
     : 'products';
   
+  const currentStaticPagePath = (data?.metadata && typeof data.metadata === 'object' && (data.metadata as any)?.static_page_path) 
+    ? (data.metadata as any).static_page_path 
+    : '';
+  
   // Load currently linked collections when drawer opens and display mode is collections
   React.useEffect(() => {
     if (isDrawerOpen && currentDisplayMode === 'collections' && collections.length > 0 && data?.id) {
@@ -128,6 +133,9 @@ const ProductCategoryTypeWidget = ({ data }: DetailWidgetProps<AdminProductCateg
           ? parseInt(formData.column, 10) 
           : null,
         display_mode: formData.display_mode || 'products',
+        static_page_path: formData.static_page_path && formData.static_page_path.trim() !== '' 
+          ? formData.static_page_path.trim() 
+          : null,
       };
 
       const response = await fetch(`/admin/custom/product-categories/${data.id}/product-type`, {
@@ -292,6 +300,7 @@ const ProductCategoryTypeWidget = ({ data }: DetailWidgetProps<AdminProductCateg
                   ? String((data.metadata as any).column)
                   : '',
                 display_mode: currentDisplayMode || 'products',
+                static_page_path: currentStaticPagePath || '',
               }}
             >
               <div className="space-y-6">
@@ -359,6 +368,22 @@ const ProductCategoryTypeWidget = ({ data }: DetailWidgetProps<AdminProductCateg
                 </div>
 
                 <CollectionSelector />
+
+                <div>
+                  <InputField
+                    name="static_page_path"
+                    label="Static Page Path (Optional)"
+                    type="text"
+                    inputProps={{
+                      placeholder: "e.g., custom-tablecloths",
+                    }}
+                  />
+                  <Text className="text-xs text-gray-500 mt-1">
+                    If set, this category will link to a static page instead of showing products/collections.
+                    Enter the path without leading slash (e.g., "custom-tablecloths" for /custom-tablecloths).
+                    Leave empty to use the category page.
+                  </Text>
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-x-2 mt-6 pt-4 border-t">

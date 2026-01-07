@@ -34,7 +34,7 @@ const ImageGallery = ({ images, variantId, variantImages, className }: ImageGall
     return imagesToDisplay.filter((image) => Boolean(image.url))
   }, [imagesToDisplay])
   
-  const placeholderPath = "/images/content/placeholder.png"
+  const placeholderPath = "/images/content/placeholder.jpg"
 
   // If no images, show placeholder
   if (!filteredImages.length) {

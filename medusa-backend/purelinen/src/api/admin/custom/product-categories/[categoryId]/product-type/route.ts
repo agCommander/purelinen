@@ -7,6 +7,7 @@ export const categoryTypeSchema = z.object({
   menu_order: z.number().int().min(0).optional().nullable(),
   column: z.number().int().min(0).max(3).optional().nullable(),
   display_mode: z.enum(['products', 'collections']).optional().nullable(),
+  static_page_path: z.string().optional().nullable(),
 });
 
 export async function GET(
@@ -79,6 +80,9 @@ export async function POST(
     const menuOrder = customFields?.menu_order !== undefined ? customFields.menu_order : null;
     const column = customFields?.column !== undefined ? customFields.column : null;
     const displayMode = customFields?.display_mode || 'products';
+    const staticPagePath = customFields?.static_page_path && customFields.static_page_path.trim() !== '' 
+      ? customFields.static_page_path.trim() 
+      : null;
     
     const metadata = {
       ...existingMetadata,
@@ -86,6 +90,7 @@ export async function POST(
       menu_order: menuOrder,
       column: column,
       display_mode: displayMode,
+      static_page_path: staticPagePath,
     };
 
     console.log('Updating with metadata:', metadata);

@@ -60,7 +60,7 @@ export default async function CollectionTemplate({
               ? collectionDetails.data.image.url
               : (collection.metadata?.image && typeof collection.metadata.image === 'object' && 'url' in collection.metadata.image)
               ? (collection.metadata.image as { url: string }).url
-              : "/images/content/placeholder.png"
+              : "/images/content/placeholder.jpg"
 
             return (
               <div className="relative w-full aspect-[3/4] mt-[20px] ml-[20px]">

@@ -163,16 +163,24 @@ export const HeaderDrawer: React.FC<{
                     {/* Category Items */}
                     {categoryItems.length > 0 ? (
                       <div className="flex flex-col">
-                        {categoryItems.map((category) => (
-                          <LocalizedLink
-                            key={category.id}
-                            href={`/categories/${category.handle}`}
-                            onClick={() => setIsMenuOpen(false)}
-                            className="px-4 py-4 text-left border-b border-grayscale-200 hover:bg-grayscale-50 transition-colors"
-                          >
-                            <span className="text-base font-normal">{category.name}</span>
-                          </LocalizedLink>
-                        ))}
+                        {categoryItems.map((category) => {
+                          const categoryMetadata = category.metadata as any
+                          const staticPagePath = categoryMetadata?.static_page_path
+                          const href = staticPagePath 
+                            ? `/${staticPagePath}` 
+                            : `/categories/${category.handle}`
+                          
+                          return (
+                            <LocalizedLink
+                              key={category.id}
+                              href={href}
+                              onClick={() => setIsMenuOpen(false)}
+                              className="px-4 py-4 text-left border-b border-grayscale-200 hover:bg-grayscale-50 transition-colors"
+                            >
+                              <span className="text-base font-normal">{category.name}</span>
+                            </LocalizedLink>
+                          )
+                        })}
                       </div>
                     ) : (
                       <div className="px-4 py-8 text-center text-grayscale-500">

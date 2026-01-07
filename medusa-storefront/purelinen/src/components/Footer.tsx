@@ -36,9 +36,14 @@ export const Footer: React.FC = () => {
                 <li>
                   <LocalizedLink href="/contact">Contact Us Form</LocalizedLink>
                 </li>
-      
+                <li>
+                  <LocalizedLink href="/custom-made-products">Custom Made Products</LocalizedLink>
+                </li>
                 <li>
                   <LocalizedLink href="/care-guide">Care guide</LocalizedLink>
+                </li>
+                <li>
+                  <LocalizedLink href="/linen-facts">Linen Facts & Features</LocalizedLink>
                 </li>
                 <li>
                   <LocalizedLink href="/gift-card">Gift cards</LocalizedLink>

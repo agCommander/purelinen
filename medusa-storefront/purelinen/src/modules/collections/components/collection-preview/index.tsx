@@ -13,7 +13,7 @@ export default function CollectionPreview({
     "url" in collection.metadata.image &&
     typeof collection.metadata.image.url === "string"
       ? collection.metadata.image.url
-      : "/images/content/placeholder.png"
+      : "/images/content/placeholder.jpg"
 
   return (
     <LocalizedLink href={`/collections/${collection.handle}`}>

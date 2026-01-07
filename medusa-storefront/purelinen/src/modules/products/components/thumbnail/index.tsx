@@ -47,7 +47,7 @@ const ImageOrPlaceholder = ({
   image,
   size,
 }: Pick<ThumbnailProps, "size"> & { image?: string }) => {
-  const placeholderPath = "/images/content/placeholder.png"
+  const placeholderPath = "/images/content/placeholder.jpg"
   const imageSrc = image || placeholderPath
 
   return (

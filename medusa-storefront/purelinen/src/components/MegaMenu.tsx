@@ -140,15 +140,23 @@ export const MegaMenu: React.FC<{
                     >
                       {columnCategories.length > 0 && (
                         <div className="space-y-2">
-                          {columnCategories.map((category) => (
-                            <LocalizedLink
-                              key={category.id}
-                              href={`/categories/${category.handle}`}
-                              className="text-xs font-normal hover:underline block"
-                            >
-                              {category.name}
-                            </LocalizedLink>
-                          ))}
+                          {columnCategories.map((category) => {
+                            const categoryMetadata = category.metadata as any
+                            const staticPagePath = categoryMetadata?.static_page_path
+                            const href = staticPagePath 
+                              ? `/${staticPagePath}` 
+                              : `/categories/${category.handle}`
+                            
+                            return (
+                              <LocalizedLink
+                                key={category.id}
+                                href={href}
+                                className="text-xs font-normal hover:underline block"
+                              >
+                                {category.name}
+                              </LocalizedLink>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
