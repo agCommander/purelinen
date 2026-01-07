@@ -42,31 +42,40 @@ const ProductCategoryTypeWidget = ({ data }: DetailWidgetProps<AdminProductCateg
       })
       .catch(err => console.error('Error fetching product types:', err));
     
-    // Fetch collections
-    fetch('/admin/custom/collections')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(data => {
-        console.log('Collections response:', data);
-        if (data.collections && Array.isArray(data.collections)) {
-          setCollections(data.collections.map((c: any) => ({
-            id: c.id,
-            title: c.title || c.handle || 'Untitled Collection'
-          })));
-        } else {
-          console.warn('Unexpected collections response format:', data);
+    // Fetch collections filtered by this category
+    if (data?.id) {
+      console.log('Fetching collections for category:', data.id);
+      fetch(`/admin/custom/collections?category_id=${data.id}`)
+        .then(res => {
+          console.log('Collections fetch response status:', res.status);
+          if (!res.ok) {
+            return res.json().then(errData => {
+              console.error('Collections fetch error response:', errData);
+              throw new Error(errData.message || `HTTP error! status: ${res.status}`);
+            });
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log('Collections response:', data);
+          if (data.collections && Array.isArray(data.collections)) {
+            setCollections(data.collections.map((c: any) => ({
+              id: c.id,
+              title: c.title || c.handle || 'Untitled Collection'
+            })));
+            console.log('Collections set:', data.collections.length);
+          } else {
+            console.warn('Unexpected collections response format:', data);
+            setCollections([]);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching collections:', err);
+          console.error('Error details:', err.message, err.stack);
           setCollections([]);
-        }
-      })
-      .catch(err => {
-        console.error('Error fetching collections:', err);
-        setCollections([]);
-      });
-  }, []);
+        });
+    }
+  }, [data?.id]);
   
   const currentDisplayMode = (data?.metadata && typeof data.metadata === 'object' && (data.metadata as any)?.display_mode) 
     ? (data.metadata as any).display_mode 

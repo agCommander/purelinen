@@ -1,5 +1,6 @@
 import { HttpTypes } from "@medusajs/types"
 import CollectionPreview from "@modules/collections/components/collection-preview"
+import { LayoutColumn } from "@/components/Layout"
 
 type CollectionGridProps = {
   collections: HttpTypes.StoreCollection[]
@@ -15,13 +16,13 @@ export default function CollectionGrid({ collections }: CollectionGridProps) {
   }
 
   return (
-    <ul className="grid grid-cols-2 w-full small:grid-cols-3 medium:grid-cols-4 gap-x-6 gap-y-8">
+    <>
       {collections.map((collection) => (
-        <li key={collection.id}>
+        <LayoutColumn key={collection.id} className="md:!col-span-3 !col-span-6">
           <CollectionPreview collection={collection} />
-        </li>
+        </LayoutColumn>
       ))}
-    </ul>
+    </>
   )
 }
 

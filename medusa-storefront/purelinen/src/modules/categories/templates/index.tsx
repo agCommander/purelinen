@@ -49,15 +49,17 @@ export default async function CategoryTemplate({
       </Layout>
       {shouldShowCollections ? (
         <Suspense fallback={<SkeletonProductGrid />}>
-          <Layout className="!max-w-none w-full !px-[24px]">
-            {collectionsData && collectionsData.collections.length > 0 ? (
+          {collectionsData && collectionsData.collections.length > 0 ? (
+            <Layout className="!max-w-none w-full !px-[20px] gap-x-[20px] md:!gap-x-[20px] gap-y-10 md:gap-y-6 mb-6">
               <CollectionGrid collections={collectionsData.collections} />
-            ) : (
+            </Layout>
+          ) : (
+            <Layout className="!max-w-none w-full !px-[24px]">
               <div className="text-center py-12">
                 <p className="text-grayscale-500">No collections found for this category.</p>
               </div>
-            )}
-          </Layout>
+            </Layout>
+          )}
         </Suspense>
       ) : (
         <Suspense fallback={<SkeletonProductGrid />}>
