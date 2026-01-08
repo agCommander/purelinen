@@ -45,7 +45,7 @@ export default function CustomMadeNapkinsPage() {
         />
       </div>
       
-      <Layout className="pt-10 pb-20 md:pt-47 md:pb-32">
+      <Layout className="pt-10 pb-20 md:pt-6 md:pb-32">
         <LayoutColumn
           start={{ base: 1, lg: 2, xl: 3 }}
           end={{ base: 13, lg: 11, xl: 10 }}
@@ -66,10 +66,10 @@ export default function CustomMadeNapkinsPage() {
             
             <ol className="list-decimal list-outside ml-5 space-y-4 text-base">
               <li className="text-black">
-                Provide the quantity of tablecloths; runners or placemats or napkins or cocktail napkins or coasters
+                Provide the quantity of napkins 
               </li>
               <li className="text-black">
-                Provide sizes of products
+                Provide sizes of napkins
               </li>
               <li className="text-black">
                 Advise colour or share the project details with us and we will help you to select the colour
@@ -87,8 +87,6 @@ export default function CustomMadeNapkinsPage() {
 
             <div className="space-y-4 my-8">
               <p className="font-bold">PLEASE NOTE: Custom Made products are not refundable and not exchangeable so PLEASE choose your colour, fabric and style very carefully.</p>
-              <p className="font-bold">PLEASE NOTE 1: Custom Made products are not refundable and not exchangeable so PLEASE choose your colour, fabric and style very carefully.</p>
-              <p className="font-bold">PLEASE NOTE 2: When ordering an Oval Shaped tablecloth, we require that you send us a full-scale template. We will not proceed to manufacture without one.</p>
             </div>
 
             {/* Edging Options */}

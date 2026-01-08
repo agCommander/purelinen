@@ -71,7 +71,7 @@ export default function CustomMadeProductsPage() {
             <div className="my-8">
               <p className="font-bold text-base md:text-lg mb-4">HOW TO FAST TRACK A QUOTE FOR A CUSTOM PROJECT</p>
               <ol className="list-decimal list-outside ml-5 space-y-4 text-base">
-                <li>Provide the quantity of tablecloths; runners or placemats or napkins or cocktail napkins or coasters</li>
+                <li>Provide the quantity of the product type you are ordering (e.g. tablecloths; runners or placemats or napkins or cocktail napkins or coasters)</li>
                 <li>Provide sizes of products</li>
                 <li>Advise colour or share the project details with us and we will help you to select the colour</li>
                 <li>If you require a custom-logo, please email us a PDF document of your Artwork and let us know the size of the embroidery, the colour and the location of the logo on the products.</li>

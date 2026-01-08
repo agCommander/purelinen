@@ -2,6 +2,8 @@ import { Metadata } from "next"
 import { StoreRegion } from "@medusajs/types"
 import { listRegions } from "@lib/data/regions"
 import { Layout, LayoutColumn } from "@/components/Layout"
+import Image from "next/image"
+
 
 export const metadata: Metadata = {
   title: "Custom Tablecloths",
@@ -31,7 +33,20 @@ export async function generateStaticParams() {
 
 export default function CustomTableclothsPage() {
   return (
-    <Layout className="pt-30 pb-20 md:pt-47 md:pb-32">
+    <>
+      {/* Full-width hero image */}
+      <div className="relative w-full aspect-[16/9] md:aspect-[2/1] mb-8 md:mb-12">
+        <Image
+          src="/images/content/custom-made-tablecloths-hero.jpg"
+          alt="Custom Made Tablecloths"
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+      </div>
+      
+      <Layout className="pt-30 pb-20 md:pt-6 md:pb-32">
       <LayoutColumn
         start={{ base: 1, lg: 2, xl: 3 }}
         end={{ base: 13, lg: 11, xl: 10 }}
@@ -52,10 +67,10 @@ export default function CustomTableclothsPage() {
           
           <ol className="list-decimal list-outside ml-5 space-y-4 text-base">
             <li className="text-black">
-              <p>Provide the quantity of tablecloths; runners or placemats or napkins or cocktail napkins or coasters</p>
+              <p>Provide the quantity of tablecloths</p>
             </li>
             <li className="text-black">
-              <p>Provide sizes of products</p>
+              <p>Provide sizes of tablecloths</p>
             </li>
             <li className="text-black">
               <p>Advise colour or share the project details with us and we will help you to select the colour</p>
@@ -72,7 +87,6 @@ export default function CustomTableclothsPage() {
           </ol>
 
           <div className="space-y-4 my-8">
-            <p className="font-bold">PLEASE NOTE: Custom Made products are not refundable and not exchangeable so PLEASE choose your colour, fabric and style very carefully.</p>
             <p className="font-bold">PLEASE NOTE 1: Custom Made products are not refundable and not exchangeable so PLEASE choose your colour, fabric and style very carefully.</p>
             <p className="font-bold">PLEASE NOTE 2: When ordering an Oval Shaped tablecloth, we require that you send us a full-scale template. We will not proceed to manufacture without one.</p>
           </div>
@@ -323,7 +337,9 @@ export default function CustomTableclothsPage() {
 
           <hr className="my-12 border-grayscale-200" />
         </div>
+
       </LayoutColumn>
     </Layout>
+    </>
   )
 }

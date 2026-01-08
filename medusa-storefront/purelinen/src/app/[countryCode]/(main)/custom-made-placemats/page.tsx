@@ -66,10 +66,10 @@ export default function CustomMadePlacematsPage() {
             
             <ol className="list-decimal list-outside ml-5 space-y-4 text-base">
               <li className="text-black">
-                <p>Provide the quantity of tablecloths; runners or placemats or napkins or cocktail napkins or coasters</p>
+                <p>Provide the quantity of placemats</p>
               </li>
               <li className="text-black">
-                <p>Provide sizes of products</p>
+                <p>Provide sizes of placemats</p>
               </li>
               <li className="text-black">
                 <p>Advise colour or share the project details with us and we will help you to select the colour</p>
@@ -87,8 +87,6 @@ export default function CustomMadePlacematsPage() {
 
             <div className="space-y-4 my-8">
               <p className="font-bold">PLEASE NOTE: Custom Made products are not refundable and not exchangeable so PLEASE choose your colour, fabric and style very carefully.</p>
-              <p className="font-bold">PLEASE NOTE 1: Custom Made products are not refundable and not exchangeable so PLEASE choose your colour, fabric and style very carefully.</p>
-              <p className="font-bold">PLEASE NOTE 2: When ordering an Oval Shaped tablecloth, we require that you send us a full-scale template. We will not proceed to manufacture without one.</p>
             </div>
 
             {/* Placemat Styles */}

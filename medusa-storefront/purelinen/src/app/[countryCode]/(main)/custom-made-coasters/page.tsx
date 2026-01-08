@@ -35,7 +35,7 @@ export default function CustomMadeCoastersPage() {
   return (
     <>
       {/* Full-width hero image */}
-      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] mb-8 md:mb-12">
+      <div className="relative w-full aspect-[16/9] md:aspect-[2/1] mb-8 md:mb-6">
         <Image
           src="/images/content/custom-made-coasters-hero.jpg"
           alt="Custom Made Coasters"
@@ -46,12 +46,12 @@ export default function CustomMadeCoastersPage() {
         />
       </div>
       
-      <Layout className="pt-30 pb-20 md:pt-47 md:pb-32">
+      <Layout className="pt-30 pb-20 md:pt-6 md:pb-32">
         <LayoutColumn
           start={{ base: 1, lg: 2, xl: 3 }}
           end={{ base: 13, lg: 11, xl: 10 }}
         >
-          <h1 className="text-lg md:text-2xl mb-16 md:mb-25">
+          <h1 className="text-lg md:text-2xl mb-16 md:mb-8">
             Custom Made Coasters
           </h1>
         </LayoutColumn>
@@ -67,10 +67,10 @@ export default function CustomMadeCoastersPage() {
             
             <ol className="list-decimal list-outside ml-5 space-y-4 text-base">
               <li className="text-black">
-                <p>Provide the quantity of tablecloths; runners or placemats or napkins or cocktail napkins or coasters</p>
+                <p>Provide the quantity of coasters</p>
               </li>
               <li className="text-black">
-                <p>Provide sizes of products</p>
+                <p>Provide sizes of coasters</p>
               </li>
               <li className="text-black">
                 <p>Advise colour or share the project details with us and we will help you to select the colour</p>
@@ -88,8 +88,6 @@ export default function CustomMadeCoastersPage() {
 
             <div className="space-y-4 my-8">
               <p className="font-bold">PLEASE NOTE: Custom Made products are not refundable and not exchangeable so PLEASE choose your colour, fabric and style very carefully.</p>
-              <p className="font-bold">PLEASE NOTE 1: Custom Made products are not refundable and not exchangeable so PLEASE choose your colour, fabric and style very carefully.</p>
-              <p className="font-bold">PLEASE NOTE 2: When ordering an Oval Shaped tablecloth, we require that you send us a full-scale template. We will not proceed to manufacture without one.</p>
             </div>
 
             {/* Style 1 */}
