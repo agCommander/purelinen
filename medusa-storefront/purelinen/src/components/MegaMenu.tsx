@@ -8,6 +8,16 @@ import { HttpTypes } from "@medusajs/types"
 type ProductType = HttpTypes.StoreProductType
 type Category = HttpTypes.StoreProductCategory
 
+// Helper function to get singular form of product type for menu labels
+// Removes trailing "s" from plural product types
+const getSingularProductType = (productTypeValue: string): string => {
+  // Remove trailing "s" if the word ends with "s" (but not if it's a single letter or already singular)
+  if (productTypeValue.endsWith("s") && productTypeValue.length > 1) {
+    return productTypeValue.slice(0, -1)
+  }
+  return productTypeValue
+}
+
 // Helper function to get product type image paths
 // Returns array of image paths, or null if none configured
 const getProductTypeImages = (productType: ProductType): string[] | null => {
@@ -138,6 +148,18 @@ export const MegaMenu: React.FC<{
                           : ""
                       }`}
                     >
+                      {/* Add "Collections" link at top of Column 1 */}
+                      {colIndex === 0 && (
+                        <>
+                          <LocalizedLink
+                            href={`/types/${productType.value}`}
+                            className="text-xs font-normal underline hover:no-underline block mb-4"
+                          >
+                            {getSingularProductType(productType.value)} Collections
+                          </LocalizedLink>
+                        </>
+                      )}
+                      
                       {columnCategories.length > 0 && (
                         <div className="space-y-2">
                           {columnCategories.map((category) => {
