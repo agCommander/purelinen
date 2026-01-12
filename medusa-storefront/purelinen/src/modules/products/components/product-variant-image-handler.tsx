@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { HttpTypes } from "@medusajs/types"
+import { sdk } from "@lib/config"
 import ImageGallery from "./image-gallery"
 import ProductActions from "./product-actions"
 import ProductInfo from "@modules/products/templates/product-info"
@@ -28,20 +29,43 @@ export default function ProductVariantImageHandler({
   images,
 }: ProductVariantImageHandlerProps) {
   const [selectedVariant, setSelectedVariant] = useState<HttpTypes.StoreProductVariant | undefined>(undefined)
+  const [variantImages, setVariantImages] = useState<HttpTypes.StoreProductImage[] | undefined>(undefined)
+  const [isLoadingVariantImages, setIsLoadingVariantImages] = useState(false)
 
-  // Get variant images if variant is selected and has images
-  // Note: variant.images might not be in the TypeScript type but is returned by the API
-  const variantImages = useMemo(() => {
-    if (!selectedVariant) {
-      return undefined
+  // Fetch variant-specific images from custom endpoint when variant is selected
+  useEffect(() => {
+    if (!selectedVariant?.id) {
+      setVariantImages(undefined)
+      return
     }
-    // Type assertion needed because StoreProductVariant type may not include images
-    const variantWithImages = selectedVariant as HttpTypes.StoreProductVariant & { images?: HttpTypes.StoreProductImage[] }
-    if (!variantWithImages.images || variantWithImages.images.length === 0) {
-      return undefined
-    }
-    return variantWithImages.images
-  }, [selectedVariant])
+
+    setIsLoadingVariantImages(true)
+    
+    // Fetch variant-specific images from custom endpoint
+    sdk.client
+      .fetch<{ images: HttpTypes.StoreProductImage[] }>(
+        `/store/custom/variants/${selectedVariant.id}/images`,
+        {
+          cache: "no-store",
+        }
+      )
+      .then(({ images: variantImagesData }) => {
+        // Only set variant images if there are actually variant-specific images
+        // If empty array, set to undefined so hero images are shown
+        if (variantImagesData && variantImagesData.length > 0) {
+          setVariantImages(variantImagesData)
+        } else {
+          setVariantImages(undefined)
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching variant images:", error)
+        setVariantImages(undefined)
+      })
+      .finally(() => {
+        setIsLoadingVariantImages(false)
+      })
+  }, [selectedVariant?.id])
 
   return (
     <>
