@@ -13,16 +13,17 @@ export async function GET(
     // You can extend this to query from database or materials system
     const colorMap: Record<string, string> = {
       // Whites and neutrals
+      "Optical White": "#FFFFFF",
       "White": "#FFFFFF",
       "Natural": "#b7b3a7",
-      "Natural Flax": "#b7b3a7",
+      "Natural Flax": "#d7ccb8",
       "Off White": "#FAF0E6",
       "Cream": "#FFFDD0",
       "Ivory": "#FFFFF0",
       "Beige": "#F5F5DC",
       
       // Grays
-      "Grey": "#808080",
+      "Grey": "#cacaca",
       "Steel Grey": "#808080",
       "Gray": "#808080",
       "Charcoal": "#36454F",
@@ -36,7 +37,7 @@ export async function GET(
       "Camel": "#C19A6B",
       
       // Blues
-      "Blue": "#0000FF",
+      "Blue": "#ade0e5",
       "Navy": "#000080",
       "Tiffany": "#83ccd4",
       "FrenchNavy": "#000080",
@@ -46,7 +47,7 @@ export async function GET(
       // Other colors
       "Dusty Rose": "#b38c91",
       "Nude": "#FFC0CB",
-      "Pink": "#FFC0CB",
+      "Pink": "#fbd2d4",
       "Red": "#FF0000",
       "Green": "#008000",
       "Serena": "#b6b3a0",
