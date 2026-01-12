@@ -20,6 +20,8 @@ import { UiRadioGroup } from "@/components/ui/Radio"
 import { withReactQueryProvider } from "@lib/util/react-query"
 import { useAddLineItem } from "hooks/cart"
 import { useCustomer } from "hooks/customer"
+import ColorSwatchPicker from "@modules/products/components/color-swatch-picker"
+import { sdk } from "@lib/config"
 
 type ProductActionsProps = {
   product: HttpTypes.StoreProduct
@@ -48,7 +50,7 @@ const optionsAsKeymap = (
   }, {})
 }
 
-const priorityOptions = ["Material", "Color", "Size"]
+const priorityOptions = ["Material", "Color", "Colour", "Size"]
 
 const getInitialOptions = (product: ProductActionsProps["product"]) => {
   if (product.variants?.length === 1) {
@@ -115,8 +117,8 @@ function ProductActions({ product, materials, disabled, onVariantChange }: Produ
       return undefined
     }
 
-    // Find the Color option if it exists
-    const colorOption = product.options?.find((o) => o.title === "Color")
+    // Find the Color/Colour option if it exists (handle both spellings)
+    const colorOption = product.options?.find((o) => o.title === "Color" || o.title === "Colour")
     const colorOptionId = colorOption?.id
     const selectedColor = colorOptionId ? options[colorOptionId] : undefined
 
@@ -158,7 +160,7 @@ function ProductActions({ product, materials, disabled, onVariantChange }: Produ
   }, [selectedVariant, onVariantChange])
 
   // update the options when a variant is selected
-  const setOptionValue = (optionId: string, value: string) => {
+  const setOptionValue = (optionId: string, value: string | undefined) => {
     setOptions((prev) => ({
       ...prev,
       [optionId]: value,
@@ -198,18 +200,76 @@ function ProductActions({ product, materials, disabled, onVariantChange }: Produ
   })
 
   const materialOption = productOptions.find((o) => o.title === "Material")
-  const colorOption = productOptions.find((o) => o.title === "Color")
-  const otherOptions =
-    materialOption && colorOption
-      ? productOptions.filter(
-          (o) => o.id !== materialOption.id && o.id !== colorOption.id
-        )
-      : productOptions
+  const colorOption = productOptions.find((o) => o.title === "Color" || o.title === "Colour")
+  const otherOptions = productOptions.filter((o) => {
+    // Always exclude Material and Color/Colour from dropdown options
+    // Material has its own dropdown, Color/Colour uses swatches
+    if (materialOption && o.id === materialOption.id) return false
+    if (colorOption && o.id === colorOption.id) return false
+    if (o.title === "Color" || o.title === "Colour") return false
+    return true
+  })
 
   const selectedMaterial =
     materialOption && options[materialOption.id]
       ? materials.find((m) => m.name === options[materialOption.id])
       : undefined
+
+  // Fetch color hex code mapping
+  const [colorHexMap, setColorHexMap] = useState<Record<string, string>>({})
+  
+  useEffect(() => {
+    // Fetch color hex code mapping from backend
+    sdk.client
+      .fetch<{ colors: Record<string, string> }>(`/store/custom/colors/map`, {
+        cache: "force-cache",
+      })
+      .then(({ colors }: { colors: Record<string, string> }) => {
+        setColorHexMap(colors || {})
+      })
+      .catch((error: unknown) => {
+        console.error("Error fetching color map:", error)
+        setColorHexMap({})
+      })
+  }, [])
+
+  // Extract colors from variants when Material isn't available or selected
+  const colorsFromVariants = useMemo(() => {
+    if (!colorOption) return []
+    
+    // If we have a selected material with colors, use those
+    if (selectedMaterial && selectedMaterial.colors.length > 0) {
+      return selectedMaterial.colors
+    }
+    
+    // Otherwise, extract unique colors from product variants
+    const colorValues = new Set<string>()
+    
+    product.variants?.forEach((variant) => {
+      const colorValue = variant.options?.find(
+        (opt) => opt.option_id === colorOption.id
+      )?.value
+      
+      if (colorValue) {
+        colorValues.add(colorValue)
+      }
+    })
+    
+    // Return colors with hex codes from mapping
+    return Array.from(colorValues).map((colorName) => {
+      // Try to find hex code from colorHexMap (case-insensitive)
+      const hexCode = colorHexMap[colorName] || 
+                     colorHexMap[colorName.toLowerCase()] ||
+                     colorHexMap[colorName.charAt(0).toUpperCase() + colorName.slice(1).toLowerCase()] ||
+                     "#CCCCCC" // Default gray if not found
+      
+      return {
+        id: colorName,
+        name: colorName,
+        hex_code: hexCode,
+      }
+    })
+  }, [product.variants, colorOption, selectedMaterial, materials, colorHexMap])
 
   const showOtherOptions =
     !materialOption ||
@@ -225,75 +285,66 @@ function ProductActions({ product, materials, disabled, onVariantChange }: Produ
       </div>
       {hasMultipleVariants && (
         <div className="flex flex-col gap-8 md:gap-6 mb-4 md:mb-26">
-          {materialOption && colorOption && (
-            <>
-              <div>
-                <p className="mb-4">
-                  Materials
-                  {options[materialOption.id] && (
-                    <span className="text-grayscale-500 ml-6">
-                      {options[materialOption.id]}
-                    </span>
-                  )}
-                </p>
-                <ReactAria.Select
-                  selectedKey={options[materialOption.id] ?? null}
-                  onSelectionChange={(value) => {
-                    setOptions({ [materialOption.id]: `${value}` })
-                  }}
-                  placeholder="Choose material"
-                  className="w-full md:w-60"
-                  isDisabled={!!disabled || isPending}
-                  aria-label="Material"
-                >
-                  <UiSelectButton className="!h-12 px-4 gap-2 max-md:text-base">
-                    <UiSelectValue />
-                    <UiSelectIcon className="h-6 w-6" />
-                  </UiSelectButton>
-                  <ReactAria.Popover className="w-[--trigger-width]">
-                    <UiSelectListBox>
-                      {materials.map((material) => (
-                        <UiSelectListBoxItem
-                          key={material.id}
-                          id={material.name}
-                        >
-                          {material.name}
-                        </UiSelectListBoxItem>
-                      ))}
-                    </UiSelectListBox>
-                  </ReactAria.Popover>
-                </ReactAria.Select>
-              </div>
-              {selectedMaterial && (
-                <div className="mb-6">
-                  <p className="mb-4">
-                    Colors
-                    <span className="text-grayscale-500 ml-6">
-                      {options[colorOption.id]}
-                    </span>
-                  </p>
-                  <UiRadioGroup
-                    value={options[colorOption.id] ?? null}
-                    onChange={(value) => {
-                      setOptionValue(colorOption.id, value)
-                    }}
-                    aria-label="Color"
-                    className="flex gap-6"
-                    isDisabled={!!disabled || isPending}
-                  >
-                    {selectedMaterial.colors.map((color) => (
-                      <ReactAria.Radio
-                        key={color.id}
-                        value={color.name}
-                        aria-label={color.name}
-                        className="h-8 w-8 cursor-pointer relative before:transition-colors before:absolute before:content-[''] before:-bottom-2 before:left-0 before:w-full before:h-px data-[selected]:before:bg-black shadow-sm hover:shadow"
-                        style={{ background: color.hex_code }}
-                      />
+          {materialOption && (
+            <div>
+              <p className="mb-4">
+                Materials
+                {options[materialOption.id] && (
+                  <span className="text-grayscale-500 ml-6">
+                    {options[materialOption.id]}
+                  </span>
+                )}
+              </p>
+              <ReactAria.Select
+                selectedKey={options[materialOption.id] ?? null}
+                onSelectionChange={(value) => {
+                  setOptions({ [materialOption.id]: `${value}` })
+                }}
+                placeholder="Choose material"
+                className="w-full md:w-60"
+                isDisabled={!!disabled || isPending}
+                aria-label="Material"
+              >
+                <UiSelectButton className="!h-12 px-4 gap-2 max-md:text-base">
+                  <UiSelectValue />
+                  <UiSelectIcon className="h-6 w-6" />
+                </UiSelectButton>
+                <ReactAria.Popover className="w-[--trigger-width]">
+                  <UiSelectListBox>
+                    {materials.map((material) => (
+                      <UiSelectListBoxItem
+                        key={material.id}
+                        id={material.name}
+                      >
+                        {material.name}
+                      </UiSelectListBoxItem>
                     ))}
-                  </UiRadioGroup>
-                </div>
-              )}
-            </>
+                  </UiSelectListBox>
+                </ReactAria.Popover>
+              </ReactAria.Select>
+            </div>
+          )}
+          {/* Show Color swatch picker if Color option exists and has colors */}
+          {colorOption && colorsFromVariants.length > 0 && (
+            <div className="mb-6">
+              <p className="mb-4">
+                Colors
+                {options[colorOption.id] && (
+                  <span className="text-grayscale-500 ml-6">
+                    {options[colorOption.id]}
+                  </span>
+                )}
+              </p>
+              <ColorSwatchPicker
+                colors={colorsFromVariants}
+                selectedColor={options[colorOption.id] ?? null}
+                onColorChange={(color) => {
+                  setOptionValue(colorOption.id, color ?? undefined)
+                }}
+                disabled={!!disabled || isPending}
+                aria-label="Color"
+              />
+            </div>
           )}
           {showOtherOptions &&
             otherOptions.map((option) => {
