@@ -21,6 +21,7 @@ import { withReactQueryProvider } from "@lib/util/react-query"
 import { useAddLineItem } from "hooks/cart"
 import { useCustomer } from "hooks/customer"
 import ColorSwatchPicker from "@modules/products/components/color-swatch-picker"
+import SizeSelector from "@modules/products/components/size-selector"
 import { sdk } from "@lib/config"
 
 type ProductActionsProps = {
@@ -201,11 +202,13 @@ function ProductActions({ product, materials, disabled, onVariantChange }: Produ
 
   const materialOption = productOptions.find((o) => o.title === "Material")
   const colorOption = productOptions.find((o) => o.title === "Color" || o.title === "Colour")
+  const sizeOption = productOptions.find((o) => o.title === "Size")
   const otherOptions = productOptions.filter((o) => {
-    // Always exclude Material and Color/Colour from dropdown options
-    // Material has its own dropdown, Color/Colour uses swatches
+    // Always exclude Material, Color/Colour, and Size from dropdown options
+    // Material has its own dropdown, Color/Colour uses swatches, Size uses SizeSelector
     if (materialOption && o.id === materialOption.id) return false
     if (colorOption && o.id === colorOption.id) return false
+    if (sizeOption && o.id === sizeOption.id) return false
     if (o.title === "Color" || o.title === "Colour") return false
     return true
   })
@@ -270,6 +273,45 @@ function ProductActions({ product, materials, disabled, onVariantChange }: Produ
       }
     })
   }, [product.variants, colorOption, selectedMaterial, materials, colorHexMap])
+
+  // Extract sizes from variants for SizeSelector
+  const sizesFromVariants = useMemo(() => {
+    if (!sizeOption) return []
+    
+    // Filter variants based on selected options (except size)
+    const filteredVariants = product.variants?.filter((variant) => {
+      const variantOptions = optionsAsKeymap(variant.options)
+      if (!variantOptions) return false
+      
+      // Check if variant matches all selected options except size
+      return Object.entries(options)
+        .filter(([optionId]) => optionId !== sizeOption.id) // Exclude size option
+        .every(([optionId, value]) => {
+          if (value === undefined) return true // Option not selected, skip
+          return variantOptions[optionId] === value
+        })
+    }) || []
+    
+    // Extract unique sizes from filtered variants
+    const sizeMap = new Map<string, HttpTypes.StoreProductVariant>()
+    
+    filteredVariants.forEach((variant) => {
+      const sizeValue = variant.options?.find(
+        (opt) => opt.option_id === sizeOption.id
+      )?.value
+      
+      if (sizeValue && !sizeMap.has(sizeValue)) {
+        sizeMap.set(sizeValue, variant)
+      }
+    })
+    
+    // Return sizes with their variants
+    return Array.from(sizeMap.entries()).map(([sizeValue, variant]) => ({
+      id: sizeValue,
+      value: sizeValue,
+      variant,
+    }))
+  }, [product.variants, sizeOption, options])
 
   const showOtherOptions =
     !materialOption ||
@@ -343,6 +385,26 @@ function ProductActions({ product, materials, disabled, onVariantChange }: Produ
                 }}
                 disabled={!!disabled || isPending}
                 aria-label="Color"
+              />
+            </div>
+          )}
+          {/* Show Size selector if Size option exists and has sizes */}
+          {sizeOption && sizesFromVariants.length > 0 && (
+            <div className="mb-6">
+              <p className="mb-4">Sizes</p>
+              <SizeSelector
+                sizes={sizesFromVariants}
+                selectedSize={options[sizeOption.id] ?? null}
+                onSizeChange={(size: string | null) => {
+                  setOptionValue(sizeOption.id, size ?? undefined)
+                }}
+                quantity={quantity}
+                onQuantityChange={setQuantity}
+                product={product}
+                disabled={!!disabled || isPending}
+                showPrices={!!customer}
+                maxQuantity={itemsInStock}
+                ariaLabel="Sizes"
               />
             </div>
           )}

@@ -17,22 +17,15 @@ const ImageGallery = ({ images, variantId, variantImages, className }: ImageGall
   const [remountKey, setRemountKey] = useState(0)
   
   useEffect(() => {
-    // Force remount when variantId or variantImages change
+    // Force remount when variantId or images change
     setRemountKey(prev => prev + 1)
-  }, [variantId, variantImages])
+  }, [variantId, images])
 
-  // If a variant is selected and has variant-specific images, use those
-  // Otherwise, fall back to product images
-  const imagesToDisplay = useMemo(() => {
-    if (variantId && variantImages && variantImages.length > 0) {
-      return variantImages
-    }
-    return images
-  }, [variantId, variantImages, images])
-  
+  // Images are now pre-filtered by the parent component
+  // Just filter out any images without URLs
   const filteredImages = useMemo(() => {
-    return imagesToDisplay.filter((image) => Boolean(image.url))
-  }, [imagesToDisplay])
+    return images.filter((image) => Boolean(image.url))
+  }, [images])
   
   const placeholderPath = "/images/content/placeholder.jpg"
 
