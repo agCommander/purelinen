@@ -232,7 +232,7 @@ function ProductActions({ product, materials, disabled, onVariantChange, colorMa
     // Fallback: Fetch color hex code mapping from backend (only if not provided)
     sdk.client
       .fetch<{ colors: Record<string, string> }>(`/store/custom/colors/map`, {
-        cache: "force-cache",
+        cache: "no-store",
       })
       .then(({ colors }: { colors: Record<string, string> }) => {
         setColorHexMap(colors || {})

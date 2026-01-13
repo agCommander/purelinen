@@ -79,6 +79,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+export const revalidate = 60 // Revalidate every 60 seconds to pick up color changes
+
 export default async function ProductPage({ params }: Props) {
   const { handle, countryCode } = await params
   const region = await getRegion(countryCode)
