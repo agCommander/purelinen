@@ -10,15 +10,20 @@ import {
   UiSelectListBoxItem,
   UiSelectValue,
 } from "@/components/ui/Select"
+import {
+  UiCheckbox,
+  UiCheckboxBox,
+  UiCheckboxIcon,
+  UiCheckboxLabel,
+} from "@/components/ui/Checkbox"
 
 type FilterPanelProps = {
   isOpen: boolean
   onClose: () => void
   productTypes: Record<string, string>
   colorFilterGroups: Array<{
-    groupName: string
+    name: string
     hexCode: string
-    colorCount: number
   }>
   selectedProductType?: string | null
   selectedColorGroups?: string[]
@@ -37,6 +42,20 @@ export default function FilterPanel({
   onProductTypeChange,
   onColorGroupsChange,
 }: FilterPanelProps) {
+  const [isColorAccordionOpen, setIsColorAccordionOpen] = useState(false)
+  
+  // Local state for filter selections (not applied until "Apply Filters" is clicked)
+  const [localProductType, setLocalProductType] = useState<string | null>(selectedProductType ?? null)
+  const [localColorGroups, setLocalColorGroups] = useState<string[]>(selectedColorGroups)
+
+  // Update local state when props change (e.g., when panel opens with current filters)
+  useEffect(() => {
+    if (isOpen) {
+      setLocalProductType(selectedProductType ?? null)
+      setLocalColorGroups(selectedColorGroups)
+    }
+  }, [isOpen, selectedProductType, selectedColorGroups])
+
   // Prevent body scroll when panel is open
   useEffect(() => {
     if (isOpen) {
@@ -50,12 +69,33 @@ export default function FilterPanel({
   }, [isOpen])
 
   const handleColorGroupToggle = (groupName: string) => {
-    if (selectedColorGroups.includes(groupName)) {
-      onColorGroupsChange(selectedColorGroups.filter((g) => g !== groupName))
+    if (localColorGroups.includes(groupName)) {
+      setLocalColorGroups(localColorGroups.filter((g) => g !== groupName))
     } else {
-      onColorGroupsChange([...selectedColorGroups, groupName])
+      setLocalColorGroups([...localColorGroups, groupName])
     }
   }
+
+  const handleApplyFilters = () => {
+    // Apply the local state to the actual filters
+    onProductTypeChange(localProductType)
+    onColorGroupsChange(localColorGroups)
+    onClose()
+  }
+
+  const handleClearAll = () => {
+    // Clear local state and apply immediately
+    setLocalProductType(null)
+    setLocalColorGroups([])
+    onProductTypeChange(null)
+    onColorGroupsChange([])
+    setIsColorAccordionOpen(false)
+  }
+
+  // Split color filter groups into 2 columns
+  const midPoint = Math.ceil(colorFilterGroups.length / 2)
+  const leftColumnGroups = colorFilterGroups.slice(0, midPoint)
+  const rightColumnGroups = colorFilterGroups.slice(midPoint)
 
   if (!isOpen) return null
 
@@ -90,9 +130,15 @@ export default function FilterPanel({
           <div className="mb-8">
             <label className="block text-sm font-medium mb-4">Product Type</label>
             <ReactAria.Select
-              selectedKey={selectedProductType ?? null}
+              selectedKey={localProductType ?? ""}
               onSelectionChange={(value) => {
-                onProductTypeChange(value ? String(value) : null)
+                const newType = value && value !== "" ? String(value) : null
+                setLocalProductType(newType)
+                // If clearing product type, also clear color groups
+                if (!newType) {
+                  setLocalColorGroups([])
+                  setIsColorAccordionOpen(false)
+                }
               }}
               placeholder="All Product Types"
               className="w-full"
@@ -102,8 +148,8 @@ export default function FilterPanel({
                 <UiSelectIcon className="h-6 w-6" />
               </UiSelectButton>
               <ReactAria.Popover className="w-[--trigger-width]">
-                <UiSelectListBox>
-                  <UiSelectListBoxItem id={null}>All Product Types</UiSelectListBoxItem>
+                <UiSelectListBox className="!max-h-none">
+                  <UiSelectListBoxItem id="">All Product Types</UiSelectListBoxItem>
                   {Object.entries(productTypes).map(([value, label]) => (
                     <UiSelectListBoxItem key={value} id={value}>
                       {label}
@@ -116,64 +162,120 @@ export default function FilterPanel({
 
           {/* Color Filter */}
           <div className="mb-8">
-            <label className="block text-sm font-medium mb-4">Colors</label>
-            <div className="flex flex-wrap gap-4">
-              {colorFilterGroups.map((group) => {
-                const isSelected = selectedColorGroups.includes(group.groupName)
-                return (
-                  <button
-                    key={group.groupName}
-                    type="button"
-                    onClick={() => handleColorGroupToggle(group.groupName)}
-                    className={`relative w-12 h-12 rounded-full border-2 transition-all ${
-                      isSelected
-                        ? "border-black scale-110"
-                        : "border-grayscale-300 hover:border-grayscale-400"
-                    }`}
-                    style={{ backgroundColor: group.hexCode }}
-                    aria-label={`Select ${group.groupName}`}
-                    title={group.groupName}
-                  />
-                )
-              })}
+            <div className="flex items-center justify-between mb-4">
+              <label className={`block text-sm font-medium ${!localProductType ? "text-grayscale-400" : ""}`}>
+                Colour
+                {!localProductType && (
+                  <span className="ml-2 text-xs text-grayscale-400 font-normal">
+                    (Select a product type first)
+                  </span>
+                )}
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (localProductType) {
+                    setIsColorAccordionOpen(!isColorAccordionOpen)
+                  }
+                }}
+                disabled={!localProductType}
+                className={`flex items-center justify-center w-6 h-6 rounded transition-colors ${
+                  localProductType 
+                    ? "hover:bg-grayscale-100 cursor-pointer" 
+                    : "opacity-50 cursor-not-allowed"
+                }`}
+                aria-label={isColorAccordionOpen ? "Collapse colors" : "Expand colors"}
+                aria-expanded={isColorAccordionOpen}
+                aria-disabled={!localProductType}
+              >
+                <Icon 
+                  name={isColorAccordionOpen ? "minus" : "plus"} 
+                  className="w-4 h-4" 
+                />
+              </button>
             </div>
-            {selectedColorGroups.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs text-grayscale-600 mb-2">Selected:</p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedColorGroups.map((group) => (
-                    <span
-                      key={group}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-grayscale-100 text-xs rounded"
-                    >
-                      {group}
-                      <button
-                        onClick={() => handleColorGroupToggle(group)}
-                        className="hover:text-red-500"
-                        aria-label={`Remove ${group}`}
-                      >
-                        <Icon name="close" className="w-3 h-3" />
-                      </button>
-                    </span>
-                  ))}
-                </div>
+            
+            {isColorAccordionOpen && localProductType && (
+              <div className="mt-4 border-t border-grayscale-200 pt-4">
+                {colorFilterGroups.length === 0 ? (
+                  <p className="text-sm text-grayscale-600">No color groups available</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-x-6 gap-y-2">
+                    {/* Left Column */}
+                    <div className="flex flex-col space-y-2">
+                      {leftColumnGroups.map((group) => {
+                        const isSelected = localColorGroups.includes(group.name)
+                        return (
+                          <label
+                            key={group.name}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-grayscale-50 p-1 rounded -ml-1"
+                          >
+                            <UiCheckbox
+                              value={group.name}
+                              isSelected={isSelected}
+                              onChange={() => handleColorGroupToggle(group.name)}
+                              className="flex-shrink-0"
+                            >
+                              <UiCheckboxBox>
+                                <UiCheckboxIcon />
+                              </UiCheckboxBox>
+                            </UiCheckbox>
+                            <UiCheckboxLabel className="text-sm cursor-pointer flex-1">
+                              {group.name}
+                            </UiCheckboxLabel>
+                          </label>
+                        )
+                      })}
+                    </div>
+                    
+                    {/* Right Column */}
+                    <div className="flex flex-col space-y-2">
+                      {rightColumnGroups.map((group) => {
+                        const isSelected = localColorGroups.includes(group.name)
+                        return (
+                          <label
+                            key={group.name}
+                            className="flex items-center gap-2 cursor-pointer hover:bg-grayscale-50 p-1 rounded -ml-1"
+                          >
+                            <UiCheckbox
+                              value={group.name}
+                              isSelected={isSelected}
+                              onChange={() => handleColorGroupToggle(group.name)}
+                              className="flex-shrink-0"
+                            >
+                              <UiCheckboxBox>
+                                <UiCheckboxIcon />
+                              </UiCheckboxBox>
+                            </UiCheckbox>
+                            <UiCheckboxLabel className="text-sm cursor-pointer flex-1">
+                              {group.name}
+                            </UiCheckboxLabel>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
+            )}
+            
+            {!localProductType && (
+              <p className="text-xs text-grayscale-500 mt-2">
+                Please select a product type to filter by color
+              </p>
             )}
           </div>
 
           {/* Apply/Clear buttons */}
           <div className="flex gap-4 pt-4 border-t border-grayscale-200">
             <button
-              onClick={() => {
-                onProductTypeChange(null)
-                onColorGroupsChange([])
-              }}
+              onClick={handleClearAll}
               className="flex-1 px-4 py-2 border border-grayscale-300 rounded hover:bg-grayscale-50"
             >
               Clear All
             </button>
             <button
-              onClick={onClose}
+              onClick={handleApplyFilters}
               className="flex-1 px-4 py-2 bg-black text-white rounded hover:bg-grayscale-800"
             >
               Apply Filters

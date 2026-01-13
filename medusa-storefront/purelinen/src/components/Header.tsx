@@ -3,6 +3,7 @@ import { listRegions } from "@lib/data/regions"
 import { getProductTypesList } from "@lib/data/product-types"
 import { getCategoriesList } from "@lib/data/categories"
 import { getCustomer } from "@lib/data/customer"
+import { getColorsList } from "@lib/data/colors-list"
 import { SearchField } from "@/components/SearchField"
 import { Layout, LayoutColumn } from "@/components/Layout"
 import { LocalizedLink } from "@/components/LocalizedLink"
@@ -11,6 +12,7 @@ import { RegionSwitcher } from "@/components/RegionSwitcher"
 import { HeaderWrapper } from "@/components/HeaderWrapper"
 import { Logo } from "@/components/Logo"
 import { CategoryMenu } from "@/components/CategoryMenu"
+import { FilterButton } from "@/components/FilterButton"
 
 import dynamic from "next/dynamic"
 
@@ -26,13 +28,20 @@ const CartDrawer = dynamic(
 
 export const Header: React.FC = async () => {
   const regions = await listRegions()
-  const [productTypes, categories, customer] = await Promise.all([
+  const [productTypes, categories, customer, colors] = await Promise.all([
     getProductTypesList(0, 100, ["id", "value", "metadata"]),
     getCategoriesList(0, 100, ["id", "name", "handle", "metadata"]),
     getCustomer().catch(() => null),
+    getColorsList().catch(() => []),
   ])
   
   const isLoggedIn = !!customer
+
+  // Format product types for FilterPanel (Record<string, string>)
+  const productTypesMap: Record<string, string> = {}
+  productTypes?.productTypes.forEach((type) => {
+    productTypesMap[type.value] = type.value
+  })
 
   const countryOptions = regions
     .map((r) => {
@@ -90,6 +99,10 @@ export const Header: React.FC = async () => {
                 selectButtonClassName="h-auto !gap-0 !p-1 transition-none"
                 selectIconClassName="text-current"
               />*/}
+              <FilterButton
+                productTypes={productTypesMap}
+                colorFilterGroups={colors}
+              />
               <React.Suspense>
                 <SearchField countryOptions={countryOptions} />
               </React.Suspense>

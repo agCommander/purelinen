@@ -84,13 +84,27 @@ export const getCollectionsWithProducts = async (
 }
 
 export const getCollectionsByTypeValue = async function (
-  typeValue: string
+  typeValue: string,
+  colorGroups?: string[]
 ): Promise<{ collections: HttpTypes.StoreCollection[]; count: number }> {
+  const queryParams: Record<string, string | string[]> = {}
+  
+  if (colorGroups && colorGroups.length > 0) {
+    queryParams.colorGroup = colorGroups
+  }
+  
+  const queryString = new URLSearchParams()
+  if (colorGroups && colorGroups.length > 0) {
+    colorGroups.forEach((group) => queryString.append("colorGroup", group))
+  }
+  
+  const url = `/store/custom/type-collections-by-value/${encodeURIComponent(typeValue)}${queryString.toString() ? `?${queryString.toString()}` : ""}`
+  
   return sdk.client
     .fetch<{
       collections: HttpTypes.StoreCollection[]
       count: number
-    }>(`/store/custom/type-collections-by-value/${encodeURIComponent(typeValue)}`, {
+    }>(url, {
       method: "GET",
       next: { tags: ["collections"] },
       cache: "force-cache",

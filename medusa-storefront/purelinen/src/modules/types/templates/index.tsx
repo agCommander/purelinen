@@ -6,11 +6,13 @@ import { getCollectionsByTypeValue } from "@lib/data/collections"
 export default async function TypeTemplate({
   typeValue,
   countryCode,
+  colorGroups,
 }: {
   typeValue: string
   countryCode: string
+  colorGroups?: string[]
 }) {
-  const { collections } = await getCollectionsByTypeValue(typeValue)
+  const { collections } = await getCollectionsByTypeValue(typeValue, colorGroups)
 
   if (!collections || collections.length === 0) {
     return (
