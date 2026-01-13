@@ -25,6 +25,7 @@ type ProductTemplateProps = {
   }[]
   region: HttpTypes.StoreRegion
   countryCode: string
+  colorMap: Record<string, string>
 }
 
 const ProductTemplate: React.FC<ProductTemplateProps> = ({
@@ -32,6 +33,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
   materials,
   region,
   countryCode,
+  colorMap,
 }) => {
   if (!product || !product.id) {
     return notFound()
@@ -87,6 +89,7 @@ const ProductTemplate: React.FC<ProductTemplateProps> = ({
             materials={materials}
             region={region}
             images={images}
+            colorMap={colorMap}
           />
         </LayoutColumn>
       </Layout>

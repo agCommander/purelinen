@@ -9,57 +9,8 @@ export async function GET(
   res: MedusaResponse
 ) {
   try {
-    // Default color mapping - common linen colors
-    // You can extend this to query from database or materials system
-    const colorMap: Record<string, string> = {
-      // Whites and neutrals
-      "Optical White": "#FFFFFF",
-      "White": "#FFFFFF",
-      "Natural": "#b7b3a7",
-      "Natural Flax": "#d7ccb8",
-      "Off White": "#FAF0E6",
-      "Cream": "#FFFDD0",
-      "Ivory": "#FFFFF0",
-      "Beige": "#F5F5DC",
-      
-      // Grays
-      "Grey": "#cacaca",
-      "Shades of Grey": "#cacaca",
-      "Steel Grey": "#808080",
-      "Gray": "#808080",
-      "Charcoal": "#36454F",
-      "Stone Grey": "#8B8680",
-      "Taupe": "#483C32",
-      
-      // Browns
-      "Brown": "#8B4513",
-      "Tobacco": "#514542",
-      "Natural Brown": "#A0522D",
-      "Camel": "#C19A6B",
-      
-      // Blues
-      "Shades of Blue": "#ade0e5",
-      "Blue": "#ade0e5",
-      "Navy": "#000080",
-      "Tiffany": "#83ccd4",
-      "FrenchNavy": "#000080",
-      "Sky Blue": "#e0e8ea",
-      "Pearl Blue": "#cfd1dd",
-      
-      // Other colors
-      "Dusty Rose": "#b38c91",
-      "Nude": "#FFC0CB",
-      "Pink": "#fbd2d4",
-      "Shades of Pink": "#fbd2d4",
-      "Red": "#FF0000",
-      "Green": "#008000",
-      "Serena": "#b6b3a0",
-      "Yellow": "#FFFF00",
-      "Black": "#000000",
-    }
-
-    // Query color names from materials system if available
-    // This is optional - you can extend this to query from your materials/colors database
+    // Query colors from database only (no hardcoded fallback)
+    const colorMap: Record<string, string> = {}
     let client: any = null;
     try {
       const { Client } = require('pg');
@@ -96,8 +47,8 @@ export async function GET(
         }
       }
     } catch (error) {
-      // If database query fails, just use the default mapping
-      console.log('Could not fetch colors from database, using default mapping');
+      // If database query fails, return empty map
+      console.error('Could not fetch colors from database:', error);
     } finally {
       if (client) {
         try {

@@ -7,6 +7,7 @@ import {
   getProductByHandle,
   getProductFashionDataByHandle,
 } from "@lib/data/products"
+import { getColorMap } from "@lib/data/colors"
 import ProductTemplate from "@modules/products/templates"
 
 type Props = {
@@ -86,9 +87,10 @@ export default async function ProductPage({ params }: Props) {
     notFound()
   }
 
-  const [pricedProduct, fashionData] = await Promise.all([
+  const [pricedProduct, fashionData, colorMap] = await Promise.all([
     getProductByHandle(handle, region.id),
     getProductFashionDataByHandle(handle),
+    getColorMap(),
   ])
 
   if (!pricedProduct) {
@@ -101,6 +103,7 @@ export default async function ProductPage({ params }: Props) {
       materials={fashionData.materials}
       region={region}
       countryCode={countryCode}
+      colorMap={colorMap}
     />
   )
 }

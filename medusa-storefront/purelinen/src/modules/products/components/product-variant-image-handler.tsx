@@ -24,6 +24,7 @@ type ProductVariantImageHandlerProps = {
   }[]
   region: HttpTypes.StoreRegion
   images: HttpTypes.StoreProductImage[]
+  colorMap: Record<string, string>
 }
 
 export default function ProductVariantImageHandler({
@@ -31,6 +32,7 @@ export default function ProductVariantImageHandler({
   materials,
   region,
   images,
+  colorMap,
 }: ProductVariantImageHandlerProps) {
   const [selectedVariant, setSelectedVariant] = useState<HttpTypes.StoreProductVariant | undefined>(undefined)
   const [allProductImages, setAllProductImages] = useState<ProductImageWithVariant[] | undefined>(undefined)
@@ -124,6 +126,7 @@ export default function ProductVariantImageHandler({
             materials={materials}
             region={region}
             onVariantChange={setSelectedVariant}
+            colorMap={colorMap}
           />
         </div>
       </div>

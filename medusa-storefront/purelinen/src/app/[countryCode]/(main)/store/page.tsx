@@ -13,6 +13,8 @@ type Params = {
     sortBy?: SortOptions
     collection?: string | string[]
     category?: string | string[]
+    productType?: string
+    colorGroup?: string | string[]
     page?: string
   }>
   params: Promise<{
@@ -22,7 +24,7 @@ type Params = {
 
 export default async function StorePage({ searchParams, params }: Params) {
   const { countryCode } = await params
-  const { sortBy, page, collection, category } = await searchParams
+  const { sortBy, page, collection, category, productType, colorGroup } = await searchParams
 
   return (
     <StoreTemplate
@@ -38,6 +40,10 @@ export default async function StorePage({ searchParams, params }: Params) {
       }
       category={
         !category ? undefined : Array.isArray(category) ? category : [category]
+      }
+      productType={productType}
+      colorGroup={
+        !colorGroup ? undefined : Array.isArray(colorGroup) ? colorGroup : [colorGroup]
       }
     />
   )

@@ -12,6 +12,9 @@ import SortProducts, {
   SortOptions,
 } from "@modules/store/components/refinement-list/sort-products"
 import { TypeFilter } from "@modules/store/components/refinement-list/type-filter"
+import FilterPanel from "@modules/store/components/filter-panel"
+import { Icon } from "@/components/Icon"
+import { useState } from "react"
 
 type RefinementListProps = {
   title?: string
@@ -21,6 +24,11 @@ type RefinementListProps = {
   category?: string[]
   types?: Record<string, string>
   type?: string[]
+  colorFilterGroups?: Array<{
+    groupName: string
+    hexCode: string
+    colorCount: number
+  }>
   sortBy: SortOptions | undefined
   "data-testid"?: string
 }
@@ -33,12 +41,18 @@ const RefinementList = ({
   category,
   types,
   type,
+  colorFilterGroups = [],
   sortBy,
   "data-testid": dataTestId,
 }: RefinementListProps) => {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
+  
+  // Get filter values from URL params
+  const selectedProductType = searchParams.get("productType")
+  const selectedColorGroups = searchParams.getAll("colorGroup")
 
   const setQueryParams = useCallback(
     (name: string, value: string | string[]) => {
@@ -81,15 +95,44 @@ const RefinementList = ({
           {title}
         </h2>
         <div className="flex justify-between gap-10">
-          <MobileFilters
-            collections={collections}
-            collection={collection}
-            categories={categories}
-            category={category}
-            types={types}
-            type={type}
-            setMultipleQueryParams={setMultipleQueryParams}
-          />
+          <div className="flex gap-4">
+            <MobileFilters
+              collections={collections}
+              collection={collection}
+              categories={categories}
+              category={category}
+              types={types}
+              type={type}
+              setMultipleQueryParams={setMultipleQueryParams}
+            />
+            {/* Filter Button */}
+            <button
+              onClick={() => setIsFilterPanelOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 border border-grayscale-300 rounded hover:bg-grayscale-50 md:hidden"
+              aria-label="Open filters"
+            >
+              <Icon name="sliders" className="w-5 h-5" />
+              <span className="text-sm">Filters</span>
+              {(selectedProductType || selectedColorGroups.length > 0) && (
+                <span className="ml-1 px-1.5 py-0.5 bg-black text-white text-xs rounded-full">
+                  {(selectedProductType ? 1 : 0) + selectedColorGroups.length}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setIsFilterPanelOpen(true)}
+              className="hidden md:flex items-center gap-2 px-4 py-2 border border-grayscale-300 rounded hover:bg-grayscale-50"
+              aria-label="Open filters"
+            >
+              <Icon name="sliders" className="w-5 h-5" />
+              <span>Filters</span>
+              {(selectedProductType || selectedColorGroups.length > 0) && (
+                <span className="ml-1 px-1.5 py-0.5 bg-black text-white text-xs rounded-full">
+                  {(selectedProductType ? 1 : 0) + selectedColorGroups.length}
+                </span>
+              )}
+            </button>
+          </div>
           <MobileSort sortBy={sortBy} setQueryParams={setQueryParams} />
           <div className="flex justify-between gap-4 max-md:hidden">
             {typeof categories !== "undefined" && (
@@ -120,6 +163,33 @@ const RefinementList = ({
             data-testid={dataTestId}
           />
         </div>
+        
+        {/* Filter Panel */}
+        {types && (
+          <FilterPanel
+            isOpen={isFilterPanelOpen}
+            onClose={() => setIsFilterPanelOpen(false)}
+            productTypes={types}
+            colorFilterGroups={colorFilterGroups}
+            selectedProductType={selectedProductType}
+            selectedColorGroups={selectedColorGroups}
+            onProductTypeChange={(value) => {
+              if (value) {
+                setQueryParams("productType", value)
+              } else {
+                const query = new URLSearchParams(searchParams)
+                query.delete("productType")
+                router.push(`${pathname}?${query.toString()}`, { scroll: false })
+              }
+            }}
+            onColorGroupsChange={(groups) => {
+              const query = new URLSearchParams(searchParams)
+              query.delete("colorGroup")
+              groups.forEach((group) => query.append("colorGroup", group))
+              router.push(`${pathname}?${query.toString()}`, { scroll: false })
+            }}
+          />
+        )}
       </LayoutColumn>
     </Layout>
   )

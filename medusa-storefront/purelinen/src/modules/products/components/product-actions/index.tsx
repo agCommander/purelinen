@@ -38,6 +38,7 @@ type ProductActionsProps = {
   region: HttpTypes.StoreRegion
   disabled?: boolean
   onVariantChange?: (variant: HttpTypes.StoreProductVariant | undefined) => void
+  colorMap?: Record<string, string>
 }
 
 const optionsAsKeymap = (
@@ -77,7 +78,7 @@ const getInitialOptions = (product: ProductActionsProps["product"]) => {
   return null
 }
 
-function ProductActions({ product, materials, disabled, onVariantChange }: ProductActionsProps) {
+function ProductActions({ product, materials, disabled, onVariantChange, colorMap: initialColorMap }: ProductActionsProps) {
   const [options, setOptions] = useState<Record<string, string | undefined>>(
     getInitialOptions(product) ?? {}
   )
@@ -218,11 +219,17 @@ function ProductActions({ product, materials, disabled, onVariantChange }: Produ
       ? materials.find((m) => m.name === options[materialOption.id])
       : undefined
 
-  // Fetch color hex code mapping
-  const [colorHexMap, setColorHexMap] = useState<Record<string, string>>({})
+  // Use color map from props (server-side fetched) or fallback to client-side fetch
+  const [colorHexMap, setColorHexMap] = useState<Record<string, string>>(initialColorMap || {})
   
   useEffect(() => {
-    // Fetch color hex code mapping from backend
+    // If we already have the color map from props, use it
+    if (initialColorMap && Object.keys(initialColorMap).length > 0) {
+      setColorHexMap(initialColorMap)
+      return
+    }
+    
+    // Fallback: Fetch color hex code mapping from backend (only if not provided)
     sdk.client
       .fetch<{ colors: Record<string, string> }>(`/store/custom/colors/map`, {
         cache: "force-cache",
@@ -234,7 +241,7 @@ function ProductActions({ product, materials, disabled, onVariantChange }: Produ
         console.error("Error fetching color map:", error)
         setColorHexMap({})
       })
-  }, [])
+  }, [initialColorMap])
 
   // Extract colors from variants when Material isn't available or selected
   const colorsFromVariants = useMemo(() => {

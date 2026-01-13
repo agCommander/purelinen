@@ -8,6 +8,7 @@ import { CategoriesSlider } from "@modules/store/components/categories-slider"
 import { getCollectionsList } from "@lib/data/collections"
 import { getCategoriesList } from "@lib/data/categories"
 import { getProductTypesList } from "@lib/data/product-types"
+import { getColorFilterGroups } from "@lib/data/color-groups"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import { getRegion } from "@lib/data/regions"
 
@@ -15,22 +16,26 @@ const StoreTemplate = async ({
   sortBy,
   collection,
   category,
-  // type,
+  productType,
+  colorGroup,
   page,
   countryCode,  
 }: {
   sortBy?: SortOptions
   collection?: string[]
-  category?: string[] 
+  category?: string[]
+  productType?: string
+  colorGroup?: string[]
   page?: string
   countryCode: string
 }) => {
   const pageNumber = page ? parseInt(page, 10) : 1
 
-  const [collections, categories, region] = await Promise.all([
+  const [collections, categories, productTypes, colorFilterGroups, region] = await Promise.all([
     getCollectionsList(0, 100, ["id", "title", "handle"]),
     getCategoriesList(0, 100, ["id", "name", "handle", "metadata"]),
-    // getProductTypesList(0, 100, ["id", "value"]),
+    getProductTypesList(0, 100, ["id", "value"]),
+    getColorFilterGroups(),
     getRegion(countryCode),
   ])
 
@@ -45,8 +50,11 @@ const StoreTemplate = async ({
           categories.product_categories.map((c) => [c.handle, c.name])
         )}
         category={category}
-
-       sortBy={sortBy} 
+        types={Object.fromEntries(
+          productTypes.productTypes.map((t) => [t.value, t.value])
+        )}
+        colorFilterGroups={colorFilterGroups}
+        sortBy={sortBy} 
       />
       <CategoriesSlider />
       <Suspense fallback={<SkeletonProductGrid />}>
