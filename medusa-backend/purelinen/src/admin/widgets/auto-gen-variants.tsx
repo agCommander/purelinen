@@ -38,7 +38,7 @@ import ProductVariantPrice from "./_parts/product-variant-price";
 /* Constants & Types                                                   */
 /* ------------------------------------------------------------------ */
 
-const LIMIT = 15 as const;
+const LIMIT = 50 as const;
 
 type VariantDraftOption = {
   option_id: string;
@@ -68,6 +68,9 @@ const UpdateVariantPricesSchema = z.object({
       allow_backorder: z.boolean().optional(),
       manage_inventory: z.boolean().optional(),
       prices: z
+        .record(z.string(), z.string().or(z.number()).optional())
+        .optional(),
+      priceListPrices: z
         .record(z.string(), z.string().or(z.number()).optional())
         .optional(),
     })
@@ -245,6 +248,12 @@ const AutoGenerateVariants = ({
             }
             return acc;
           }, {}),
+          priceListPrices: (variant.priceListPrices || []).reduce((acc: any, price: any) => {
+            if (price.price_list_id) {
+              acc[price.price_list_id] = price.amount;
+            }
+            return acc;
+          }, {}),
         })),
       });
     }
@@ -306,10 +315,55 @@ const AutoGenerateVariants = ({
   /* ---------------------------- Mutations -------------------------- */
 
   const { mutate: createVariantsMutation, isPending } = useMutation({
-    mutationFn: async (reqData: AdminCreateProductVariant[]) => {
-      return await sdk.admin.product.batchVariants(product!.id, {
+    mutationFn: async ({ reqData, formVariants }: { reqData: AdminCreateProductVariant[], formVariants: any[] }) => {
+      // Create variants first
+      const result = await sdk.admin.product.batchVariants(product!.id, {
         create: reqData,
       });
+
+      // Then save Price List prices for each created variant
+      const createdVariants = (result as any).variants || (result as any).product?.variants || [];
+      if (createdVariants.length > 0 && formVariants.length > 0) {
+        const priceListPromises: Promise<any>[] = [];
+        
+        for (let i = 0; i < createdVariants.length && i < formVariants.length; i++) {
+          const variant = createdVariants[i];
+          const formVariant = formVariants[i];
+          
+          if (formVariant.priceListPrices && Object.keys(formVariant.priceListPrices).length > 0) {
+            // Build prices array for Price Lists
+            const priceListPrices = Object.entries(formVariant.priceListPrices)
+              .filter(([_, value]) => value !== "" && typeof value !== "undefined")
+              .map(([priceListId, value]: any) => ({
+                price_list_id: priceListId,
+                amount: castNumber(value),
+                currency_code: "aud",
+              }));
+
+            if (priceListPrices.length > 0) {
+              priceListPromises.push(
+                fetch(`/admin/custom/variants/${variant.id}/price-list-prices`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ prices: priceListPrices }),
+                }).then(res => {
+                  if (!res.ok) {
+                    throw new Error(`Failed to save Price List prices for variant ${variant.id}`);
+                  }
+                  return res.json();
+                })
+              );
+            }
+          }
+        }
+
+        // Wait for all Price List prices to be saved
+        if (priceListPromises.length > 0) {
+          await Promise.all(priceListPromises);
+        }
+      }
+
+      return result;
     },
     onSuccess: async () => {
       revalidate();
@@ -317,7 +371,7 @@ const AutoGenerateVariants = ({
         queryKey: ["product", product?.id, "variants-options"],
       });
       await queryClient.invalidateQueries({ refetchType: "all" });
-      toast.success("Variants created successfully");
+      toast.success("Variants and prices created successfully");
       setVariantSheetOpen(false);
       setRowSelection({});
       setStep("details");
@@ -410,7 +464,7 @@ const AutoGenerateVariants = ({
         }),
     }));
 
-    createVariantsMutation(reqData);
+    createVariantsMutation({ reqData, formVariants: values.variants });
   });
 
   /* --------------------------- DataTable --------------------------- */
@@ -557,10 +611,17 @@ const AutoGenerateVariants = ({
 
                 <FocusModal.Body className="overflow-y-auto ">
                   <ProgressTabs.Content value="details" asChild>
-                    <ProductVariantDetails form={form} />
+                    <ProductVariantDetails 
+                      form={form} 
+                      variantsToGenerate={variantsToGenerate}
+                      selectedVariantIds={Object.keys(rowSelection)}
+                    />
                   </ProgressTabs.Content>
                   <ProgressTabs.Content value="prices" asChild>
-                    <ProductVariantPrice form={form} />
+                    <ProductVariantPrice 
+                      form={form} 
+                      variantsToGenerate={variantsToGenerate}
+                    />
                   </ProgressTabs.Content>
                 </FocusModal.Body>
                 <FocusModal.Footer className="border-ui-border-base flex items-center justify-end gap-x-2 border-t p-4  w-full ">

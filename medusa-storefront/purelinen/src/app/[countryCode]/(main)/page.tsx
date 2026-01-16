@@ -7,7 +7,7 @@ import { LocalizedLink } from "@/components/LocalizedLink"
 import { CollectionsSection } from "@/components/CollectionsSection"
 
 export const metadata: Metadata = {
-  title: "Medusa Next.js Starter Template",
+  title: "PURE LINEN - PURE LUXURY",
   description:
     "A performant frontend ecommerce starter template with Next.js 14 and Medusa.",
 }
