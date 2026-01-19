@@ -23,6 +23,7 @@ import { useCustomer } from "hooks/customer"
 import ColorSwatchPicker from "@modules/products/components/color-swatch-picker"
 import SizeSelector from "@modules/products/components/size-selector"
 import { sdk } from "@lib/config"
+import { IS_LINENTHINGS, IS_PURELINEN } from "@/lib/config/site-config"
 
 type ProductActionsProps = {
   product: HttpTypes.StoreProduct
@@ -326,9 +327,14 @@ function ProductActions({ product, materials, disabled, onVariantChange, colorMa
     (selectedMaterial &&
       (selectedMaterial.colors.length < 2 || options[colorOption.id]))
 
+  // Show pricing based on site and login status:
+  // - Linenthings: Always show pricing
+  // - Purelinen: Only show if logged in
+  const shouldShowPricing = IS_LINENTHINGS || (IS_PURELINEN && !!customer)
+
   return (
     <>
-      {customer && <ProductPrice product={product} variant={selectedVariant} />}
+      {shouldShowPricing && <ProductPrice product={product} variant={selectedVariant} />}
       <div className="max-md:text-xs mb-8 md:mb-16 max-w-120">
         <p>{product.description}</p>
       </div>
@@ -409,7 +415,7 @@ function ProductActions({ product, materials, disabled, onVariantChange, colorMa
                 onQuantityChange={setQuantity}
                 product={product}
                 disabled={!!disabled || isPending}
-                showPrices={!!customer}
+                showPrices={shouldShowPricing}
                 maxQuantity={itemsInStock}
                 ariaLabel="Sizes"
               />
@@ -461,7 +467,10 @@ function ProductActions({ product, materials, disabled, onVariantChange, colorMa
             })}
         </div>
       )}
-      {customer && (
+      {/* Show cart controls based on site and login status:
+          - Linenthings: Always show cart
+          - Purelinen: Only show if logged in */}
+      {(IS_LINENTHINGS || (IS_PURELINEN && !!customer)) && (
         <div className="flex max-sm:flex-col gap-4">
           <NumberField
             isDisabled={

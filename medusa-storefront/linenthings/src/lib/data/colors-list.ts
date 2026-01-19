@@ -1,0 +1,1 @@
+../../../purelinen/src/lib/data/colors-list.ts

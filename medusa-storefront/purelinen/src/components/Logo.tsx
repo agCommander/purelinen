@@ -2,10 +2,12 @@
 
 import * as React from "react"
 import { LocalizedLink } from "@/components/LocalizedLink"
+import { getSiteConfig, IS_PURELINEN } from "@/lib/config/site-config"
 
 export const Logo: React.FC = () => {
   const [isSticky, setIsSticky] = React.useState(false)
   const [isLight, setIsLight] = React.useState(false)
+  const siteConfig = getSiteConfig()
 
   React.useEffect(() => {
     const headerElement = document.querySelector("#site-header")
@@ -34,15 +36,17 @@ export const Logo: React.FC = () => {
     }
   }, [])
 
-  // Always use grey logo
-  const logoSrc = "/images/content/PURELINEN-GREY-LOGO.png"
+  // Use site-specific logo
+  const logoSrc = IS_PURELINEN 
+    ? "/images/content/PURELINEN-GREY-LOGO.png"
+    : "/images/content/LT_Logo.png"
 
   return (
     <h1 className="font-medium text-md">
       <LocalizedLink href="/">
         <img
           src={logoSrc}
-          alt="Pure Linen"
+          alt={siteConfig.logoAlt}
           width={220}
           className="transition-opacity duration-200"
         />

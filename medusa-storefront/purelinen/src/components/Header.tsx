@@ -13,6 +13,7 @@ import { HeaderWrapper } from "@/components/HeaderWrapper"
 import { Logo } from "@/components/Logo"
 import { CategoryMenu } from "@/components/CategoryMenu"
 import { FilterButton } from "@/components/FilterButton"
+import { getSiteConfig, IS_LINENTHINGS, IS_PURELINEN } from "@/lib/config/site-config"
 
 import dynamic from "next/dynamic"
 
@@ -36,6 +37,12 @@ export const Header: React.FC = async () => {
   ])
   
   const isLoggedIn = !!customer
+  const siteConfig = getSiteConfig()
+  
+  // Show cart based on site and login status:
+  // - Linenthings: Always show cart
+  // - Purelinen: Only show if logged in
+  const shouldShowCart = IS_LINENTHINGS || (IS_PURELINEN && isLoggedIn)
 
   // Format product types for FilterPanel (Record<string, string>)
   const productTypesMap: Record<string, string> = {}
@@ -107,7 +114,7 @@ export const Header: React.FC = async () => {
                 <SearchField countryOptions={countryOptions} />
               </React.Suspense>
               <LoginLink className="p-1 md:text-gray-500" />
-              {isLoggedIn && <CartDrawer />}
+              {shouldShowCart && <CartDrawer />}
             </div>
 
             {/* Mobile menu */}

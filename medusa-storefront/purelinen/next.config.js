@@ -11,6 +11,11 @@ const nextConfig = {
     staticGenerationRetryCount: 3,
     staticGenerationMaxConcurrency: 1,
   },
+  // Set site name via environment variable (defaults to 'purelinen')
+  // This works similar to htaccess in Magento - determines site identity
+  env: {
+    NEXT_PUBLIC_STORE_NAME: process.env.NEXT_PUBLIC_STORE_NAME || process.env.STORE_NAME || 'purelinen',
+  },
   images: {
     remotePatterns: [
       {
@@ -24,6 +29,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "purelinen.com.au",
+      },
+      {
+        protocol: "https",
+        hostname: "linenthings.com.au",
       },
     ],
   },
