@@ -134,7 +134,14 @@ export async function POST(
 
       // Update or create each Price List price
       for (const priceData of prices) {
-        const priceId = `price_${variantId.replace('variant_', '').slice(0, 20)}_${priceData.price_list_id.replace('plist_', '').slice(0, 10)}_${priceData.currency_code}`
+        // Use consistent ID format: price_{variantId}_{priceListName}_{currency}
+        // Match the format used in add-prices-to-price-lists.ts
+        const priceListName = priceData.price_list_id === 'plist_01KF2PEZ7CJWA5FYXTRCKY6NKS' 
+          ? 'purelinen' 
+          : priceData.price_list_id === 'plist_01KF2RYC38M6705Z363HC4T9Y6'
+          ? 'linenthings'
+          : priceData.price_list_id.replace('plist_', '').slice(0, 10)
+        const priceId = `price_${variantId.replace('variant_', '').slice(0, 20)}_${priceListName}_${priceData.currency_code}`
         const amountCents = Math.round(priceData.amount)
 
         await client.query(`

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { defineRouteConfig } from '@medusajs/admin-sdk';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,10 +12,11 @@ import {
   toast,
 } from '@medusajs/ui';
 import { ArrowLeft } from '@medusajs/icons';
-import { sdk } from '../../../../lib/sdk';
-import { DataGrid, createDataGridHelper } from '../../../../data-grid';
-import { DataGridCurrencyCell } from '../../../../data-grid/components';
+import { sdk } from '../../lib/sdk';
+import { DataGrid, createDataGridHelper } from '../../data-grid';
+import { DataGridCurrencyCell } from '../../data-grid/components';
 import { HttpTypes } from '@medusajs/framework/types';
+import { withQueryClient } from '../../components/QueryClientProvider';
 
 const variantPricingSchema = z.object({
   variants: z.array(
@@ -36,7 +37,8 @@ const columnHelper = createDataGridHelper<
 >();
 
 const ProductVariantPricingPage = () => {
-  const { id: productId } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const productId = searchParams.get('productId');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -49,21 +51,30 @@ const ProductVariantPricingPage = () => {
         fields: 'variants.*,variants.prices.*',
       });
       
-      // Fetch Price List prices for each variant
-      if (product.product?.variants) {
-        for (const variant of product.product.variants) {
-          try {
-            const pricesResponse = await fetch(
-              `/admin/custom/variants/${variant.id}/price-list-prices`,
-              { credentials: 'include' }
-            );
-            if (pricesResponse.ok) {
-              const pricesData = await pricesResponse.json();
-              (variant as any).priceListPrices = pricesData.prices || [];
-            } else {
+      // Fetch all Price List prices for all variants in one batch request
+      if (product.product?.variants && product.product.variants.length > 0) {
+        try {
+          const pricesResponse = await fetch(
+            `/admin/custom/products/${productId}/price-list-prices`,
+            { credentials: 'include' }
+          );
+          if (pricesResponse.ok) {
+            const pricesData = await pricesResponse.json();
+            const pricesByVariant = pricesData.pricesByVariant || {};
+            
+            // Attach Price List prices to each variant
+            for (const variant of product.product.variants) {
+              (variant as any).priceListPrices = pricesByVariant[variant.id] || [];
+            }
+          } else {
+            // If batch fetch fails, set empty arrays
+            for (const variant of product.product.variants) {
               (variant as any).priceListPrices = [];
             }
-          } catch (e) {
+          }
+        } catch (e) {
+          // If batch fetch fails, set empty arrays
+          for (const variant of product.product.variants) {
             (variant as any).priceListPrices = [];
           }
         }
@@ -132,10 +143,15 @@ const ProductVariantPricingPage = () => {
   // Save mutation
   const saveMutation = useMutation({
     mutationFn: async (data: VariantPricingFormData) => {
-      // Update base prices
-      for (const variant of data.variants) {
-        if (variant.prices && Object.keys(variant.prices).length > 0) {
-          const prices = Object.entries(variant.prices)
+      if (!productId) {
+        throw new Error('Product ID is required');
+      }
+
+      // Prepare variant updates for base prices
+      const variantUpdates = data.variants
+        .filter((variant) => variant.prices && Object.keys(variant.prices).length > 0)
+        .map((variant) => {
+          const prices = Object.entries(variant.prices!)
             .filter(([_, value]) => value !== '' && typeof value !== 'undefined')
             .map(([key, value]: any) => {
               const isRegion = key.startsWith('reg_');
@@ -146,14 +162,22 @@ const ProductVariantPricingPage = () => {
               };
             });
 
-          if (prices.length > 0) {
-            await sdk.admin.product.updateVariant(variant.id, {
-              prices,
-            });
-          }
-        }
+          return {
+            id: variant.id,
+            prices: prices.length > 0 ? prices : undefined,
+          };
+        })
+        .filter((update) => update.prices !== undefined);
 
-        // Update Price List prices
+      // Update base prices using batchVariants
+      if (variantUpdates.length > 0) {
+        await sdk.admin.product.batchVariants(productId, {
+          update: variantUpdates,
+        });
+      }
+
+      // Update Price List prices
+      for (const variant of data.variants) {
         if (variant.priceListPrices && Object.keys(variant.priceListPrices).length > 0) {
           const priceListPrices = Object.entries(variant.priceListPrices)
             .filter(([_, value]) => value !== '' && typeof value !== 'undefined')
@@ -275,7 +299,6 @@ const ProductVariantPricingPage = () => {
 
 export const config = defineRouteConfig({
   label: 'Variant Pricing',
-  description: 'Edit variant prices including Price Lists',
 });
 
-export default ProductVariantPricingPage;
+export default withQueryClient(ProductVariantPricingPage);
