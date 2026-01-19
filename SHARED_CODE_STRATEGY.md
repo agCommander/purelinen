@@ -97,13 +97,22 @@ If a component needs to be different between sites:
 2. Copy the file: `cp purelinen/src/components/Component.tsx linenthings/src/components/Component.tsx`
 3. Make site-specific changes
 
-## Current Symlinks
+## Current Status
+
+**82 symlinks created** - Almost everything is shared!
+
+**Only 11 site-specific files remain:**
+- `app/[countryCode]/(main)/page.tsx` - Home page (different content)
+- `lib/config/site-config.ts` - Site configuration (different defaults)
+- `next.config.js` - May have site-specific settings
+- `package.json` - Different ports
 
 To see what's currently shared:
 
 ```bash
 cd medusa-storefront/linenthings/src
-find . -type l -ls
+find . -type l | wc -l  # Count symlinks
+find . -type l -ls      # List all symlinks
 ```
 
 ## Troubleshooting
