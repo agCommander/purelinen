@@ -1,1 +1,0 @@
-../../purelinen/src/lib/constants.tsx

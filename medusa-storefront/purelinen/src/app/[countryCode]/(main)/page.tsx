@@ -5,11 +5,13 @@ import { getProductTypesList } from "@lib/data/product-types"
 import { Layout, LayoutColumn } from "@/components/Layout"
 import { LocalizedLink } from "@/components/LocalizedLink"
 import { CollectionsSection } from "@/components/CollectionsSection"
+import { IS_PURELINEN, getSiteConfig } from "@/lib/config/site-config"
 
 export const metadata: Metadata = {
-  title: "PURE LINEN - PURE LUXURY",
-  description:
-    "A performant frontend ecommerce starter template with Next.js 14 and Medusa.",
+  title: IS_PURELINEN ? "PURE LINEN - PURE LUXURY" : "Linen Things",
+  description: IS_PURELINEN
+    ? "A performant frontend ecommerce starter template with Next.js 14 and Medusa."
+    : "Linen Things - Quality linen products",
 }
 
 const ProductTypesSection: React.FC = async () => {

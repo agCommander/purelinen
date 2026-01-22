@@ -1,1 +1,0 @@
-../../purelinen/src/types/icon.ts

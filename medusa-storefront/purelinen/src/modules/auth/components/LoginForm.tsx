@@ -62,8 +62,28 @@ export const LoginForm = withReactQueryProvider<{
         >
           Forgot password?
         </LocalizedLink>
-        {!data?.success && (
-          <p className="text-red-primary text-sm">{data?.message}</p>
+        {!data?.success && data?.message && (
+          <div className={`p-4 rounded ${
+            data.message.includes("pending approval") 
+              ? "bg-yellow-50 border border-yellow-200" 
+              : "bg-red-50 border border-red-200"
+          }`}>
+            <p className={`text-sm ${
+              data.message.includes("pending approval")
+                ? "text-yellow-800"
+                : "text-red-primary"
+            }`}>
+              {data.message}
+            </p>
+            {data.requiresB2BStep2 && (
+              <LocalizedLink
+                href="/auth/register"
+                className="mt-2 inline-block text-sm underline"
+              >
+                Complete your registration
+              </LocalizedLink>
+            )}
+          </div>
         )}
         <SubmitButton isLoading={isPending}>Log in</SubmitButton>
       </div>

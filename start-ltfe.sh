@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # Start Linen Things Frontend
+# Uses the same codebase as purelinen with SITE_BRAND=linenthings env var
 echo "🌐 Starting Linen Things Frontend..."
 echo "📁 Working directory: $(pwd)"
 echo "🛍️  Frontend will run on: http://localhost:8000"
-echo "🇦🇺 Australian store: http://localhost:8000/au"
+echo "🏷️  Site Brand: linenthings (via NEXT_PUBLIC_SITE_BRAND)"
 echo ""
 
-cd medusa-storefront/linenthings
+cd medusa-storefront/purelinen
 
 # Check if node_modules exists, if not install dependencies
 if [ ! -d "node_modules" ]; then
@@ -16,4 +17,5 @@ if [ ! -d "node_modules" ]; then
   echo ""
 fi
 
-yarn dev
+# Set environment variable and start dev server
+NEXT_PUBLIC_SITE_BRAND=linenthings yarn dev --port 8000

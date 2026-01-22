@@ -1,1 +1,0 @@
-../../purelinen/src/components/CollectionsSection.tsx

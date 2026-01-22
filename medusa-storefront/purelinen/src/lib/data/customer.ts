@@ -6,6 +6,11 @@ import { revalidateTag } from "next/cache"
 import { HttpTypes } from "@medusajs/types"
 
 import { sdk } from "@lib/config"
+
+// Get backend URL for direct fetch calls
+const getBackendUrl = () => {
+  return process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL || "http://localhost:9000"
+}
 import {
   getAuthHeaders,
   setAuthToken,
@@ -17,7 +22,9 @@ import {
   loginFormSchema,
   signupFormSchema,
   updateCustomerFormSchema,
+  b2bRegistrationStep2Schema,
 } from "hooks/customer"
+import { IS_PURELINEN } from "@/lib/config/site-config"
 
 export const getCustomer = async function () {
   return await sdk.client
@@ -62,6 +69,16 @@ export const updateCustomer = async function (
 
 export async function signup(formData: z.infer<typeof signupFormSchema>) {
   try {
+    // Validate B2B fields if Pure Linen
+    if (IS_PURELINEN) {
+      if (!formData.abn_acn || !formData.business_description) {
+        return {
+          success: false,
+          error: "ABN/ACN and business description are required for wholesale accounts",
+        }
+      }
+    }
+
     const token = await sdk.auth.register("customer", "emailpass", {
       email: formData.email,
       password: formData.password,
@@ -69,17 +86,59 @@ export async function signup(formData: z.infer<typeof signupFormSchema>) {
 
     const customHeaders = { authorization: `Bearer ${token}` }
 
+    // For Pure Linen (B2B), include B2B fields in metadata
+    const metadata: Record<string, any> = {}
+    if (IS_PURELINEN) {
+      metadata.approved = false
+      metadata.registration_step = 2 // Both steps complete in one form
+      metadata.abn_acn = formData.abn_acn
+      metadata.business_description = formData.business_description
+    }
+
     const { customer: createdCustomer } = await sdk.store.customer.create(
       {
         email: formData.email,
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone ?? undefined,
+        metadata,
       },
       {},
       customHeaders
     )
 
+    // Assign to B2B group if Pure Linen
+    if (IS_PURELINEN && createdCustomer.id) {
+      try {
+        // Use native fetch to avoid SDK's automatic JSON handling
+        const backendUrl = getBackendUrl()
+        const publishableKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
+        
+        await fetch(`${backendUrl}/store/custom/customer/b2b-signup`, {
+          method: "POST",
+          headers: {
+            ...customHeaders,
+            "Content-Type": "application/json",
+            ...(publishableKey && { "x-publishable-api-key": publishableKey }),
+          },
+          body: JSON.stringify({ customer_id: createdCustomer.id }),
+        })
+      } catch (groupError) {
+        console.error("Error assigning customer to B2B group:", groupError)
+        // Continue even if group assignment fails - customer is still created
+      }
+    }
+
+    // For Pure Linen B2B, don't auto-login (they need approval)
+    if (IS_PURELINEN) {
+      // Don't log in - they need approval first
+      return { 
+        success: true, 
+        customer: createdCustomer,
+      }
+    }
+
+    // For Retail (Linen Things), proceed with normal login
     const loginToken = await sdk.auth.login("customer", "emailpass", {
       email: formData.email,
       password: formData.password,
@@ -87,7 +146,6 @@ export async function signup(formData: z.infer<typeof signupFormSchema>) {
 
     if (typeof loginToken === "object") {
       redirect(loginToken.location)
-
       return { success: true, customer: createdCustomer }
     }
 
@@ -115,6 +173,55 @@ export async function signup(formData: z.infer<typeof signupFormSchema>) {
   }
 }
 
+export async function completeB2BRegistration(
+  formData: z.infer<typeof b2bRegistrationStep2Schema>
+) {
+  try {
+    const customer = await getCustomer()
+    const authHeaders = await getAuthHeaders()
+    
+    // Try to get customer ID from current session, or from auth token
+    let customerId = customer?.id
+    
+    if (!customerId) {
+      // If we can't get customer from session, try to extract from token
+      // This handles the case where user just registered but session isn't fully established
+      return {
+        success: false,
+        error: "Please refresh the page and try again, or log in first.",
+      }
+    }
+
+    // Update customer with B2B details
+    const response = await sdk.client.fetch("/store/custom/customer/complete-b2b-registration", {
+      method: "POST",
+      headers: authHeaders,
+      body: JSON.stringify({
+        abn_acn: formData.abn_acn,
+        business_description: formData.business_description,
+        customer_id: customerId, // Pass customer ID as backup
+      }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.message || "Failed to complete registration")
+    }
+
+    revalidateTag("customer")
+
+    // Logout after completing step 2 (they'll need approval before logging in)
+    await removeAuthToken()
+
+    return { success: true }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : `${error}`,
+    }
+  }
+}
+
 export async function login(formData: z.infer<typeof loginFormSchema>) {
   const redirectUrl = formData.redirect_url
 
@@ -129,6 +236,34 @@ export async function login(formData: z.infer<typeof loginFormSchema>) {
     }
 
     await setAuthToken(token)
+    
+    // Check if customer is approved (for B2B customers)
+    const customer = await getCustomer()
+    if (IS_PURELINEN && customer) {
+      const approved = customer.metadata?.approved
+      const registrationStep = customer.metadata?.registration_step
+      
+      // Check if step 2 is incomplete
+      if (registrationStep === 1 || registrationStep === "1") {
+        await removeAuthToken()
+        return {
+          success: false,
+          message: "Please complete your business information registration to continue.",
+          requiresB2BStep2: true,
+        }
+      }
+      
+      // Check if not approved
+      const isApproved = approved === true || approved === "true"
+      if (!isApproved && (approved === false || approved === "false" || approved === null)) {
+        await removeAuthToken()
+        return {
+          success: false,
+          message: "Your account is pending approval. You will be notified via email once your account has been approved.",
+        }
+      }
+    }
+
     revalidateTag("customer")
 
     const cartId = await getCartId()

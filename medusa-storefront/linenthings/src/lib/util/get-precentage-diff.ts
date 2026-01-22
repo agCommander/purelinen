@@ -1,1 +1,0 @@
-../../purelinen/src/lib/util/get-precentage-diff.ts

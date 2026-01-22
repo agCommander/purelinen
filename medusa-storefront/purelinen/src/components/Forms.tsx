@@ -262,6 +262,59 @@ export const InputField: React.FC<InputFieldProps> = ({
   )
 }
 
+export interface TextareaFieldProps {
+  className?: string
+  name: string
+  placeholder?: string
+  label?: string
+  rows?: number
+  inputProps?: Omit<
+    React.ComponentProps<"textarea">,
+    "name" | "id" | keyof ControllerRenderProps
+  >
+}
+
+export const TextareaField: React.FC<TextareaFieldProps> = ({
+  className,
+  name,
+  placeholder,
+  label,
+  rows = 4,
+  inputProps,
+}) => {
+  const { field, fieldState } = useController<{ __name__: string }, "__name__">(
+    { name: name as "__name__" }
+  )
+
+  return (
+    <div className={className}>
+      {label && (
+        <InputLabel className="mb-2">
+          {label}
+        </InputLabel>
+      )}
+      <textarea
+        {...inputProps}
+        {...field}
+        value={field.value ?? ""}
+        id={name}
+        rows={rows}
+        placeholder={placeholder}
+        className={twMerge(
+          "block w-full rounded-xs transition-all outline-none px-4 py-3 border border-grayscale-200 hover:border-grayscale-500 focus:border-grayscale-500 bg-transparent disabled:pointer-events-none disabled:bg-grayscale-50 aria-[invalid=true]:border-red-primary aria-[invalid=true]:focus:border-red-900",
+          inputProps?.className
+        )}
+        aria-invalid={Boolean(fieldState.error)}
+      />
+      {fieldState.error && (
+        <div className="pt-2 text-red-900 text-small-regular">
+          <span>{fieldState.error.message}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export interface CountrySelectFieldProps {
   className?: string
   name: string

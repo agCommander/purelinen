@@ -1,9 +1,15 @@
 /**
  * Site Configuration
  * Determines which website/brand is running
- * Set via environment variable NEXT_PUBLIC_STORE_NAME or automatically detected from hostname
+ * Set via environment variable NEXT_PUBLIC_SITE_BRAND or NEXT_PUBLIC_STORE_NAME
+ * Automatically detected from hostname in production
  * 
  * Similar to htaccess in Magento - determines site identity
+ * 
+ * Usage:
+ * - Deploy same codebase twice with different env vars:
+ *   - SITE_BRAND=purelinen (or NEXT_PUBLIC_SITE_BRAND=purelinen)
+ *   - SITE_BRAND=linenthings (or NEXT_PUBLIC_SITE_BRAND=linenthings)
  */
 
 export type SiteName = 'purelinen' | 'linenthings'
@@ -12,7 +18,15 @@ export type SiteName = 'purelinen' | 'linenthings'
  * Get the current site name from environment variable or hostname
  */
 function getSiteName(): SiteName {
-  // Check NEXT_PUBLIC_ prefixed env var (available on both server and client)
+  // Check NEXT_PUBLIC_SITE_BRAND first (new preferred name)
+  if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_BRAND) {
+    const siteBrand = process.env.NEXT_PUBLIC_SITE_BRAND.toLowerCase()
+    if (siteBrand === 'purelinen' || siteBrand === 'linenthings') {
+      return siteBrand as SiteName
+    }
+  }
+
+  // Check NEXT_PUBLIC_STORE_NAME (backward compatibility)
   if (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_STORE_NAME) {
     const storeName = process.env.NEXT_PUBLIC_STORE_NAME.toLowerCase()
     if (storeName === 'purelinen' || storeName === 'linenthings') {
@@ -31,8 +45,8 @@ function getSiteName(): SiteName {
     }
   }
 
-  // Default fallback based on which storefront directory we're in
-  // This will be set via next.config.js env variable
+  // Default fallback to purelinen
+  // In production, this should be set via environment variable
   return 'purelinen'
 }
 

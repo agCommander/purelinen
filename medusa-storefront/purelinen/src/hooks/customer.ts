@@ -13,6 +13,7 @@ import {
   signup,
   updateCustomer,
   updateCustomerAddress,
+  completeB2BRegistration,
 } from "@lib/data/customer"
 import { z } from "zod"
 import { StoreCustomer } from "@medusajs/types"
@@ -158,17 +159,38 @@ export const useDeleteCustomerAddress = (
   })
 }
 
-export const signupFormSchema = z.object({
+// Base schema for all signups
+const baseSignupSchema = z.object({
   email: z.string().email(),
   first_name: z.string().min(1),
   last_name: z.string().min(1),
   phone: z.string().optional().nullable(),
   password: z.string().min(6),
+  confirm_password: z.string().min(6),
+})
+
+// B2B fields (only required for Pure Linen)
+const b2bFieldsSchema = z.object({
+  abn_acn: z.string().min(9).max(11).regex(/^[0-9]+$/, "ABN/ACN must contain only numbers"),
+  business_description: z.string().min(10).max(1000),
+})
+
+// Combined schema - B2B fields are optional at schema level, validated in signup function
+export const signupFormSchema = baseSignupSchema
+  .merge(b2bFieldsSchema.partial())
+  .refine((data) => data.password === data.confirm_password, {
+    message: "Passwords don't match",
+    path: ["confirm_password"],
+  })
+
+export const b2bRegistrationStep2Schema = z.object({
+  abn_acn: z.string().min(9).max(11).regex(/^[0-9]+$/, "ABN/ACN must contain only numbers"),
+  business_description: z.string().min(10).max(1000),
 })
 
 export const useSignup = (
   options?: UseMutationOptions<
-    { success: boolean; error?: string | null; customer?: StoreCustomer },
+    { success: boolean; error?: string | null; customer?: StoreCustomer; requiresB2BStep2?: boolean },
     Error,
     z.infer<typeof signupFormSchema>
   >
@@ -179,6 +201,28 @@ export const useSignup = (
     mutationKey: ["signup"],
     mutationFn: async (values: z.infer<typeof signupFormSchema>) => {
       return signup(values)
+    },
+    onSuccess: async (...args) => {
+      await queryClient.invalidateQueries({ queryKey: ["customer"] })
+      await options?.onSuccess?.(...args)
+    },
+    ...options,
+  })
+}
+
+export const useB2BRegistrationStep2 = (
+  options?: UseMutationOptions<
+    { success: boolean; error?: string | null },
+    Error,
+    z.infer<typeof b2bRegistrationStep2Schema>
+  >
+) => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: ["b2b-registration-step2"],
+    mutationFn: async (values: z.infer<typeof b2bRegistrationStep2Schema>) => {
+      return completeB2BRegistration(values)
     },
     onSuccess: async (...args) => {
       await queryClient.invalidateQueries({ queryKey: ["customer"] })
