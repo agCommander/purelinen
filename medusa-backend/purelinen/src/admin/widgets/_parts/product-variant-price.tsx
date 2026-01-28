@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 import {
   DataGrid,
@@ -202,13 +202,10 @@ const ProductVariantPrice = ({
       const priceValue = linenthingsSizePrices[sizeValue];
       const prices = variant.prices || {};
       
-      // Apply to AUD currency (for linenthings pricing)
-      // Note: These will be base prices, but you can later add them to Price Lists
+      // Apply to AUD currency (for retail/Linen Things pricing)
+      // These are base prices, which are now Retail (Linen Things) prices
       const audCurrency = currencyCodes.find(c => c.toLowerCase() === 'aud') || currencyCodes[0];
       if (audCurrency) {
-        // Store linenthings price - you might want to use a different key or metadata
-        // For now, we'll apply to the same base price columns
-        // You can distinguish them later when adding to Price Lists
         prices[audCurrency] = priceValue;
       }
 
@@ -223,7 +220,8 @@ const ProductVariantPrice = ({
   }, [sizeKey, linenthingsSizePrices, form, variantsToGenerate, currencies, regions]);
 
   // Auto-generate prices from import data (by SKU matching)
-  const handleAutoGeneratePrices = useCallback((priceType: 'base' | 'purelinen' | 'linenthings') => {
+  // priceType: 'linenthings' = Retail prices (base prices), 'purelinen' = B2B wholesale (price list)
+  const handleAutoGeneratePrices = useCallback((priceType: 'purelinen' | 'linenthings') => {
     if (!priceImportData || !variantsToGenerate.length) {
       toast.error('Price data not loaded');
       return;
@@ -251,19 +249,11 @@ const ProductVariantPrice = ({
       if (matchingVariant.sku && priceImportData.pricesBySku[matchingVariant.sku]) {
         const skuPrices = priceImportData.pricesBySku[matchingVariant.sku];
         
-        if (priceType === 'base' && skuPrices.purelinen) {
-          priceAmount = skuPrices.purelinen;
-        } else if (priceType === 'purelinen' && skuPrices.purelinen) {
+        if (priceType === 'purelinen' && skuPrices.purelinen) {
           priceAmount = skuPrices.purelinen;
         } else if (priceType === 'linenthings' && skuPrices.linenthings) {
           priceAmount = skuPrices.linenthings;
         }
-      }
-
-      // If no SKU match and looking for linenthings, try variant_id (for existing variants)
-      if (!priceAmount && priceType === 'linenthings' && matchingVariant.id) {
-        // Note: This won't work for new variants, but we can try
-        // For new variants, SKU matching is the only option
       }
 
       if (!priceAmount) {
@@ -297,15 +287,43 @@ const ProductVariantPrice = ({
     }
   }, [priceImportData, variantsToGenerate, form, currencies, regions]);
 
-  const columns = useVariantPriceGridColumns({
+  const baseColumns = useVariantPriceGridColumns({
     currencies,
     regions: [], // Not using regional pricing - only AUD currency
     pricePreferences,
     priceLists: priceLists || [],
   });
+  
+  // Customize base price column header to indicate it's Retail (Linen Things)
+  const columns = React.useMemo(() => {
+    return baseColumns.map((col: any) => {
+      // Update AUD price column header - check for currency_prices.aud or similar patterns
+      if (col.id === 'currency_prices.aud' || 
+          (typeof col.id === 'string' && col.id.includes('aud') && col.id.includes('currency'))) {
+        return {
+          ...col,
+          header: () => (
+            <div className="flex flex-col">
+              <span>Retail Price</span>
+              <span className="text-xs text-gray-500 font-normal">(Linen Things)</span>
+            </div>
+          ),
+        };
+      }
+      return col;
+    });
+  }, [baseColumns]);
 
   return (
     <div className="flex flex-col gap-4 p-6">
+      {/* Pricing Structure Info */}
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-800">
+          <strong>Pricing Structure:</strong> Base prices are Retail (Linen Things) prices. 
+          Pure Linen price list is for B2B wholesale. Linen Things price list is for date-ranged discounts/sales only.
+        </p>
+      </div>
+      
       {/* Auto-Generate Prices Section */}
       <div className="flex flex-col gap-4 p-4 border border-ui-border-base rounded-lg bg-ui-bg-subtle">
         <div className="flex flex-col gap-2">
@@ -320,10 +338,10 @@ const ProductVariantPrice = ({
             type="button"
             variant="secondary"
             size="small"
-            onClick={() => handleAutoGeneratePrices('base')}
+            onClick={() => handleAutoGeneratePrices('linenthings')}
             disabled={isGeneratingPrices || !priceImportData || variants.length === 0}
           >
-            Load Base Prices (Purelinen)
+            Load Retail Prices (Linen Things)
           </Button>
           <Button
             type="button"
@@ -332,16 +350,7 @@ const ProductVariantPrice = ({
             onClick={() => handleAutoGeneratePrices('purelinen')}
             disabled={isGeneratingPrices || !priceImportData || variants.length === 0}
           >
-            Load Purelinen Prices
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            size="small"
-            onClick={() => handleAutoGeneratePrices('linenthings')}
-            disabled={isGeneratingPrices || !priceImportData || variants.length === 0}
-          >
-            Load Linenthings Prices
+            Load Pure Linen Prices (B2B)
           </Button>
         </div>
         
@@ -353,14 +362,57 @@ const ProductVariantPrice = ({
         )}
       </div>
 
-      {/* Size-based pricing section - Purelinen (Base) */}
+      {/* Size-based pricing section - Retail (Linen Things) */}
       {sizeKey && uniqueSizes.length > 0 && (
         <>
           <div className="flex flex-col gap-4 p-4 border border-ui-border-base rounded-lg bg-ui-bg-subtle">
           <div className="flex flex-col gap-2">
-            <Label>Set Purelinen (Base) Prices by Size</Label>
+            <Label>Set Retail Prices (Linen Things) by Size</Label>
             <p className="text-xs text-ui-fg-subtle">
-              Enter Purelinen prices for each size and click "Apply Purelinen Prices" to set base prices.
+              Enter retail prices for each size. These will be set as base prices (used by Linen Things storefront).
+            </p>
+          </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              {uniqueSizes.map((size) => (
+                <div key={`retail-${size}`} className="flex flex-col gap-1">
+                  <Label htmlFor={`retail-price-${size}`} className="text-xs">
+                    {size}
+                  </Label>
+                  <Input
+                    id={`retail-price-${size}`}
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={linenthingsSizePrices[size] || ""}
+                    onChange={(e) => {
+                      setLinenthingsSizePrices((prev) => ({
+                        ...prev,
+                        [size]: e.target.value,
+                      }));
+                    }}
+                    placeholder="0.00"
+                  />
+                </div>
+              ))}
+            </div>
+            
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleApplyLinenthingsPricesBySize}
+              disabled={Object.keys(linenthingsSizePrices).length === 0 || variants.length === 0}
+            >
+              Apply Retail Prices (Linen Things) by Size
+            </Button>
+          </div>
+
+          {/* Size-based pricing section - Pure Linen (B2B) */}
+          <div className="flex flex-col gap-4 p-4 border border-ui-border-base rounded-lg bg-ui-bg-subtle">
+          <div className="flex flex-col gap-2">
+            <Label>Set Pure Linen Prices (B2B Wholesale) by Size</Label>
+            <p className="text-xs text-ui-fg-subtle">
+              Enter Pure Linen wholesale prices for each size. These will be added to the Pure Linen price list.
             </p>
           </div>
             
@@ -394,50 +446,7 @@ const ProductVariantPrice = ({
               onClick={handleApplyPurelinenPricesBySize}
               disabled={Object.keys(purelinenSizePrices).length === 0 || variants.length === 0}
             >
-              Apply Purelinen Prices by Size
-            </Button>
-          </div>
-
-          {/* Size-based pricing section - Linenthings */}
-          <div className="flex flex-col gap-4 p-4 border border-ui-border-base rounded-lg bg-ui-bg-subtle">
-          <div className="flex flex-col gap-2">
-            <Label>Set Linenthings Prices by Size</Label>
-            <p className="text-xs text-ui-fg-subtle">
-              Enter Linenthings prices for each size and click "Apply Linenthings Prices" to set retail prices.
-            </p>
-          </div>
-            
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {uniqueSizes.map((size) => (
-                <div key={`linenthings-${size}`} className="flex flex-col gap-1">
-                  <Label htmlFor={`linenthings-price-${size}`} className="text-xs">
-                    {size}
-                  </Label>
-                  <Input
-                    id={`linenthings-price-${size}`}
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={linenthingsSizePrices[size] || ""}
-                    onChange={(e) => {
-                      setLinenthingsSizePrices((prev) => ({
-                        ...prev,
-                        [size]: e.target.value,
-                      }));
-                    }}
-                    placeholder="0.00"
-                  />
-                </div>
-              ))}
-            </div>
-            
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleApplyLinenthingsPricesBySize}
-              disabled={Object.keys(linenthingsSizePrices).length === 0 || variants.length === 0}
-            >
-              Apply Linenthings Prices by Size
+              Apply Pure Linen Prices (B2B) by Size
             </Button>
           </div>
         </>
@@ -495,6 +504,7 @@ const useVariantPriceGridColumns = ({
         disableHiding: true,
       }),
 
+      // Base prices = Retail (Linen Things) prices
       ...createDataGridPriceColumns<
         HttpTypes.AdminProductVariant,
         ProductCreateSchemaType
@@ -510,17 +520,34 @@ const useVariantPriceGridColumns = ({
         },
         t: ((key: any) => key) as any,
       }),
-      // Add Price List columns
+      // Add Price List columns with proper labels
       ...(priceLists.map((priceList) => {
         const audCurrency = currencies?.find((c) => c.currency_code.toLowerCase() === 'aud')?.currency_code || 'aud';
+        const isPureLinen = priceList.title?.toUpperCase() === 'PURELINEN' || priceList.title?.includes('Pure Linen');
+        const isLinenthings = priceList.title?.toUpperCase() === 'LINENTHINGS' || priceList.title?.includes('Linen Things');
+        
+        let headerLabel = `Price ${priceList.title}`;
+        let subLabel = '';
+        
+        if (isPureLinen) {
+          headerLabel = 'Pure Linen';
+          subLabel = '(B2B Wholesale)';
+        } else if (isLinenthings) {
+          headerLabel = 'Linen Things Discounts';
+          subLabel = '(Date-ranged sales only)';
+        }
+        
         return columnHelper.column({
           id: `price_list.${priceList.id}`,
           name: priceList.title,
           header: () => (
-            <div className="flex w-full items-center justify-between gap-3">
+            <div className="flex flex-col">
               <span className="truncate" title={priceList.title}>
-                Price {priceList.title}
+                {headerLabel}
               </span>
+              {subLabel && (
+                <span className="text-xs text-gray-500 font-normal">{subLabel}</span>
+              )}
             </div>
           ),
           field: (context) => {

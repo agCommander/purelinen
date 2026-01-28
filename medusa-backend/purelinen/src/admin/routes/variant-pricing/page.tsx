@@ -210,6 +210,14 @@ const ProductVariantPricingPage = () => {
   const columns = React.useMemo(() => {
     const audCurrency = currencies?.find((c) => c.currency_code.toLowerCase() === 'aud')?.currency_code || 'aud';
     
+    // Identify price lists by title
+    const pureLinenPriceList = priceLists?.find((pl: any) => 
+      pl.title?.toUpperCase() === 'PURELINEN' || pl.title?.includes('Pure Linen')
+    );
+    const linenthingsPriceList = priceLists?.find((pl: any) => 
+      pl.title?.toUpperCase() === 'LINENTHINGS' || pl.title?.includes('Linen Things')
+    );
+    
     return [
       columnHelper.column({
         id: 'Title',
@@ -227,26 +235,48 @@ const ProductVariantPricingPage = () => {
         },
         disableHiding: true,
       }),
-      // Base price column (AUD)
+      // Base price column = Retail (Linen Things) price
       columnHelper.column({
         id: 'price_aud',
-        name: 'Price AUD',
-        header: 'Price AUD',
+        name: 'Retail Price (Linen Things)',
+        header: () => (
+          <div className="flex flex-col">
+            <span>Retail Price</span>
+            <span className="text-xs text-gray-500 font-normal">(Linen Things)</span>
+          </div>
+        ),
         field: (context) => `variants.${context.row.index}.prices.${audCurrency}`,
         type: 'number',
         cell: (context) => <DataGridCurrencyCell code={audCurrency} context={context} />,
       }),
-      // Price List columns
-      ...(priceLists?.map((priceList: any) => {
-        return columnHelper.column({
-          id: `price_list.${priceList.id}`,
-          name: priceList.title,
-          header: `Price ${priceList.title}`,
-          field: (context) => `variants.${context.row.index}.priceListPrices.${priceList.id}`,
-          type: 'number',
-          cell: (context) => <DataGridCurrencyCell code={audCurrency} context={context} />,
-        });
-      }) || []),
+      // Pure Linen price list (B2B wholesale)
+      ...(pureLinenPriceList ? [columnHelper.column({
+        id: `price_list.${pureLinenPriceList.id}`,
+        name: pureLinenPriceList.title,
+        header: () => (
+          <div className="flex flex-col">
+            <span>Pure Linen</span>
+            <span className="text-xs text-gray-500 font-normal">(B2B Wholesale)</span>
+          </div>
+        ),
+        field: (context) => `variants.${context.row.index}.priceListPrices.${pureLinenPriceList.id}`,
+        type: 'number',
+        cell: (context) => <DataGridCurrencyCell code={audCurrency} context={context} />,
+      })] : []),
+      // Linen Things price list (Discounts only)
+      ...(linenthingsPriceList ? [columnHelper.column({
+        id: `price_list.${linenthingsPriceList.id}`,
+        name: linenthingsPriceList.title,
+        header: () => (
+          <div className="flex flex-col">
+            <span>Linen Things Discounts</span>
+            <span className="text-xs text-gray-500 font-normal">(Date-ranged sales only)</span>
+          </div>
+        ),
+        field: (context) => `variants.${context.row.index}.priceListPrices.${linenthingsPriceList.id}`,
+        type: 'number',
+        cell: (context) => <DataGridCurrencyCell code={audCurrency} context={context} />,
+      })] : []),
     ];
   }, [currencies, priceLists]);
 
@@ -285,9 +315,15 @@ const ProductVariantPricingPage = () => {
 
       <FormProvider {...form}>
         <div className="p-6">
+          <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>Pricing Structure:</strong> Base prices are Retail (Linen Things) prices. 
+              Pure Linen price list is for B2B wholesale. Linen Things price list is for date-ranged discounts/sales only.
+            </p>
+          </div>
           <DataGrid
             columns={columns}
-            data={variants}
+            data={variants as any}
             state={form}
             onEditingChange={() => {}}
           />
