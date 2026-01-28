@@ -34,19 +34,21 @@ const ProductVariantPricingButton = ({ data: product }: DetailWidgetProps<AdminP
   return (
     <div className="flex items-center justify-end gap-2 px-6 py-3 border-b border-ui-border-base -mb-px">
       <Button
-        variant="secondary"
+        variant="primary"
         size="small"
         onClick={() => navigate(`/variant-pricing?productId=${product.id}`)}
+        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
       >
         <CurrencyDollar />
-        Edit Prices (with Price Lists)
+        Edit All Product Variant Prices (with Prices for both Purelinen and Linenthings)
       </Button>
     </div>
   );
 };
 
 export const config = defineWidgetConfig({
-  zone: 'product.details.after',
+  zone: 'product.details.before', // Try placing it before other content
+  // zone: 'product.details.after', // Fallback if before doesn't work
 });
 
 export default ProductVariantPricingButton;

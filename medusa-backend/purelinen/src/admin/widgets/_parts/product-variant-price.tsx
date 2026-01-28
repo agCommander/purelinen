@@ -479,7 +479,9 @@ const useVariantPriceGridColumns = ({
       columnHelper.column({
         id: "Title",
         header: "Title",
-        size: 300,
+        size: 500, // Increased from 300 to 400px for better visibility
+       // minSize: 300, // Minimum width
+       // maxSize: 600, // Maximum width (allows some adjustment)
         cell: (context) => {
           const entity = context.row.original;
           return (
