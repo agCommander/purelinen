@@ -71,10 +71,10 @@ export async function signup(formData: z.infer<typeof signupFormSchema>) {
   try {
     // Validate B2B fields if Pure Linen
     if (IS_PURELINEN) {
-      if (!formData.abn_acn || !formData.business_description) {
+      if (!formData.abn_acn || !formData.business_description || !formData.company) {
         return {
           success: false,
-          error: "ABN/ACN and business description are required for wholesale accounts",
+          error: "Company name, ABN/ACN and business description are required for wholesale accounts",
         }
       }
     }
@@ -93,6 +93,9 @@ export async function signup(formData: z.infer<typeof signupFormSchema>) {
       metadata.registration_step = 2 // Both steps complete in one form
       metadata.abn_acn = formData.abn_acn
       metadata.business_description = formData.business_description
+      if (formData.website && formData.website.trim() !== "") {
+        metadata.website = formData.website.trim()
+      }
     }
 
     const { customer: createdCustomer } = await sdk.store.customer.create(
@@ -101,6 +104,7 @@ export async function signup(formData: z.infer<typeof signupFormSchema>) {
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone ?? undefined,
+        company_name: IS_PURELINEN ? formData.company : undefined,
         metadata,
       },
       {},
@@ -201,11 +205,20 @@ export async function completeB2BRegistration(
         business_description: formData.business_description,
         customer_id: customerId, // Pass customer ID as backup
       }),
-    })
+    }) as Response
 
+    // Type guard: ensure response is of expected type
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      throw new Error(errorData.message || "Failed to complete registration")
+      let errorMessage = "Failed to complete registration"
+      try {
+        const errorData = await response.json()
+        if (errorData && typeof errorData === 'object' && 'message' in errorData) {
+          errorMessage = String(errorData.message)
+        }
+      } catch {
+        // ignore parsing error
+      }
+      throw new Error(errorMessage)
     }
 
     revalidateTag("customer")

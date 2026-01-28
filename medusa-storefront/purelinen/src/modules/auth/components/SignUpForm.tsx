@@ -147,6 +147,24 @@ export const SignUpForm = withReactQueryProvider(() => {
                 <div className="border-t border-gray-200 pt-6 mt-4">
                   <h3 className="text-md font-semibold mb-4">Business Information</h3>
                 </div>
+                <InputField
+                  placeholder="Company Name *"
+                  name="company"
+                  className="flex-1"
+                  inputProps={{ 
+                    autoComplete: "organization",
+                  }}
+                />
+                <InputField
+                  placeholder="Website (optional)"
+                  name="website"
+                  type="text"
+                  className="flex-1"
+                  inputProps={{ 
+                    autoComplete: "url",
+                    title: "Please enter a valid website URL (e.g., https://example.com)"
+                  }}
+                />
                 <div>
                   <label className="block mb-2 font-semibold text-sm">
                     Australian Business Number (ABN) or Australian Company Number (ACN) *

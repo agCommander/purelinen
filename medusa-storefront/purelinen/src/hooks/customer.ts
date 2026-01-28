@@ -171,6 +171,8 @@ const baseSignupSchema = z.object({
 
 // B2B fields (only required for Pure Linen)
 const b2bFieldsSchema = z.object({
+  company: z.string().min(1, "Company name is required"),
+  website: z.string().optional().nullable(),
   abn_acn: z.string().min(9).max(11).regex(/^[0-9]+$/, "ABN/ACN must contain only numbers"),
   business_description: z.string().min(10).max(1000),
 })
@@ -182,6 +184,24 @@ export const signupFormSchema = baseSignupSchema
     message: "Passwords don't match",
     path: ["confirm_password"],
   })
+  .refine(
+    (data) => {
+      // Website validation - allow empty or valid URL
+      if (!data.website || data.website === "") {
+        return true
+      }
+      try {
+        new URL(data.website)
+        return true
+      } catch {
+        return false
+      }
+    },
+    {
+      message: "Please enter a valid website URL (e.g., https://example.com)",
+      path: ["website"],
+    }
+  )
 
 export const b2bRegistrationStep2Schema = z.object({
   abn_acn: z.string().min(9).max(11).regex(/^[0-9]+$/, "ABN/ACN must contain only numbers"),
