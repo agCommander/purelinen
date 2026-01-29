@@ -22,6 +22,7 @@
     "test:unit": "TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.978.0",
     "@hookform/resolvers": "^5.2.2",
     "@medusajs/admin-sdk": "^2.11.2",
     "@medusajs/cli": "^2.11.2",
@@ -37,6 +38,7 @@
     "@mikro-orm/migrations": "6.4.16",
     "@mikro-orm/postgresql": "6.4.16",
     "@paypal/react-paypal-js": "^8.8.3",
+    "@react-email/components": "^1.0.6",
     "@rokmohar/medusa-plugin-meilisearch": "^1.3.3",
     "awilix": "^8.0.1",
     "cors": "^2.8.5",
@@ -44,6 +46,7 @@
     "medusa-variant-images": "^1.1.3",
     "pg": "^8.13.0",
     "react-dropzone": "^14.3.8",
+    "react-email": "^5.2.5",
     "react-hook-form": "^7.62.0",
     "winston": "^3.17.0"
   },
