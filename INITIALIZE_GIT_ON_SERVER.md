@@ -99,6 +99,8 @@ echo "medusa-backend/purelinen/*" > .git/info/sparse-checkout
 git pull origin main
 ```
 
+
+
 **Note:** This is more complex and the workflow would need to be adjusted.
 
 ## Option 3: Initialize at Root of Current Structure

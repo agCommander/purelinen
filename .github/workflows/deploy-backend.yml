@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - main  # Change to your main branch name
-    paths:
-      - 'medusa-backend/purelinen/**'
-      - '.github/workflows/deploy-backend.yml'
+    # Removed paths filter to trigger on any push to main
+    # Uncomment below if you only want to deploy when backend changes
+    # paths:
+    #   - 'medusa-backend/purelinen/**'
+    #   - '.github/workflows/deploy-backend.yml'
 
 jobs:
   deploy:
@@ -29,11 +31,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            # Backend directory path
-            cd /home/purelinen/public_html/subdomains/newpl/medusa-backend/purelinen
-            
-            # Pull latest code
+            # Pull from root where git is initialized
+            cd /home/purelinen/public_html/subdomains/newpl
             git pull origin main
+            
+            # Then go to backend directory
+            cd medusa-backend/purelinen
             
             # Install dependencies
             npm install --legacy-peer-deps
