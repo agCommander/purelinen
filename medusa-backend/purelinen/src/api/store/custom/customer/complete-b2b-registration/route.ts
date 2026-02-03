@@ -10,14 +10,9 @@ export async function POST(
   res: MedusaResponse
 ) {
   try {
-    // Get customer ID from auth context or body
-    let customerId = (req.auth_context as any)?.actor_id as string | undefined
-    
-    // If not in auth context, try to get from body (for cases where token might not be set yet)
+    // Get customer ID from body
     const body = req.body as { customer_id?: string; abn_acn?: string; business_description?: string }
-    if (!customerId && body.customer_id) {
-      customerId = body.customer_id
-    }
+    const customerId = body.customer_id
     
     if (!customerId) {
       return res.status(401).json({
