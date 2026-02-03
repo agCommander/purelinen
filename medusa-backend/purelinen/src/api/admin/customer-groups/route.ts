@@ -73,7 +73,7 @@ export async function POST(
 ) {
   try {
     const customerModule = req.scope.resolve(Modules.CUSTOMER) as any
-    const { name, handle, metadata } = req.body
+    const { name, handle, metadata } = req.body as { name?: string; handle?: string; metadata?: Record<string, any> }
     
     if (!name || !handle) {
       return res.status(400).json({

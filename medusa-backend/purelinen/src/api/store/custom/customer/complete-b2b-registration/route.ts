@@ -11,11 +11,12 @@ export async function POST(
 ) {
   try {
     // Get customer ID from auth context or body
-    let customerId = req.auth_context?.actor_id
+    let customerId = (req.auth_context as any)?.actor_id as string | undefined
     
     // If not in auth context, try to get from body (for cases where token might not be set yet)
-    if (!customerId && req.body?.customer_id) {
-      customerId = req.body.customer_id
+    const body = req.body as { customer_id?: string; abn_acn?: string; business_description?: string }
+    if (!customerId && body.customer_id) {
+      customerId = body.customer_id
     }
     
     if (!customerId) {
@@ -25,7 +26,7 @@ export async function POST(
       })
     }
 
-    const { abn_acn, business_description } = req.body
+    const { abn_acn, business_description } = body
 
     if (!abn_acn || !business_description) {
       return res.status(400).json({

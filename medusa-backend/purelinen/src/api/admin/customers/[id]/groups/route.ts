@@ -37,7 +37,7 @@ export async function PUT(
 ) {
   try {
     const customerId = req.params.id
-    const { group_ids } = req.body // Array of customer group IDs
+    const { group_ids } = req.body as { group_ids?: string[] } // Array of customer group IDs
     
     if (!Array.isArray(group_ids)) {
       return res.status(400).json({

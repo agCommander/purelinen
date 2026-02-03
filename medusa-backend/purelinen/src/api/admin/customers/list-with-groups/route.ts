@@ -64,7 +64,7 @@ export async function GET(
       const groups = Array.isArray(row.groups) ? row.groups.filter((g: any) => g.id) : []
       
       // Determine group type
-      let groupType = null
+      let groupType: string | null = null
       if (groups.length > 0) {
         const b2bGroup = groups.find(
           (g: any) => {

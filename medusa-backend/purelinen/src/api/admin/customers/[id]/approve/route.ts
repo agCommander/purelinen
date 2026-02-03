@@ -12,7 +12,7 @@ export async function PUT(
 ) {
   try {
     const customerId = req.params.id
-    const { approved } = req.body
+    const { approved } = req.body as { approved?: boolean }
 
     if (typeof approved !== "boolean") {
       return res.status(400).json({
