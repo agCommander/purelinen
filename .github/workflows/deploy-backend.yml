@@ -33,7 +33,12 @@ jobs:
           script: |
             # Pull from root where git is initialized
             cd /home/purelinen/public_html/subdomains/newpl
-            git pull origin main
+            
+            # Handle untracked files that might conflict
+            git stash --include-untracked || true
+            
+            # Pull latest code (force if needed)
+            git pull origin main || git reset --hard origin/main
             
             # Then go to backend directory
             cd medusa-backend/purelinen
