@@ -1,0 +1,50 @@
+name: Deploy Backend to Production
+
+on:
+  push:
+    branches:
+      - main  # Change to your main branch name
+    paths:
+      - 'medusa-backend/purelinen/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      
+      - name: Deploy to server via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # Backend directory path
+            cd /home/purelinen/public_html/subdomains/newpl/medusa-backend/purelinen
+            
+            # Pull latest code
+            git pull origin main
+            
+            # Install dependencies
+            npm install --legacy-peer-deps
+            
+            # Build application
+            npm run build
+            
+            # Restart PM2
+            pm2 restart purelinen-backend || pm2 start ecosystem.config.js
+            
+            # Save PM2 config
+            pm2 save
+            
+            echo "Deployment completed successfully!"
