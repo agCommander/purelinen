@@ -10,8 +10,25 @@ export async function GET(
   res: MedusaResponse
 ): Promise<void> {
   try {
+    // Log request details for debugging
+    console.log("[Session Route] GET /auth/session called")
+    console.log("[Session Route] Cookies:", req.headers.cookie)
+    console.log("[Session Route] Request path:", req.path)
+    console.log("[Session Route] Request URL:", req.url)
+    
     // Check for session
     const session = (req as any).session
+    
+    console.log("[Session Route] Session exists:", !!session)
+    if (session) {
+      console.log("[Session Route] Session data:", {
+        id: session.id?.substring(0, 30) + "...",
+        auth_identity_id: session.auth_identity_id,
+        hasToken: !!session.token,
+        actor_type: session.actor_type,
+        keys: Object.keys(session),
+      })
+    }
     
     if (session && (session.auth_identity_id || session.token)) {
       // Session exists - get user info
