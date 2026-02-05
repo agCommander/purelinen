@@ -121,190 +121,47 @@ export async function POST(
     url: req.url
   })
   
-  // If request is from admin panel, call admin auth endpoint directly
-  // and manually create the session
+  // If request is from admin panel, use Medusa's auth service directly
+  // This is the proper way according to Medusa v2 docs: https://docs.medusajs.com/resources/commerce-modules/auth
   if (isAdminRequest) {
-    console.log("[Auth Route] Handling admin authentication")
+    console.log("[Auth Route] Handling admin authentication using Medusa auth service")
     
     try {
-      // Make HTTP request to admin auth endpoint to authenticate
-      const port = parseInt(process.env.PORT || "9000", 10)
-      const cookieHeader = req.headers.cookie || ""
+      const authModuleService = req.scope.resolve(Modules.AUTH)
       
-      const response = await makeInternalRequest(
-        "/auth/admin/emailpass",
-        "POST",
-        req.body,
-        port,
-        cookieHeader
+      // Use Medusa's authenticate method with authScope: "admin"
+      // This properly handles session creation according to Medusa v2 docs
+      const { success, authIdentity, error } = await authModuleService.authenticate(
+        "emailpass",
+        {
+          url: req.url,
+          headers: req.headers,
+          query: req.query,
+          body: req.body,
+          authScope: "admin", // This tells Medusa to use admin authentication
+          protocol: req.protocol || "https",
+        }
       )
       
-      if (response.status >= 400) {
-        res.status(response.status).json(response.data)
-        return
-      }
-      
-      // Admin auth returns a JWT token - decode it to extract auth info
-      const authData = response.data || {}
-      const token = authData.token
-      
-      if (!token) {
-        console.error("[Auth Route] No token in admin auth response")
-        res.status(500).json({ message: "Authentication failed - no token received" })
-        return
-      }
-      
-      // Decode JWT token to extract auth_identity_id and other info
-      // JWT format: header.payload.signature
-      let authIdentityId: string | undefined
-      let actorId: string | undefined
-      let actorType: string | undefined
-      
-      try {
-        const tokenParts = token.split(".")
-        if (tokenParts.length === 3) {
-          // Decode base64url payload (second part)
-          const payload = Buffer.from(tokenParts[1], "base64url").toString("utf-8")
-          const decoded = JSON.parse(payload)
-          
-          authIdentityId = decoded.auth_identity_id
-          actorId = decoded.actor_id
-          actorType = decoded.actor_type
-          
-          console.log("[Auth Route] Decoded JWT:", {
-            authIdentityId,
-            actorId,
-            actorType,
-            exp: decoded.exp,
-            iat: decoded.iat,
-          })
-        }
-      } catch (e) {
-        console.error("[Auth Route] Error decoding JWT:", e)
-      }
-      
-      // Check if Set-Cookie headers are present
-      const setCookieHeaders = response.headers["set-cookie"]
-      
-      if (setCookieHeaders) {
-        // Parse and forward Set-Cookie headers properly
-        const cookies = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders]
-        cookies.forEach((cookieStr) => {
-          const [nameValue, ...attributes] = cookieStr.split(";")
-          const [name, value] = nameValue.split("=").map(s => s.trim())
-          
-          const cookieOptions: any = {}
-          attributes.forEach((attr) => {
-            const [key, val] = attr.split("=").map(s => s.trim())
-            const keyLower = key.toLowerCase()
-            
-            if (keyLower === "path") {
-              cookieOptions.path = val || "/"
-            } else if (keyLower === "domain") {
-              cookieOptions.domain = val
-            } else if (keyLower === "max-age") {
-              cookieOptions.maxAge = parseInt(val, 10)
-            } else if (keyLower === "expires") {
-              cookieOptions.expires = new Date(val)
-            } else if (keyLower === "httponly") {
-              cookieOptions.httpOnly = true
-            } else if (keyLower === "secure") {
-              cookieOptions.secure = true
-            } else if (keyLower === "samesite") {
-              cookieOptions.sameSite = (val || "lax").toLowerCase()
-            }
-          })
-          
-          res.cookie(name, value, cookieOptions)
-          console.log("[Auth Route] Set cookie:", name, "with options:", cookieOptions)
+      if (!success || !authIdentity) {
+        console.error("[Auth Route] Authentication failed:", error)
+        res.status(401).json({ 
+          message: error || "Authentication failed" 
         })
-      } else {
-        // No Set-Cookie headers - create session manually using Express session middleware
-        console.log("[Auth Route] No Set-Cookie headers, creating session manually")
-        
-        const session = (req as any).session
-        if (session) {
-          // Store auth info in session
-          session.actor_type = actorType || "admin"
-          session.token = token
-          
-          if (authIdentityId) {
-            session.auth_identity_id = authIdentityId
-          }
-          if (actorId) {
-            session.actor_id = actorId
-            session.user_id = actorId // Also store as user_id for compatibility
-          }
-          
-          // Save the session (this will set the connect.sid cookie)
-          await new Promise<void>((resolve, reject) => {
-            session.save((err: any) => {
-              if (err) {
-                console.error("[Auth Route] Error saving session:", err)
-                reject(err)
-              } else {
-                resolve()
-              }
-            })
-          })
-          
-          // Also set the JWT token as a cookie for Medusa's session endpoint
-          // Medusa v2 admin auth uses JWT tokens, so /auth/session might check for this
-          // Set cookie domain to match the request domain (important for reverse proxy)
-          const cookieDomain = process.env.NODE_ENV === "production" 
-            ? ".purelinen.com.au" // Use wildcard domain so it works on subdomains
-            : undefined // Don't set domain in development (localhost)
-          
-          res.cookie("_medusa_jwt", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days (matches JWT exp)
-            path: "/",
-            domain: cookieDomain,
-          })
-          
-          // Also ensure connect.sid cookie has the right domain
-          if (cookieDomain && session.id) {
-            // The session.save() should have set connect.sid, but let's verify
-            console.log("[Auth Route] Session cookie should be set with domain:", cookieDomain)
-          }
-          
-          console.log("[Auth Route] Session created manually:", {
-            authIdentityId,
-            actorId,
-            actorType,
-            sessionId: session.id?.substring(0, 30) + "...",
-            jwtCookieSet: true,
-          })
-        } else {
-          console.warn("[Auth Route] No session object found on request - session middleware may not be initialized")
-          // Fallback: set token as cookie directly
-          res.cookie("_medusa_jwt", token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-            path: "/",
-          })
-          console.log("[Auth Route] Set JWT token as cookie (fallback)")
-        }
+        return
       }
       
-      // Copy all response headers from the admin auth endpoint (except Set-Cookie which we handled above)
-      Object.keys(response.headers).forEach((key) => {
-        const value = response.headers[key]
-        if (value && key.toLowerCase() !== "set-cookie") {
-          if (Array.isArray(value)) {
-            res.setHeader(key, value)
-          } else {
-            res.setHeader(key, value)
-          }
-        }
+      console.log("[Auth Route] Authentication successful:", {
+        authIdentityId: authIdentity.id,
+        actorType: authIdentity.app_metadata?.actor_type,
       })
       
-      // Return the response from admin auth endpoint
-      res.status(response.status).json(response.data || {})
+      // Medusa's authenticate method should handle session creation automatically
+      // Return success response - Medusa will set the session cookie
+      res.status(200).json({
+        auth_identity_id: authIdentity.id,
+        actor_type: "admin",
+      })
       return
     } catch (error) {
       console.error("[Auth Route] Error handling admin auth:", error)
