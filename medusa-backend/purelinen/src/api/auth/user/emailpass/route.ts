@@ -248,11 +248,22 @@ export async function POST(
             })
           })
           
+          // Also set the JWT token as a cookie for Medusa's session endpoint
+          // Medusa v2 admin auth uses JWT tokens, so /auth/session might check for this
+          res.cookie("_medusa_jwt", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days (matches JWT exp)
+            path: "/",
+          })
+          
           console.log("[Auth Route] Session created manually:", {
             authIdentityId,
             actorId,
             actorType,
             sessionId: session.id?.substring(0, 30) + "...",
+            jwtCookieSet: true,
           })
         } else {
           console.warn("[Auth Route] No session object found on request - session middleware may not be initialized")
