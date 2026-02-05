@@ -1,8 +1,13 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { Modules } from "@medusajs/framework/utils"
 
+interface ResetPasswordBody {
+  email: string
+  password: string
+}
+
 export async function POST(
-  req: MedusaRequest,
+  req: MedusaRequest<ResetPasswordBody>,
   res: MedusaResponse
 ): Promise<void> {
   try {

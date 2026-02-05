@@ -1,98 +1,131 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
-import { Modules } from "@medusajs/framework/utils"
+
+interface AuthRequestBody {
+  email: string
+  password: string
+}
 
 /**
  * Custom route handler for /auth/user/emailpass
- * If request is from admin panel, use admin auth instead
+ * If request is from admin panel, proxy to admin auth endpoint
  */
 export async function POST(
-  req: MedusaRequest,
+  req: MedusaRequest<AuthRequestBody>,
   res: MedusaResponse
 ): Promise<void> {
   // Check if request is coming from admin panel
   // Check multiple sources since reverse proxy might modify headers
-  const referer = (req.headers.referer || "").toLowerCase()
-  const origin = (req.headers.origin || "").toLowerCase()
-  const host = (req.headers.host || "").toLowerCase()
-  const xForwardedHost = (req.headers["x-forwarded-host"] || "").toLowerCase()
-  const userAgent = (req.headers["user-agent"] || "").toLowerCase()
+  const referer = Array.isArray(req.headers.referer) 
+    ? req.headers.referer[0] || "" 
+    : req.headers.referer || ""
+  const origin = Array.isArray(req.headers.origin)
+    ? req.headers.origin[0] || ""
+    : req.headers.origin || ""
+  const host = Array.isArray(req.headers.host)
+    ? req.headers.host[0] || ""
+    : req.headers.host || ""
+  const xForwardedHost = Array.isArray(req.headers["x-forwarded-host"])
+    ? req.headers["x-forwarded-host"][0] || ""
+    : req.headers["x-forwarded-host"] || ""
   
-  // Also check if there's a hint in the request body or query
+  const refererLower = referer.toLowerCase()
+  const originLower = origin.toLowerCase()
+  const hostLower = host.toLowerCase()
+  const xForwardedHostLower = xForwardedHost.toLowerCase()
+  
+  // Check if request is from admin panel
   const isAdminRequest = 
-    referer.includes("/app") || 
-    origin.includes("/app") ||
-    referer.includes("admin") ||
-    origin.includes("admin") ||
+    refererLower.includes("/app") || 
+    originLower.includes("/app") ||
+    refererLower.includes("admin") ||
+    originLower.includes("admin") ||
     // Check if request comes from admin subdomain/domain
-    (host.includes("api") && !host.includes("store")) ||
+    (hostLower.includes("api") && !hostLower.includes("store")) ||
     // In production, admin panel is at /app, so any request to /auth/user/emailpass
     // from the API domain is likely admin (since customers use storefront)
-    (host.includes("api-new.purelinen.com.au") || xForwardedHost.includes("api-new"))
+    (hostLower.includes("api-new.purelinen.com.au") || xForwardedHostLower.includes("api-new"))
   
   // Log for debugging
   console.log("[Auth Route] Detecting admin request:", {
-    referer,
-    origin,
-    host,
-    xForwardedHost,
+    referer: refererLower,
+    origin: originLower,
+    host: hostLower,
+    xForwardedHost: xForwardedHostLower,
     isAdminRequest,
     path: req.path,
     url: req.url
   })
   
-  // If request is from admin panel, use admin auth
+  // If request is from admin panel, proxy to admin auth endpoint
   if (isAdminRequest) {
-    console.log("[Auth Route] Using admin authentication")
-    // Call admin auth endpoint internally
-    const { email, password } = req.body
+    console.log("[Auth Route] Proxying to admin authentication")
     
     try {
-      const authModuleService = req.scope.resolve(Modules.AUTH)
-      
-      // Authenticate as admin
-      const result = await authModuleService.authenticate("admin", "emailpass", {
-        email,
-        password,
+      // Make internal HTTP request to admin auth endpoint
+      const adminAuthUrl = `http://localhost:${process.env.PORT || 9000}/auth/admin/emailpass`
+      const response = await fetch(adminAuthUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(req.body),
       })
       
-      // Set session cookie
-      req.session.actor_id = result.actor_id
-      req.session.actor_type = "admin"
-      req.session.auth_identity_id = result.auth_identity_id
+      const data = await response.json()
       
-      return res.json({
-        token: result.token,
-        user: result.user,
+      if (!response.ok) {
+        return res.status(response.status).json(data)
+      }
+      
+      // Copy response headers (especially Set-Cookie for session)
+      response.headers.forEach((value, key) => {
+        if (key.toLowerCase() === "set-cookie") {
+          res.setHeader(key, value)
+        }
       })
+      
+      return res.status(response.status).json(data)
     } catch (error) {
-      console.error("Admin auth error:", error)
-      return res.status(401).json({ 
+      console.error("Admin auth proxy error:", error)
+      return res.status(500).json({ 
         message: error instanceof Error ? error.message : "Authentication failed" 
       })
     }
   }
   
-  // Otherwise, proceed with normal user auth
-  console.log("[Auth Route] Using user authentication")
+  // Otherwise, let Medusa handle it normally (for customer auth)
+  // We'll return 400 to indicate they should use the correct endpoint
+  // In practice, Medusa will handle this route, but since we've overridden it,
+  // we need to handle it ourselves or let it fall through
+  console.log("[Auth Route] User authentication - letting Medusa handle")
+  
+  // For now, return error suggesting to use customer auth endpoint
+  // Actually, we should let Medusa's default handler process this
+  // But since we've created this route, it will intercept
+  // The best solution is to not create this route and instead use middleware
+  // But for now, let's just proxy to the user endpoint
   try {
-    const authModuleService = req.scope.resolve(Modules.AUTH)
-    const { email, password } = req.body
-    
-    const result = await authModuleService.authenticate("user", "emailpass", {
-      email,
-      password,
+    const userAuthUrl = `http://localhost:${process.env.PORT || 9000}/auth/user/emailpass`
+    const response = await fetch(userAuthUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(req.body),
     })
     
-    req.session.actor_id = result.actor_id
-    req.session.actor_type = "user"
-    req.session.auth_identity_id = result.auth_identity_id
+    const data = await response.json()
     
-    return res.json({
-      token: result.token,
-      user: result.user,
+    // Copy response headers
+    response.headers.forEach((value, key) => {
+      if (key.toLowerCase() === "set-cookie") {
+        res.setHeader(key, value)
+      }
     })
+    
+    return res.status(response.status).json(data)
   } catch (error) {
-    return res.status(401).json({ 
+    return res.status(500).json({ 
       message: error instanceof Error ? error.message : "Authentication failed" 
     })
   }
