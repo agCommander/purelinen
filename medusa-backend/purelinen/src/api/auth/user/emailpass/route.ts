@@ -74,7 +74,8 @@ export async function POST(
       const data = await response.json()
       
       if (!response.ok) {
-        return res.status(response.status).json(data)
+        res.status(response.status).json(data)
+        return
       }
       
       // Copy response headers (especially Set-Cookie for session)
@@ -84,12 +85,14 @@ export async function POST(
         }
       })
       
-      return res.status(response.status).json(data)
+      res.status(response.status).json(data)
+      return
     } catch (error) {
       console.error("Admin auth proxy error:", error)
-      return res.status(500).json({ 
+      res.status(500).json({ 
         message: error instanceof Error ? error.message : "Authentication failed" 
       })
+      return
     }
   }
   
@@ -123,10 +126,12 @@ export async function POST(
       }
     })
     
-    return res.status(response.status).json(data)
+    res.status(response.status).json(data)
+    return
   } catch (error) {
-    return res.status(500).json({ 
+    res.status(500).json({ 
       message: error instanceof Error ? error.message : "Authentication failed" 
     })
+    return
   }
 }
