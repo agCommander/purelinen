@@ -33,7 +33,7 @@ export async function GET(
             const authIdentity = authIdentities[0]
             const userId = authIdentity.app_metadata?.user_id
             
-            if (userId) {
+            if (userId && typeof userId === "string") {
               const users = await userModuleService.listUsers({ id: userId })
               if (users && users.length > 0) {
                 const user = users[0]
