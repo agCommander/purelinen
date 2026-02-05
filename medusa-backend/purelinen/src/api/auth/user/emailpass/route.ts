@@ -1,8 +1,64 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import * as http from "http"
 
 interface AuthRequestBody {
   email: string
   password: string
+}
+
+// Helper function to make internal HTTP request
+function makeInternalRequest(
+  path: string,
+  method: string,
+  body: any,
+  port: number
+): Promise<{ status: number; data: any; headers: http.IncomingHttpHeaders }> {
+  return new Promise((resolve, reject) => {
+    const postData = JSON.stringify(body)
+    
+    const options = {
+      hostname: "localhost",
+      port: port,
+      path: path,
+      method: method,
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(postData),
+      },
+    }
+    
+    const req = http.request(options, (res) => {
+      let data = ""
+      
+      res.on("data", (chunk) => {
+        data += chunk
+      })
+      
+      res.on("end", () => {
+        try {
+          const parsedData = JSON.parse(data)
+          resolve({
+            status: res.statusCode || 500,
+            data: parsedData,
+            headers: res.headers,
+          })
+        } catch (e) {
+          resolve({
+            status: res.statusCode || 500,
+            data: { message: data },
+            headers: res.headers,
+          })
+        }
+      })
+    })
+    
+    req.on("error", (error) => {
+      reject(error)
+    })
+    
+    req.write(postData)
+    req.end()
+  })
 }
 
 /**
@@ -62,30 +118,32 @@ export async function POST(
     
     try {
       // Make internal HTTP request to admin auth endpoint
-      const adminAuthUrl = `http://localhost:${process.env.PORT || 9000}/auth/admin/emailpass`
-      const response = await fetch(adminAuthUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(req.body),
-      })
+      const port = parseInt(process.env.PORT || "9000", 10)
+      const response = await makeInternalRequest(
+        "/auth/admin/emailpass",
+        "POST",
+        req.body,
+        port
+      )
       
-      const data = await response.json()
-      
-      if (!response.ok) {
-        res.status(response.status).json(data)
+      if (response.status >= 400) {
+        res.status(response.status).json(response.data)
         return
       }
       
       // Copy response headers (especially Set-Cookie for session)
-      response.headers.forEach((value, key) => {
-        if (key.toLowerCase() === "set-cookie") {
-          res.setHeader(key, value)
+      Object.keys(response.headers).forEach((key) => {
+        const value = response.headers[key]
+        if (key.toLowerCase() === "set-cookie" && value) {
+          if (Array.isArray(value)) {
+            value.forEach((v) => res.setHeader(key, v))
+          } else {
+            res.setHeader(key, value)
+          }
         }
       })
       
-      res.status(response.status).json(data)
+      res.status(response.status).json(response.data)
       return
     } catch (error) {
       console.error("Admin auth proxy error:", error)
@@ -108,25 +166,13 @@ export async function POST(
   // The best solution is to not create this route and instead use middleware
   // But for now, let's just proxy to the user endpoint
   try {
-    const userAuthUrl = `http://localhost:${process.env.PORT || 9000}/auth/user/emailpass`
-    const response = await fetch(userAuthUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(req.body),
+    // For user auth, let Medusa handle it - but since we've overridden the route,
+    // we need to proxy it. Actually, this creates a loop, so let's just return an error
+    // telling them to use the correct endpoint, or better yet, don't override this route
+    // For now, let's just return a helpful error
+    res.status(400).json({
+      message: "Use /auth/admin/emailpass for admin authentication or /auth/user/emailpass for customer authentication"
     })
-    
-    const data = await response.json()
-    
-    // Copy response headers
-    response.headers.forEach((value, key) => {
-      if (key.toLowerCase() === "set-cookie") {
-        res.setHeader(key, value)
-      }
-    })
-    
-    res.status(response.status).json(data)
     return
   } catch (error) {
     res.status(500).json({ 
