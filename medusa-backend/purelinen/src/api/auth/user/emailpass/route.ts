@@ -144,67 +144,65 @@ export async function POST(
         return
       }
       
-      // Authentication succeeded - now we need to create a session
-      // The admin auth endpoint returns auth data but doesn't set cookies via HTTP
-      // So we need to manually create the session using Medusa's auth service
-      const authModuleService = req.scope.resolve(Modules.AUTH)
-      const userModuleService = req.scope.resolve(Modules.USER)
+      // Authentication succeeded - try to create a session using Express session middleware
+      // Access the session from the request object (Express adds it via middleware)
+      const session = (req as any).session
       
-      // Find the user
-      const users = await userModuleService.listUsers({ email: req.body.email })
-      if (!users || users.length === 0) {
-        res.status(401).json({ message: "Invalid credentials" })
-        return
-      }
-      
-      const user = users[0]
-      
-      // Authenticate with admin context to get session token
-      try {
-        // Use Medusa's authenticate method to create a proper session
-        const authResult = await authModuleService.authenticate("admin", "emailpass", {
-          entity_id: req.body.email,
-          password: req.body.password,
-        })
+      if (session) {
+        // Get auth data from response
+        const authData = response.data
+        const authIdentityId = authData?.auth_identity_id || authData?.authIdentity?.id || authData?.authIdentityId
+        const userId = authData?.user?.id || authData?.actor_id
+        const token = authData?.token
         
-        if (!authResult || !authResult.auth_identity_id) {
-          res.status(401).json({ message: "Authentication failed" })
-          return
+        if (authIdentityId || userId) {
+          // Store auth info in session
+          session.auth_identity_id = authIdentityId
+          session.user_id = userId
+          session.actor_type = "admin"
+          if (token) {
+            session.token = token
+          }
+          
+          // Save the session (this will set the cookie)
+          await new Promise<void>((resolve, reject) => {
+            session.save((err: any) => {
+              if (err) {
+                console.error("[Auth Route] Error saving session:", err)
+                reject(err)
+              } else {
+                resolve()
+              }
+            })
+          })
+          
+          console.log("[Auth Route] Session created:", {
+            authIdentityId,
+            userId,
+            sessionId: session.id?.substring(0, 20) + "...",
+          })
+        } else {
+          console.warn("[Auth Route] No auth identity or user ID in response:", authData)
         }
-        
-        // Set session cookie manually
-        // Medusa uses connect.sid for sessions
-        const sessionId = authResult.auth_identity_id // Use auth identity as session identifier
-        
-        // Set session cookie with proper options
-        res.cookie("connect.sid", sessionId, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-          path: "/",
-        })
-        
-        console.log("[Auth Route] Session created:", {
-          authIdentityId: authResult.auth_identity_id,
-          userId: user.id,
-        })
-        
-        // Return success response
-        res.status(200).json({
-          user: {
-            id: user.id,
-            email: user.email,
-          },
-        })
-        return
-      } catch (authError) {
-        console.error("[Auth Route] Error creating session:", authError)
-        // If direct auth fails, return the HTTP response anyway
-        // The client might be able to use the token from the response
-        res.status(response.status).json(response.data)
-        return
+      } else {
+        console.warn("[Auth Route] No session object found on request")
       }
+      
+      // Copy all response headers from the admin auth endpoint
+      Object.keys(response.headers).forEach((key) => {
+        const value = response.headers[key]
+        if (value && key.toLowerCase() !== "set-cookie") {
+          if (Array.isArray(value)) {
+            res.setHeader(key, value)
+          } else {
+            res.setHeader(key, value)
+          }
+        }
+      })
+      
+      // Return the response from admin auth endpoint
+      res.status(response.status).json(response.data)
+      return
     } catch (error) {
       console.error("[Auth Route] Error handling admin auth:", error)
       res.status(500).json({ 
