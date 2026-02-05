@@ -45,17 +45,19 @@ function makeInternalRequest(
       
       res.on("end", () => {
         try {
-          const parsedData = JSON.parse(data)
+          const parsedData = data ? JSON.parse(data) : {}
           resolve({
             status: res.statusCode || 500,
             data: parsedData,
             headers: res.headers,
+            rawData: data, // Include raw data for debugging
           })
         } catch (e) {
           resolve({
             status: res.statusCode || 500,
             data: { message: data },
             headers: res.headers,
+            rawData: data, // Include raw data for debugging
           })
         }
       })
@@ -144,49 +146,99 @@ export async function POST(
         return
       }
       
-      // Log the full response to see its structure
-      console.log("[Auth Route] Admin auth response:", JSON.stringify(response.data, null, 2))
-      console.log("[Auth Route] Response headers:", Object.keys(response.headers))
+      // Admin auth returns a JWT token - decode it to extract auth info
+      const authData = response.data || {}
+      const token = authData.token
       
-      // Authentication succeeded - try to create a session using Express session middleware
-      // Access the session from the request object (Express adds it via middleware)
-      const session = (req as any).session
+      if (!token) {
+        console.error("[Auth Route] No token in admin auth response")
+        res.status(500).json({ message: "Authentication failed - no token received" })
+        return
+      }
       
-      if (session) {
-        // Get auth data from response - check various possible structures
-        const authData = response.data
-        const authIdentityId = 
-          authData?.auth_identity_id || 
-          authData?.authIdentity?.id || 
-          authData?.authIdentityId ||
-          authData?.auth_identity?.id
-        const userId = 
-          authData?.user?.id || 
-          authData?.actor_id ||
-          authData?.user_id
-        const token = authData?.token || authData?.access_token
-        
-        console.log("[Auth Route] Extracted auth data:", {
-          authIdentityId,
-          userId,
-          hasToken: !!token,
-          responseKeys: Object.keys(authData || {}),
+      // Decode JWT token to extract auth_identity_id and other info
+      // JWT format: header.payload.signature
+      let authIdentityId: string | undefined
+      let actorId: string | undefined
+      let actorType: string | undefined
+      
+      try {
+        const tokenParts = token.split(".")
+        if (tokenParts.length === 3) {
+          // Decode base64url payload (second part)
+          const payload = Buffer.from(tokenParts[1], "base64url").toString("utf-8")
+          const decoded = JSON.parse(payload)
+          
+          authIdentityId = decoded.auth_identity_id
+          actorId = decoded.actor_id
+          actorType = decoded.actor_type
+          
+          console.log("[Auth Route] Decoded JWT:", {
+            authIdentityId,
+            actorId,
+            actorType,
+            exp: decoded.exp,
+            iat: decoded.iat,
+          })
+        }
+      } catch (e) {
+        console.error("[Auth Route] Error decoding JWT:", e)
+      }
+      
+      // Check if Set-Cookie headers are present
+      const setCookieHeaders = response.headers["set-cookie"]
+      
+      if (setCookieHeaders) {
+        // Parse and forward Set-Cookie headers properly
+        const cookies = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders]
+        cookies.forEach((cookieStr) => {
+          const [nameValue, ...attributes] = cookieStr.split(";")
+          const [name, value] = nameValue.split("=").map(s => s.trim())
+          
+          const cookieOptions: any = {}
+          attributes.forEach((attr) => {
+            const [key, val] = attr.split("=").map(s => s.trim())
+            const keyLower = key.toLowerCase()
+            
+            if (keyLower === "path") {
+              cookieOptions.path = val || "/"
+            } else if (keyLower === "domain") {
+              cookieOptions.domain = val
+            } else if (keyLower === "max-age") {
+              cookieOptions.maxAge = parseInt(val, 10)
+            } else if (keyLower === "expires") {
+              cookieOptions.expires = new Date(val)
+            } else if (keyLower === "httponly") {
+              cookieOptions.httpOnly = true
+            } else if (keyLower === "secure") {
+              cookieOptions.secure = true
+            } else if (keyLower === "samesite") {
+              cookieOptions.sameSite = (val || "lax").toLowerCase()
+            }
+          })
+          
+          res.cookie(name, value, cookieOptions)
+          console.log("[Auth Route] Set cookie:", name, "with options:", cookieOptions)
         })
+      } else {
+        // No Set-Cookie headers - create session manually using Express session middleware
+        console.log("[Auth Route] No Set-Cookie headers, creating session manually")
         
-        if (authIdentityId || userId) {
+        const session = (req as any).session
+        if (session) {
           // Store auth info in session
+          session.actor_type = actorType || "admin"
+          session.token = token
+          
           if (authIdentityId) {
             session.auth_identity_id = authIdentityId
           }
-          if (userId) {
-            session.user_id = userId
-          }
-          session.actor_type = "admin"
-          if (token) {
-            session.token = token
+          if (actorId) {
+            session.actor_id = actorId
+            session.user_id = actorId // Also store as user_id for compatibility
           }
           
-          // Save the session (this will set the cookie)
+          // Save the session (this will set the connect.sid cookie)
           await new Promise<void>((resolve, reject) => {
             session.save((err: any) => {
               if (err) {
@@ -198,34 +250,27 @@ export async function POST(
             })
           })
           
-          console.log("[Auth Route] Session created:", {
+          console.log("[Auth Route] Session created manually:", {
             authIdentityId,
-            userId,
-            sessionId: session.id?.substring(0, 20) + "...",
+            actorId,
+            actorType,
+            sessionId: session.id?.substring(0, 30) + "...",
           })
         } else {
-          console.warn("[Auth Route] No auth identity or user ID in response:", authData)
-          // Even without auth identity, try to save session with whatever data we have
-          session.actor_type = "admin"
-          if (authData) {
-            Object.assign(session, authData)
-          }
-          await new Promise<void>((resolve, reject) => {
-            session.save((err: any) => {
-              if (err) {
-                console.error("[Auth Route] Error saving session:", err)
-                reject(err)
-              } else {
-                resolve()
-              }
-            })
+          console.warn("[Auth Route] No session object found on request - session middleware may not be initialized")
+          // Fallback: set token as cookie directly
+          res.cookie("_medusa_jwt", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+            path: "/",
           })
+          console.log("[Auth Route] Set JWT token as cookie (fallback)")
         }
-      } else {
-        console.warn("[Auth Route] No session object found on request")
       }
       
-      // Copy all response headers from the admin auth endpoint
+      // Copy all response headers from the admin auth endpoint (except Set-Cookie which we handled above)
       Object.keys(response.headers).forEach((key) => {
         const value = response.headers[key]
         if (value && key.toLowerCase() !== "set-cookie") {
@@ -238,7 +283,7 @@ export async function POST(
       })
       
       // Return the response from admin auth endpoint
-      res.status(response.status).json(response.data)
+      res.status(response.status).json(response.data || {})
       return
     } catch (error) {
       console.error("[Auth Route] Error handling admin auth:", error)
