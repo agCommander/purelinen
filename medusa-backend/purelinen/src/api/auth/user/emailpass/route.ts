@@ -129,16 +129,53 @@ export async function POST(
     try {
       const authModuleService = req.scope.resolve(Modules.AUTH)
       
-      // Use Medusa's authenticate method with authScope: "admin"
-      // This properly handles session creation according to Medusa v2 docs
+      // Convert headers to Record<string, string> format
+      const headers: Record<string, string> = {}
+      Object.keys(req.headers).forEach((key) => {
+        const value = req.headers[key]
+        if (value) {
+          headers[key] = Array.isArray(value) ? value[0] : value
+        }
+      })
+      
+      // Convert query to Record<string, string> format
+      const query: Record<string, string> = {}
+      Object.keys(req.query).forEach((key) => {
+        const value = req.query[key]
+        if (value) {
+          // Handle ParsedQs type - convert to string
+          if (typeof value === "string") {
+            query[key] = value
+          } else if (Array.isArray(value)) {
+            // Get first element and convert to string
+            const firstValue = value[0]
+            query[key] = typeof firstValue === "string" ? firstValue : String(firstValue || "")
+          } else {
+            query[key] = String(value)
+          }
+        }
+      })
+      
+      // Convert body to Record<string, string> format
+      const body: Record<string, string> = {
+        email: req.body.email,
+        password: req.body.password,
+      }
+      
+      // Modify URL to point to admin endpoint so Medusa knows it's admin auth
+      // The auth provider checks the URL to determine the scope
+      const adminUrl = req.url.replace("/auth/user/emailpass", "/auth/admin/emailpass")
+      
+      // Use Medusa's authenticate method
+      // Note: authScope is not in the type definition, but the URL path determines the scope
+      // By using /auth/admin/emailpass in the URL, Medusa will treat it as admin auth
       const { success, authIdentity, error } = await authModuleService.authenticate(
         "emailpass",
         {
-          url: req.url,
-          headers: req.headers,
-          query: req.query,
-          body: req.body,
-          authScope: "admin", // This tells Medusa to use admin authentication
+          url: adminUrl,
+          headers,
+          query,
+          body,
           protocol: req.protocol || "https",
         }
       )
