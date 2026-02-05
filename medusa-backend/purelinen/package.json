@@ -13,7 +13,7 @@
     "medusa"
   ],
   "scripts": {
-    "build": "medusa build",
+    "build": "medusa build && node -e \"const bundler = require('@medusajs/admin-bundler'); bundler.build({ outDir: './public/admin', path: '/app', plugins: ['@medusajs/draft-order/admin'] }).catch(e => { console.error(e); process.exit(1); })\"",
     "seed": "medusa exec ./src/scripts/seed.ts",
     "start": "medusa start",
     "dev": "medusa develop",
