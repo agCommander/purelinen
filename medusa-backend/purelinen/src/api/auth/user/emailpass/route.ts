@@ -144,21 +144,43 @@ export async function POST(
         return
       }
       
+      // Log the full response to see its structure
+      console.log("[Auth Route] Admin auth response:", JSON.stringify(response.data, null, 2))
+      console.log("[Auth Route] Response headers:", Object.keys(response.headers))
+      
       // Authentication succeeded - try to create a session using Express session middleware
       // Access the session from the request object (Express adds it via middleware)
       const session = (req as any).session
       
       if (session) {
-        // Get auth data from response
+        // Get auth data from response - check various possible structures
         const authData = response.data
-        const authIdentityId = authData?.auth_identity_id || authData?.authIdentity?.id || authData?.authIdentityId
-        const userId = authData?.user?.id || authData?.actor_id
-        const token = authData?.token
+        const authIdentityId = 
+          authData?.auth_identity_id || 
+          authData?.authIdentity?.id || 
+          authData?.authIdentityId ||
+          authData?.auth_identity?.id
+        const userId = 
+          authData?.user?.id || 
+          authData?.actor_id ||
+          authData?.user_id
+        const token = authData?.token || authData?.access_token
+        
+        console.log("[Auth Route] Extracted auth data:", {
+          authIdentityId,
+          userId,
+          hasToken: !!token,
+          responseKeys: Object.keys(authData || {}),
+        })
         
         if (authIdentityId || userId) {
           // Store auth info in session
-          session.auth_identity_id = authIdentityId
-          session.user_id = userId
+          if (authIdentityId) {
+            session.auth_identity_id = authIdentityId
+          }
+          if (userId) {
+            session.user_id = userId
+          }
           session.actor_type = "admin"
           if (token) {
             session.token = token
@@ -183,6 +205,21 @@ export async function POST(
           })
         } else {
           console.warn("[Auth Route] No auth identity or user ID in response:", authData)
+          // Even without auth identity, try to save session with whatever data we have
+          session.actor_type = "admin"
+          if (authData) {
+            Object.assign(session, authData)
+          }
+          await new Promise<void>((resolve, reject) => {
+            session.save((err: any) => {
+              if (err) {
+                console.error("[Auth Route] Error saving session:", err)
+                reject(err)
+              } else {
+                resolve()
+              }
+            })
+          })
         }
       } else {
         console.warn("[Auth Route] No session object found on request")
