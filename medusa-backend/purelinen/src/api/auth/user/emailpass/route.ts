@@ -50,14 +50,12 @@ function makeInternalRequest(
             status: res.statusCode || 500,
             data: parsedData,
             headers: res.headers,
-            rawData: data, // Include raw data for debugging
           })
         } catch (e) {
           resolve({
             status: res.statusCode || 500,
             data: { message: data },
             headers: res.headers,
-            rawData: data, // Include raw data for debugging
           })
         }
       })
