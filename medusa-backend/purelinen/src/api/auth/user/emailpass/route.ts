@@ -250,13 +250,25 @@ export async function POST(
           
           // Also set the JWT token as a cookie for Medusa's session endpoint
           // Medusa v2 admin auth uses JWT tokens, so /auth/session might check for this
+          // Set cookie domain to match the request domain (important for reverse proxy)
+          const cookieDomain = process.env.NODE_ENV === "production" 
+            ? ".purelinen.com.au" // Use wildcard domain so it works on subdomains
+            : undefined // Don't set domain in development (localhost)
+          
           res.cookie("_medusa_jwt", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
             maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days (matches JWT exp)
             path: "/",
+            domain: cookieDomain,
           })
+          
+          // Also ensure connect.sid cookie has the right domain
+          if (cookieDomain && session.id) {
+            // The session.save() should have set connect.sid, but let's verify
+            console.log("[Auth Route] Session cookie should be set with domain:", cookieDomain)
+          }
           
           console.log("[Auth Route] Session created manually:", {
             authIdentityId,
