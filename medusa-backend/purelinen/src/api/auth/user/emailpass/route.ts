@@ -1,4 +1,5 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
+import { Modules } from "@medusajs/framework/utils"
 import * as http from "http"
 
 interface AuthRequestBody {
@@ -120,13 +121,13 @@ export async function POST(
     url: req.url
   })
   
-  // If request is from admin panel, proxy to admin auth endpoint
+  // If request is from admin panel, call admin auth endpoint directly
+  // and manually create the session
   if (isAdminRequest) {
-    console.log("[Auth Route] Proxying to admin authentication")
+    console.log("[Auth Route] Handling admin authentication")
     
     try {
-      // Make internal HTTP request to admin auth endpoint
-      // Forward cookies from original request so session can be established
+      // Make HTTP request to admin auth endpoint to authenticate
       const port = parseInt(process.env.PORT || "9000", 10)
       const cookieHeader = req.headers.cookie || ""
       
@@ -143,66 +144,69 @@ export async function POST(
         return
       }
       
-      // Copy response headers, but handle Set-Cookie specially
-      Object.keys(response.headers).forEach((key) => {
-        const value = response.headers[key]
-        if (value && key.toLowerCase() !== "set-cookie") {
-          // Copy non-cookie headers normally
-          if (Array.isArray(value)) {
-            res.setHeader(key, value)
-          } else {
-            res.setHeader(key, value)
-          }
-        }
-      })
+      // Authentication succeeded - now we need to create a session
+      // The admin auth endpoint returns auth data but doesn't set cookies via HTTP
+      // So we need to manually create the session using Medusa's auth service
+      const authModuleService = req.scope.resolve(Modules.AUTH)
+      const userModuleService = req.scope.resolve(Modules.USER)
       
-      // Handle Set-Cookie headers specially - parse and set with res.cookie()
-      const setCookieHeaders = response.headers["set-cookie"]
-      if (setCookieHeaders) {
-        const cookies = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders]
-        cookies.forEach((cookieStr) => {
-          // Parse cookie string: "name=value; Path=/; HttpOnly; SameSite=Strict"
-          const [nameValue, ...attributes] = cookieStr.split(";")
-          const [name, value] = nameValue.split("=").map(s => s.trim())
-          
-          const cookieOptions: any = {}
-          attributes.forEach((attr) => {
-            const [key, val] = attr.split("=").map(s => s.trim())
-            const keyLower = key.toLowerCase()
-            
-            if (keyLower === "path") {
-              cookieOptions.path = val || "/"
-            } else if (keyLower === "domain") {
-              cookieOptions.domain = val
-            } else if (keyLower === "max-age") {
-              cookieOptions.maxAge = parseInt(val, 10)
-            } else if (keyLower === "expires") {
-              cookieOptions.expires = new Date(val)
-            } else if (keyLower === "httponly") {
-              cookieOptions.httpOnly = true
-            } else if (keyLower === "secure") {
-              cookieOptions.secure = true
-            } else if (keyLower === "samesite") {
-              cookieOptions.sameSite = val || "strict"
-            }
-          })
-          
-          // Set cookie using res.cookie() which properly handles domain/path
-          res.cookie(name, value, cookieOptions)
-        })
+      // Find the user
+      const users = await userModuleService.listUsers({ email: req.body.email })
+      if (!users || users.length === 0) {
+        res.status(401).json({ message: "Invalid credentials" })
+        return
       }
       
-      // Log cookies for debugging
-      console.log("[Auth Route] Response headers:", {
-        setCookie: response.headers["set-cookie"],
-        parsedCookies: setCookieHeaders ? "Cookies parsed and set" : "No cookies",
-        allHeaders: Object.keys(response.headers)
-      })
+      const user = users[0]
       
-      res.status(response.status).json(response.data)
-      return
+      // Authenticate with admin context to get session token
+      try {
+        // Use Medusa's authenticate method to create a proper session
+        const authResult = await authModuleService.authenticate("admin", "emailpass", {
+          entity_id: req.body.email,
+          password: req.body.password,
+        })
+        
+        if (!authResult || !authResult.auth_identity_id) {
+          res.status(401).json({ message: "Authentication failed" })
+          return
+        }
+        
+        // Set session cookie manually
+        // Medusa uses connect.sid for sessions
+        const sessionId = authResult.auth_identity_id // Use auth identity as session identifier
+        
+        // Set session cookie with proper options
+        res.cookie("connect.sid", sessionId, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+          path: "/",
+        })
+        
+        console.log("[Auth Route] Session created:", {
+          authIdentityId: authResult.auth_identity_id,
+          userId: user.id,
+        })
+        
+        // Return success response
+        res.status(200).json({
+          user: {
+            id: user.id,
+            email: user.email,
+          },
+        })
+        return
+      } catch (authError) {
+        console.error("[Auth Route] Error creating session:", authError)
+        // If direct auth fails, return the HTTP response anyway
+        // The client might be able to use the token from the response
+        res.status(response.status).json(response.data)
+        return
+      }
     } catch (error) {
-      console.error("Admin auth proxy error:", error)
+      console.error("[Auth Route] Error handling admin auth:", error)
       res.status(500).json({ 
         message: error instanceof Error ? error.message : "Authentication failed" 
       })
