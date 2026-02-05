@@ -1,5 +1,10 @@
 /dist
 .env
+.env.*
+*.env
+env.bak
+.env.bak
+*.env.bak
 .DS_Store
 /uploads
 /node_modules

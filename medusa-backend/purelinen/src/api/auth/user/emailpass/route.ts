@@ -11,20 +11,28 @@ function makeInternalRequest(
   path: string,
   method: string,
   body: any,
-  port: number
+  port: number,
+  cookies?: string
 ): Promise<{ status: number; data: any; headers: http.IncomingHttpHeaders }> {
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify(body)
+    
+    const headers: http.OutgoingHttpHeaders = {
+      "Content-Type": "application/json",
+      "Content-Length": Buffer.byteLength(postData),
+    }
+    
+    // Forward cookies if provided
+    if (cookies) {
+      headers["Cookie"] = cookies
+    }
     
     const options = {
       hostname: "localhost",
       port: port,
       path: path,
       method: method,
-      headers: {
-        "Content-Type": "application/json",
-        "Content-Length": Buffer.byteLength(postData),
-      },
+      headers,
     }
     
     const req = http.request(options, (res) => {
@@ -118,12 +126,16 @@ export async function POST(
     
     try {
       // Make internal HTTP request to admin auth endpoint
+      // Forward cookies from original request so session can be established
       const port = parseInt(process.env.PORT || "9000", 10)
+      const cookieHeader = req.headers.cookie || ""
+      
       const response = await makeInternalRequest(
         "/auth/admin/emailpass",
         "POST",
         req.body,
-        port
+        port,
+        cookieHeader
       )
       
       if (response.status >= 400) {
@@ -131,16 +143,60 @@ export async function POST(
         return
       }
       
-      // Copy response headers (especially Set-Cookie for session)
+      // Copy response headers, but handle Set-Cookie specially
       Object.keys(response.headers).forEach((key) => {
         const value = response.headers[key]
-        if (key.toLowerCase() === "set-cookie" && value) {
+        if (value && key.toLowerCase() !== "set-cookie") {
+          // Copy non-cookie headers normally
           if (Array.isArray(value)) {
-            value.forEach((v) => res.setHeader(key, v))
+            res.setHeader(key, value)
           } else {
             res.setHeader(key, value)
           }
         }
+      })
+      
+      // Handle Set-Cookie headers specially - parse and set with res.cookie()
+      const setCookieHeaders = response.headers["set-cookie"]
+      if (setCookieHeaders) {
+        const cookies = Array.isArray(setCookieHeaders) ? setCookieHeaders : [setCookieHeaders]
+        cookies.forEach((cookieStr) => {
+          // Parse cookie string: "name=value; Path=/; HttpOnly; SameSite=Strict"
+          const [nameValue, ...attributes] = cookieStr.split(";")
+          const [name, value] = nameValue.split("=").map(s => s.trim())
+          
+          const cookieOptions: any = {}
+          attributes.forEach((attr) => {
+            const [key, val] = attr.split("=").map(s => s.trim())
+            const keyLower = key.toLowerCase()
+            
+            if (keyLower === "path") {
+              cookieOptions.path = val || "/"
+            } else if (keyLower === "domain") {
+              cookieOptions.domain = val
+            } else if (keyLower === "max-age") {
+              cookieOptions.maxAge = parseInt(val, 10)
+            } else if (keyLower === "expires") {
+              cookieOptions.expires = new Date(val)
+            } else if (keyLower === "httponly") {
+              cookieOptions.httpOnly = true
+            } else if (keyLower === "secure") {
+              cookieOptions.secure = true
+            } else if (keyLower === "samesite") {
+              cookieOptions.sameSite = val || "strict"
+            }
+          })
+          
+          // Set cookie using res.cookie() which properly handles domain/path
+          res.cookie(name, value, cookieOptions)
+        })
+      }
+      
+      // Log cookies for debugging
+      console.log("[Auth Route] Response headers:", {
+        setCookie: response.headers["set-cookie"],
+        parsedCookies: setCookieHeaders ? "Cookies parsed and set" : "No cookies",
+        allHeaders: Object.keys(response.headers)
       })
       
       res.status(response.status).json(response.data)
