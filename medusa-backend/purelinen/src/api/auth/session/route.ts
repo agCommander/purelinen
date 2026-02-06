@@ -25,6 +25,46 @@ export async function POST(
   const session = (req as any).session
   if (session && session.auth_identity_id) {
     console.log("[Session Route POST] Session already exists, returning success")
+    
+    // IMPORTANT: Even if session exists, we need to ensure the cookie is set!
+    // Check if Set-Cookie header is present
+    let setCookie = res.getHeader("Set-Cookie")
+    if (!setCookie) {
+      const sessionID = (req as any).sessionID
+      if (sessionID) {
+        const cookieName = (session as any).cookie?.name || 'connect.sid'
+        const cookieOptions = (session as any).cookie || {}
+        
+        // Get cookie secret
+        let cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+        try {
+          const configModule = req.scope.resolve("configModule")
+          if (configModule?.projectConfig?.http?.cookieSecret) {
+            cookieSecret = configModule.projectConfig.http.cookieSecret
+          }
+        } catch (e) {
+          // Use env default
+        }
+        
+        const cookieSignature = require("cookie-signature")
+        const signedValue = "s:" + cookieSignature.sign(sessionID, cookieSecret)
+        
+        const isSecure = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
+        const useSecure = cookieOptions.secure !== undefined ? cookieOptions.secure : isSecure
+        
+        res.cookie(cookieName, signedValue, {
+          httpOnly: cookieOptions.httpOnly !== false,
+          secure: useSecure,
+          sameSite: 'lax',
+          path: cookieOptions.path || '/',
+          maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000),
+        })
+        
+        console.log("[Session Route POST] ✅ Cookie set for existing session")
+        setCookie = res.getHeader("Set-Cookie")
+      }
+    }
+    
     res.status(200).json({
       auth_identity_id: session.auth_identity_id,
       actor_type: session.actor_type || "admin",
