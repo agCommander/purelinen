@@ -184,13 +184,41 @@ export async function POST(
               
               // Get cookie secret from Medusa's config
               let cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+              let cookieSecretSource = "process.env.COOKIE_SECRET"
               try {
                 const configModule = req.scope.resolve("configModule")
                 if (configModule?.projectConfig?.http?.cookieSecret) {
                   cookieSecret = configModule.projectConfig.http.cookieSecret
+                  cookieSecretSource = "configModule.projectConfig.http.cookieSecret"
                 }
+                console.log("[Session Route POST] Cookie secret from configModule:", {
+                  source: cookieSecretSource,
+                  value: cookieSecret.substring(0, 20) + "...",
+                  length: cookieSecret.length,
+                })
               } catch (e) {
-                // Use env default
+                console.warn("[Session Route POST] Could not read cookieSecret from configModule:", e)
+                console.log("[Session Route POST] Using cookie secret from process.env:", {
+                  value: cookieSecret.substring(0, 20) + "...",
+                  length: cookieSecret.length,
+                })
+              }
+              
+              // Also check what Express session middleware is using
+              // Express session stores the secret in the session store or cookie options
+              const sessionCookie = (session as any).cookie
+              if (sessionCookie) {
+                console.log("[Session Route POST] Express session cookie config:", {
+                  name: sessionCookie.name,
+                  // Note: Express session doesn't expose the secret directly, but we can check the cookie name
+                })
+              }
+              
+              // Check if we can access the session store's secret
+              const sessionStore = (req as any).sessionStore
+              if (sessionStore) {
+                console.log("[Session Route POST] Session store type:", sessionStore.constructor?.name || "unknown")
+                // Some session stores expose the secret, but MemoryStore doesn't
               }
               
               const cookieSignature = require("cookie-signature")
