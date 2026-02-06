@@ -158,7 +158,16 @@ export async function POST(
             // If Express session middleware didn't set the cookie, set it manually
             // Use cookieOptions from projectConfig to ensure consistency
             if (!setCookie && sessionID) {
-              const cookieName = (session as any).cookie?.name || 'connect.sid'
+              // Get the actual cookie name from Express session middleware
+              // This is critical - if the name doesn't match, Express won't find the cookie
+              const sessionCookie = (session as any).cookie
+              const cookieName = sessionCookie?.name || 'connect.sid'
+              
+              console.log("[Session Route POST] Cookie name check:", {
+                fromSessionCookie: sessionCookie?.name,
+                using: cookieName,
+                default: 'connect.sid',
+              })
               
               // Get cookie options from projectConfig (set in medusa-config.ts)
               let cookieOptions: any = {
@@ -206,12 +215,19 @@ export async function POST(
               
               // Also check what Express session middleware is using
               // Express session stores the secret in the session store or cookie options
-              const sessionCookie = (session as any).cookie
-              if (sessionCookie) {
+              const expressSessionCookie = (session as any).cookie
+              if (expressSessionCookie) {
                 console.log("[Session Route POST] Express session cookie config:", {
-                  name: sessionCookie.name,
-                  // Note: Express session doesn't expose the secret directly, but we can check the cookie name
+                  name: expressSessionCookie.name || "undefined (using default 'connect.sid')",
+                  httpOnly: expressSessionCookie.httpOnly,
+                  secure: expressSessionCookie.secure,
+                  sameSite: expressSessionCookie.sameSite,
+                  path: expressSessionCookie.path,
+                  maxAge: expressSessionCookie.maxAge,
+                  domain: expressSessionCookie.domain,
                 })
+              } else {
+                console.warn("[Session Route POST] ⚠️  No session.cookie found!")
               }
               
               // Check if we can access the session store's secret
@@ -219,6 +235,18 @@ export async function POST(
               if (sessionStore) {
                 console.log("[Session Route POST] Session store type:", sessionStore.constructor?.name || "unknown")
                 // Some session stores expose the secret, but MemoryStore doesn't
+              }
+              
+              // IMPORTANT: Check what cookie name Express session middleware is actually using
+              // It might be different from 'connect.sid'
+              const actualCookieName = expressSessionCookie?.name || 'connect.sid'
+              console.log("[Session Route POST] Using cookie name:", actualCookieName)
+              
+              // Verify we're using the same cookie name
+              if (cookieName !== actualCookieName) {
+                console.error("[Session Route POST] ⚠️  WARNING: Cookie name mismatch!")
+                console.error("[Session Route POST] We're using:", cookieName)
+                console.error("[Session Route POST] Express session expects:", actualCookieName)
               }
               
               const cookieSignature = require("cookie-signature")
