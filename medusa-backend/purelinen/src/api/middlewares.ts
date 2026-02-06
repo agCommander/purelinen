@@ -216,11 +216,34 @@ async function handleAuthSession(
 }
 
 // Log when middlewares are being registered
+console.log("=".repeat(80))
 console.log("[Middlewares] ===== REGISTERING CUSTOM MIDDLEWARES =====")
 console.log("[Middlewares] This file is being loaded")
+console.log("[Middlewares] If you see this log, the middleware file is loaded")
+console.log("=".repeat(80))
 
 export default defineMiddlewares({
   routes: [
+    {
+      // CRITICAL: Catch-all middleware to verify middleware is working
+      // This should log ALL requests to verify middleware is being called
+      matcher: /.*/,
+      middlewares: [
+        async (req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) => {
+          // Only log /admin/users/me to avoid spam
+          if (req.path === '/admin/users/me' || req.url?.includes('/admin/users/me')) {
+            console.log("=".repeat(80))
+            console.log("[CATCH-ALL Middleware] ===== INTERCEPTED /admin/users/me =====")
+            console.log("[CATCH-ALL Middleware] Method:", req.method)
+            console.log("[CATCH-ALL Middleware] Path:", req.path)
+            console.log("[CATCH-ALL Middleware] URL:", req.url)
+            console.log("[CATCH-ALL Middleware] Original URL:", (req as any).originalUrl)
+            console.log("=".repeat(80))
+          }
+          next()
+        }
+      ],
+    },
     {
       // Match all admin product API routes (including nested routes)
       matcher: /\/admin\/products/,
@@ -234,11 +257,13 @@ export default defineMiddlewares({
     {
       // Handle /admin/users/me requests - intercept and handle directly
       // This MUST run before Medusa's route and NOT call next() to prevent Medusa's route from running
-      matcher: /^\/admin\/users\/me$/,
+      // Use a more flexible matcher to catch the request
+      matcher: /\/admin\/users\/me/,
       middlewares: [
         async (req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) => {
           // Only handle GET requests
           if (req.method !== 'GET') {
+            console.log("[Admin Users Me Middleware] Not a GET request, calling next()")
             next()
             return
           }
@@ -246,6 +271,12 @@ export default defineMiddlewares({
           console.log("=".repeat(80))
           console.log("[Admin Users Me Middleware] ===== INTERCEPTING /admin/users/me =====")
           console.log("[Admin Users Me Middleware] ===== HANDLING REQUEST DIRECTLY (NOT CALLING next()) =====")
+          console.log("[Admin Users Me Middleware] Request details:", {
+            method: req.method,
+            path: req.path,
+            url: req.url,
+            originalUrl: (req as any).originalUrl,
+          })
           
           const { Modules } = await import("@medusajs/framework/utils")
           
