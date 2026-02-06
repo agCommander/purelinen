@@ -117,12 +117,21 @@ export async function GET(
   req: MedusaRequest,
   res: MedusaResponse
 ): Promise<void> {
+  console.log("=".repeat(60))
+  console.log("[Session Route GET] ===== CUSTOM ROUTE CALLED =====")
+  console.log("[Session Route GET] Request details:", {
+    method: req.method,
+    path: req.path,
+    url: req.url,
+    cookies: req.headers.cookie ? "present" : "missing",
+  })
+  console.log("=".repeat(60))
+  
   try {
     // Check for session
     const session = (req as any).session
     const sessionID = (req as any).sessionID
     
-    console.log("[Session Route GET] CUSTOM ROUTE CALLED!")
     console.log("[Session Route GET] Session check:", {
       hasSession: !!session,
       sessionID: sessionID?.substring(0, 30) + "...",
@@ -131,6 +140,33 @@ export async function GET(
       actorType: session?.actor_type,
       cookies: req.headers.cookie ? "present" : "missing",
     })
+    
+    // Check if cookie is being sent
+    const cookies = req.headers.cookie || ""
+    const connectSidMatch = cookies.match(/connect\.sid=([^;]+)/)
+    if (connectSidMatch) {
+      console.log("[Session Route GET] Found connect.sid cookie:", connectSidMatch[1].substring(0, 50) + "...")
+      
+      // Try to verify the session store can find it
+      const sessionStore = (req as any).sessionStore
+      if (sessionStore && sessionID) {
+        sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
+          if (storeErr) {
+            console.error("[Session Route GET] Error retrieving session from store:", storeErr)
+          } else if (storedSession) {
+            console.log("[Session Route GET] ✅ Session found in store:", {
+              sessionId: sessionID?.substring(0, 30) + "...",
+              hasAuthIdentityId: !!storedSession.auth_identity_id,
+              keys: Object.keys(storedSession),
+            })
+          } else {
+            console.error("[Session Route GET] ❌ Session NOT found in store, even though cookie exists!")
+          }
+        })
+      }
+    } else {
+      console.log("[Session Route GET] No connect.sid cookie found in request")
+    }
     
     if (session && (session.auth_identity_id || session.token)) {
       const authIdentityId = session.auth_identity_id

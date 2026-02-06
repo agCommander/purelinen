@@ -166,6 +166,26 @@ export async function POST(
                       actorType: decoded.actor_type,
                     })
                     
+                    // Verify session is actually stored in the session store
+                    const sessionStore = (req as any).sessionStore
+                    if (sessionStore && sessionID) {
+                      sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
+                        if (storeErr) {
+                          console.error("[Auth Route] Error retrieving session from store:", storeErr)
+                        } else if (storedSession) {
+                          console.log("[Auth Route] ✅ Session verified in store:", {
+                            sessionId: sessionID?.substring(0, 30) + "...",
+                            hasAuthIdentityId: !!storedSession.auth_identity_id,
+                            hasData: Object.keys(storedSession).length > 0,
+                          })
+                        } else {
+                          console.error("[Auth Route] ❌ Session NOT found in store after save! This is the problem.")
+                        }
+                      })
+                    } else {
+                      console.warn("[Auth Route] No session store or sessionID available")
+                    }
+                    
                     // Express session middleware doesn't set cookie in this callback context
                     // Manually set it using the exact format Express session expects
                     const cookieName = (session as any).cookie?.name || 'connect.sid'
