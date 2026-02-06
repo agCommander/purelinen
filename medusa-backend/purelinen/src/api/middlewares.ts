@@ -233,7 +233,8 @@ export default defineMiddlewares({
     },
     {
       // Log ALL requests to /admin/users/me - this MUST run before Medusa's route
-      matcher: /\/admin\/users\/me/,
+      // Try both regex and string matcher
+      matcher: "/admin/users/me",
       middlewares: [
         async (req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) => {
           console.log("=".repeat(60))
@@ -326,6 +327,25 @@ export default defineMiddlewares({
           }
           
           console.log("=".repeat(60))
+          next()
+        }
+      ],
+    },
+    {
+      // Catch-all middleware to debug - log ALL admin requests
+      matcher: /^\/admin/,
+      middlewares: [
+        async (req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) => {
+          // Only log /admin/users/me to avoid spam
+          if (req.path === '/admin/users/me' || req.url?.includes('/admin/users/me') || (req as any).originalUrl?.includes('/admin/users/me')) {
+            console.log("=".repeat(60))
+            console.log("[CATCH-ALL Admin Middleware] ===== INTERCEPTED =====")
+            console.log("[CATCH-ALL Admin Middleware] Path:", req.path)
+            console.log("[CATCH-ALL Admin Middleware] URL:", req.url)
+            console.log("[CATCH-ALL Admin Middleware] Original URL:", (req as any).originalUrl)
+            console.log("[CATCH-ALL Admin Middleware] Cookies:", req.headers.cookie || "NONE")
+            console.log("=".repeat(60))
+          }
           next()
         }
       ],

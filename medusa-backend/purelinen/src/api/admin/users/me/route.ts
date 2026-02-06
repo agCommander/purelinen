@@ -6,6 +6,7 @@ import { Modules } from "@medusajs/framework/utils"
 
 /**
  * Custom /admin/users/me route to debug and handle session
+ * This route SHOULD take precedence over Medusa's built-in route
  */
 export async function GET(
   req: MedusaRequest,
@@ -16,9 +17,55 @@ export async function GET(
   console.log("[Admin Users Me Route] Request:", {
     method: req.method,
     path: req.path,
+    url: req.url,
+    originalUrl: (req as any).originalUrl,
     hasCookies: !!req.headers.cookie,
-    cookieHeader: req.headers.cookie?.substring(0, 200) + "...",
+    cookieHeader: req.headers.cookie || "NO COOKIES",
   })
+  
+  // Manually parse the cookie to see what's being sent
+  const cookieHeader = req.headers.cookie || ""
+  const connectSidMatch = cookieHeader.match(/connect\.sid=([^;]+)/)
+  if (connectSidMatch) {
+    const signedCookie = connectSidMatch[1]
+    console.log("[Admin Users Me Route] Found connect.sid cookie:", signedCookie.substring(0, 50) + "...")
+    
+    // Try to unsign it to get the sessionID
+    try {
+      const cookieSignature = require("cookie-signature")
+      const cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+      // Remove 's:' prefix if present
+      const cookieValue = signedCookie.startsWith('s:') ? signedCookie.substring(2) : signedCookie
+      const extractedSessionID = cookieSignature.unsign(cookieValue, cookieSecret)
+      if (extractedSessionID) {
+        console.log("[Admin Users Me Route] Extracted sessionID from cookie:", extractedSessionID.substring(0, 30) + "...")
+        
+        // Check if this session exists in the store
+        const sessionStore = (req as any).sessionStore
+        if (sessionStore) {
+          sessionStore.get(extractedSessionID, (storeErr: any, storedSession: any) => {
+            if (storeErr) {
+              console.error("[Admin Users Me Route] Error getting session by extracted ID:", storeErr)
+            } else if (storedSession) {
+              console.log("[Admin Users Me Route] ✅ Session found in store by extracted ID:", {
+                sessionId: extractedSessionID.substring(0, 30) + "...",
+                hasAuthIdentityId: !!storedSession.auth_identity_id,
+                keys: Object.keys(storedSession),
+              })
+            } else {
+              console.error("[Admin Users Me Route] ❌ Session NOT in store for extracted ID!")
+            }
+          })
+        }
+      } else {
+        console.error("[Admin Users Me Route] Failed to unsign cookie - invalid signature or wrong secret")
+      }
+    } catch (e) {
+      console.error("[Admin Users Me Route] Error unsigning cookie:", e)
+    }
+  } else {
+    console.error("[Admin Users Me Route] ❌ No connect.sid cookie found in request!")
+  }
   
   const session = (req as any).session
   const sessionID = (req as any).sessionID
