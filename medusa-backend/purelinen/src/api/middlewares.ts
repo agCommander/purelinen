@@ -111,12 +111,66 @@ async function ensureVariantPrices(
   next()
 }
 
+async function logAuthSession(
+  req: MedusaRequest,
+  res: MedusaResponse,
+  next: MedusaNextFunction
+) {
+  if (req.path === '/auth/session' || req.url?.includes('/auth/session')) {
+    console.log("=".repeat(60))
+    console.log("[Auth Session Middleware] Intercepting /auth/session")
+    console.log("[Auth Session Middleware] Request details:", {
+      method: req.method,
+      path: req.path,
+      url: req.url,
+      hasCookies: !!req.headers.cookie,
+      cookieHeader: req.headers.cookie?.substring(0, 200) + "...",
+    })
+    
+    const session = (req as any).session
+    const sessionID = (req as any).sessionID
+    console.log("[Auth Session Middleware] Session check:", {
+      hasSession: !!session,
+      sessionID: sessionID?.substring(0, 30) + "...",
+      sessionKeys: session ? Object.keys(session) : [],
+      authIdentityId: session?.auth_identity_id,
+    })
+    
+    // Check if session store can find it
+    if (sessionID) {
+      const sessionStore = (req as any).sessionStore
+      if (sessionStore) {
+        sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
+          if (storeErr) {
+            console.error("[Auth Session Middleware] Error getting session:", storeErr)
+          } else if (storedSession) {
+            console.log("[Auth Session Middleware] ✅ Session found in store:", {
+              sessionId: sessionID?.substring(0, 30) + "...",
+              hasAuthIdentityId: !!storedSession.auth_identity_id,
+            })
+          } else {
+            console.error("[Auth Session Middleware] ❌ Session NOT in store!")
+          }
+        })
+      }
+    }
+    console.log("=".repeat(60))
+  }
+  
+  next()
+}
+
 export default defineMiddlewares({
   routes: [
     {
       // Match all admin product API routes (including nested routes)
       matcher: /\/admin\/products/,
       middlewares: [ensureVariantPrices],
+    },
+    {
+      // Intercept auth/session to debug
+      matcher: /\/auth\/session/,
+      middlewares: [logAuthSession],
     },
   ],
 })
