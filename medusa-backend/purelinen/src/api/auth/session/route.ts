@@ -119,56 +119,46 @@ export async function POST(
         session.user_id = decoded.actor_id
       }
       
-      // Regenerate session to ensure Express session middleware properly handles it
-      // This creates a new session ID and ensures the cookie is set correctly
+      // Instead of regenerating, modify the existing session
+      // This should allow Express session middleware to set the cookie automatically
+      session.auth_identity_id = decoded.auth_identity_id
+      session.actor_type = decoded.actor_type || "admin"
+      session.token = token
+      
+      if (decoded.actor_id) {
+        session.user_id = decoded.actor_id
+      }
+      
+      // Touch the session to mark it as modified - this should trigger Express to set the cookie
+      if (typeof (session as any).touch === 'function') {
+        (session as any).touch()
+        console.log("[Session Route POST] Session touched to trigger cookie setting")
+      }
+      
+      // Save the session (this should set the cookie automatically)
       await new Promise<void>((resolve, reject) => {
-        session.regenerate((err: any) => {
-          if (err) {
-            console.error("[Session Route POST] Error regenerating session:", err)
-            reject(err)
-            return
-          }
-          
-          // Now set the session data after regeneration
-          const newSession = (req as any).session
-          const newSessionID = (req as any).sessionID
-          
-          newSession.auth_identity_id = decoded.auth_identity_id
-          newSession.actor_type = decoded.actor_type || "admin"
-          newSession.token = token
-          
-          if (decoded.actor_id) {
-            newSession.user_id = decoded.actor_id
-          }
-          
-          // Touch the session to mark it as modified - this should trigger Express to set the cookie
-          if (typeof (newSession as any).touch === 'function') {
-            (newSession as any).touch()
-            console.log("[Session Route POST] Session touched to trigger cookie setting")
-          }
-          
-          // Save the regenerated session (this should set the cookie automatically)
-          newSession.save((saveErr: any) => {
+        session.save((saveErr: any) => {
             if (saveErr) {
               console.error("[Session Route POST] Error saving regenerated session:", saveErr)
               reject(saveErr)
               return
             }
             
-            console.log("[Session Route POST] Session regenerated and saved:", {
-              sessionId: newSessionID?.substring(0, 30) + "...",
+            const sessionID = (req as any).sessionID
+            console.log("[Session Route POST] Session saved:", {
+              sessionId: sessionID?.substring(0, 30) + "...",
               authIdentityId: decoded.auth_identity_id,
               actorType: decoded.actor_type,
             })
             
             // Check if Set-Cookie header was set by Express session middleware
             let setCookie = res.getHeader("Set-Cookie")
-            console.log("[Session Route POST] Set-Cookie header after regenerate:", setCookie ? "present" : "missing")
+            console.log("[Session Route POST] Set-Cookie header after save:", setCookie ? "present" : "missing")
             
             // If Express session middleware didn't set the cookie, set it manually
             // Use cookieOptions from projectConfig to ensure consistency
-            if (!setCookie && newSessionID) {
-              const cookieName = (newSession as any).cookie?.name || 'connect.sid'
+            if (!setCookie && sessionID) {
+              const cookieName = (session as any).cookie?.name || 'connect.sid'
               
               // Get cookie options from projectConfig (set in medusa-config.ts)
               let cookieOptions: any = {
@@ -204,16 +194,16 @@ export async function POST(
               }
               
               const cookieSignature = require("cookie-signature")
-              const signedValue = "s:" + cookieSignature.sign(newSessionID, cookieSecret)
+              const signedValue = "s:" + cookieSignature.sign(sessionID, cookieSecret)
               
               // Verify we can unsign it with the same secret (for debugging)
               const cookieValueToVerify = signedValue.startsWith('s:') ? signedValue.substring(2) : signedValue
               const verifiedSessionID = cookieSignature.unsign(cookieValueToVerify, cookieSecret)
-              if (verifiedSessionID === newSessionID) {
+              if (verifiedSessionID === sessionID) {
                 console.log("[Session Route POST] ✅ Cookie signature verified - can be unsigned correctly")
               } else {
                 console.error("[Session Route POST] ❌ Cookie signature verification FAILED!")
-                console.error("[Session Route POST] Expected sessionID:", newSessionID?.substring(0, 30) + "...")
+                console.error("[Session Route POST] Expected sessionID:", sessionID?.substring(0, 30) + "...")
                 console.error("[Session Route POST] Verified sessionID:", verifiedSessionID?.substring(0, 30) + "..." || "null")
               }
               
@@ -256,17 +246,17 @@ export async function POST(
             
             // Verify session is actually stored in the session store
             const sessionStore = (req as any).sessionStore
-            if (sessionStore && newSessionID) {
-              sessionStore.get(newSessionID, (storeErr: any, storedSession: any) => {
+            if (sessionStore && sessionID) {
+              sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
                 if (storeErr) {
                   console.error("[Session Route POST] Error retrieving session from store:", storeErr)
                 } else if (storedSession) {
                   console.log("[Session Route POST] ✅ Session verified in store:", {
-                    sessionId: newSessionID?.substring(0, 30) + "...",
+                    sessionId: sessionID?.substring(0, 30) + "...",
                     hasAuthIdentityId: !!storedSession.auth_identity_id,
                   })
                 } else {
-                  console.error("[Session Route POST] ❌ Session NOT found in store after regenerate!")
+                  console.error("[Session Route POST] ❌ Session NOT found in store after save!")
                 }
               })
             }
@@ -274,7 +264,6 @@ export async function POST(
             resolve()
           })
         })
-      })
       
       res.status(200).json({
         auth_identity_id: decoded.auth_identity_id,
