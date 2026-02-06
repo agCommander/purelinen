@@ -111,49 +111,92 @@ async function ensureVariantPrices(
   next()
 }
 
-async function logAuthSession(
+async function handleAuthSession(
   req: MedusaRequest,
   res: MedusaResponse,
   next: MedusaNextFunction
 ) {
-  if (req.path === '/auth/session' || req.url?.includes('/auth/session')) {
+  // Intercept POST /auth/session to handle JWT token and create session
+  if (req.method === 'POST' && (req.path === '/auth/session' || req.url?.includes('/auth/session'))) {
     console.log("=".repeat(60))
-    console.log("[Auth Session Middleware] Intercepting /auth/session")
-    console.log("[Auth Session Middleware] Request details:", {
-      method: req.method,
-      path: req.path,
-      url: req.url,
-      hasCookies: !!req.headers.cookie,
-      cookieHeader: req.headers.cookie?.substring(0, 200) + "...",
-    })
+    console.log("[Auth Session Middleware] Intercepting POST /auth/session")
     
+    // Check for JWT token in Authorization header or cookies
+    let token: string | null = null
+    const authHeader = req.headers.authorization
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7)
+      console.log("[Auth Session Middleware] Found JWT in Authorization header")
+    } else {
+      const cookies = req.headers.cookie || ""
+      const jwtMatch = cookies.match(/_medusa_jwt=([^;]+)/)
+      if (jwtMatch) {
+        token = jwtMatch[1]
+        console.log("[Auth Session Middleware] Found JWT in cookies")
+      }
+    }
+    
+    if (token) {
+      try {
+        // Decode JWT
+        const base64Url = token.split('.')[1]
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+        const jsonPayload = Buffer.from(base64, 'base64').toString('utf8')
+        const decoded = JSON.parse(jsonPayload)
+        
+        console.log("[Auth Session Middleware] Decoded JWT:", {
+          authIdentityId: decoded.auth_identity_id,
+          actorType: decoded.actor_type,
+        })
+        
+        // Create session from JWT
+        const session = (req as any).session
+        if (session) {
+          session.auth_identity_id = decoded.auth_identity_id
+          session.actor_type = decoded.actor_type || "admin"
+          session.token = token
+          
+          if (decoded.actor_id) {
+            session.user_id = decoded.actor_id
+          }
+          
+          // Save session
+          session.save((err: any) => {
+            if (err) {
+              console.error("[Auth Session Middleware] Error saving session:", err)
+              res.status(500).json({ message: "Error saving session" })
+              return
+            }
+            
+            console.log("[Auth Session Middleware] ✅ Session created from JWT")
+            res.status(200).json({
+              auth_identity_id: decoded.auth_identity_id,
+              actor_type: decoded.actor_type || "admin",
+            })
+            // Don't call next() - we've handled the request
+            return
+          })
+          return // Don't continue to next middleware
+        }
+      } catch (error) {
+        console.error("[Auth Session Middleware] Error processing JWT:", error)
+      }
+    } else {
+      console.log("[Auth Session Middleware] No JWT token found")
+    }
+  }
+  
+  // For GET /auth/session, just log and continue
+  if (req.method === 'GET' && (req.path === '/auth/session' || req.url?.includes('/auth/session'))) {
+    console.log("=".repeat(60))
+    console.log("[Auth Session Middleware] Intercepting GET /auth/session")
     const session = (req as any).session
     const sessionID = (req as any).sessionID
     console.log("[Auth Session Middleware] Session check:", {
       hasSession: !!session,
       sessionID: sessionID?.substring(0, 30) + "...",
-      sessionKeys: session ? Object.keys(session) : [],
       authIdentityId: session?.auth_identity_id,
     })
-    
-    // Check if session store can find it
-    if (sessionID) {
-      const sessionStore = (req as any).sessionStore
-      if (sessionStore) {
-        sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
-          if (storeErr) {
-            console.error("[Auth Session Middleware] Error getting session:", storeErr)
-          } else if (storedSession) {
-            console.log("[Auth Session Middleware] ✅ Session found in store:", {
-              sessionId: sessionID?.substring(0, 30) + "...",
-              hasAuthIdentityId: !!storedSession.auth_identity_id,
-            })
-          } else {
-            console.error("[Auth Session Middleware] ❌ Session NOT in store!")
-          }
-        })
-      }
-    }
     console.log("=".repeat(60))
   }
   
@@ -168,9 +211,9 @@ export default defineMiddlewares({
       middlewares: [ensureVariantPrices],
     },
     {
-      // Intercept auth/session to debug
+      // Intercept auth/session to handle JWT and create session
       matcher: /\/auth\/session/,
-      middlewares: [logAuthSession],
+      middlewares: [handleAuthSession],
     },
   ],
 })
