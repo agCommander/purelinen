@@ -119,97 +119,71 @@ export async function POST(
         session.user_id = decoded.actor_id
       }
       
-      // Save the session (this will set the connect.sid cookie)
+      // Regenerate session to ensure Express session middleware properly handles it
+      // This creates a new session ID and ensures the cookie is set correctly
       await new Promise<void>((resolve, reject) => {
-        session.save((err: any) => {
+        session.regenerate((err: any) => {
           if (err) {
-            console.error("[Session Route POST] Error saving session:", err)
+            console.error("[Session Route POST] Error regenerating session:", err)
             reject(err)
-          } else {
-            const sessionID = (req as any).sessionID
-            console.log("[Session Route POST] Session created from JWT:", {
-              sessionId: sessionID?.substring(0, 30) + "...",
+            return
+          }
+          
+          // Now set the session data after regeneration
+          const newSession = (req as any).session
+          const newSessionID = (req as any).sessionID
+          
+          newSession.auth_identity_id = decoded.auth_identity_id
+          newSession.actor_type = decoded.actor_type || "admin"
+          newSession.token = token
+          
+          if (decoded.actor_id) {
+            newSession.user_id = decoded.actor_id
+          }
+          
+          // Save the regenerated session (this should set the cookie automatically)
+          newSession.save((saveErr: any) => {
+            if (saveErr) {
+              console.error("[Session Route POST] Error saving regenerated session:", saveErr)
+              reject(saveErr)
+              return
+            }
+            
+            console.log("[Session Route POST] Session regenerated and saved:", {
+              sessionId: newSessionID?.substring(0, 30) + "...",
               authIdentityId: decoded.auth_identity_id,
               actorType: decoded.actor_type,
             })
             
             // Check if Set-Cookie header was set by Express session middleware
             let setCookie = res.getHeader("Set-Cookie")
-            console.log("[Session Route POST] Set-Cookie header:", setCookie ? "present" : "missing")
-            
-            // If Express session middleware didn't set the cookie, set it manually
-            if (!setCookie && sessionID) {
-              const cookieName = (session as any).cookie?.name || 'connect.sid'
-              const cookieOptions = (session as any).cookie || {}
-              
-              // Get cookie secret from Medusa's config
-              let cookieSecret = process.env.COOKIE_SECRET || "supersecret"
-              try {
-                const configModule = req.scope.resolve("configModule")
-                if (configModule?.projectConfig?.http?.cookieSecret) {
-                  cookieSecret = configModule.projectConfig.http.cookieSecret
-                }
-              } catch (e) {
-                // Use env default
-              }
-              
-              const cookieSignature = require("cookie-signature")
-              const signedValue = "s:" + cookieSignature.sign(sessionID, cookieSecret)
-              
-              // Determine if we should use secure cookies (HTTPS)
-              const isSecure = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
-              const useSecure = cookieOptions.secure !== undefined ? cookieOptions.secure : isSecure
-              
-              // Set cookie with same options Express session would use
-              // IMPORTANT: Use 'lax' for sameSite (not 'none') for same-domain requests
-              // 'none' requires secure=true AND can cause issues with same-domain
-              const sameSiteValue = 'lax' // Force 'lax' for same-domain
-              
-              res.cookie(cookieName, signedValue, {
-                httpOnly: cookieOptions.httpOnly !== false,
-                secure: useSecure,
-                sameSite: sameSiteValue,
-                path: cookieOptions.path || '/',
-                maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000), // 24 hours
-                // Explicitly don't set domain - this can cause issues
-              })
-              
-              console.log("[Session Route POST] Cookie options:", {
-                httpOnly: cookieOptions.httpOnly !== false,
-                secure: useSecure,
-                sameSite: sameSiteValue,
-                path: cookieOptions.path || '/',
-                maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000),
-                domain: "not set (using default)",
-              })
-              
-              console.log("[Session Route POST] ✅ Cookie set manually")
-              setCookie = res.getHeader("Set-Cookie")
-            }
+            console.log("[Session Route POST] Set-Cookie header after regenerate:", setCookie ? "present" : "missing")
             
             if (setCookie) {
               console.log("[Session Route POST] Set-Cookie value:", Array.isArray(setCookie) ? setCookie[0]?.substring(0, 100) + "..." : setCookie?.toString().substring(0, 100) + "...")
+            } else {
+              console.error("[Session Route POST] ⚠️  WARNING: Set-Cookie header missing after regenerate!")
             }
             
             // Verify session is actually stored in the session store
             const sessionStore = (req as any).sessionStore
-            if (sessionStore && sessionID) {
-              sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
+            if (sessionStore && newSessionID) {
+              sessionStore.get(newSessionID, (storeErr: any, storedSession: any) => {
                 if (storeErr) {
                   console.error("[Session Route POST] Error retrieving session from store:", storeErr)
                 } else if (storedSession) {
                   console.log("[Session Route POST] ✅ Session verified in store:", {
-                    sessionId: sessionID?.substring(0, 30) + "...",
+                    sessionId: newSessionID?.substring(0, 30) + "...",
                     hasAuthIdentityId: !!storedSession.auth_identity_id,
                   })
                 } else {
-                  console.error("[Session Route POST] ❌ Session NOT found in store after save!")
+                  console.error("[Session Route POST] ❌ Session NOT found in store after regenerate!")
                 }
               })
             }
             
             resolve()
-          }
+          })
         })
       })
       
