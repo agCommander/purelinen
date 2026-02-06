@@ -85,8 +85,7 @@ export async function POST(
       // For now, return what Medusa would return (JWT token)
       // The admin SDK will handle calling /auth/session with this token
       
-      // Get JWT token from Medusa's auth response
-      // We need to call the actual admin endpoint to get the proper response with JWT
+      // Get JWT token from Medusa's auth response by calling admin endpoint
       const http = require("http")
       const postData = JSON.stringify(req.body)
       
@@ -100,25 +99,76 @@ export async function POST(
             "Content-Type": "application/json",
             "Content-Length": Buffer.byteLength(postData),
           },
-        }, (proxyRes) => {
-          res.status(proxyRes.statusCode || 500)
+        }, async (proxyRes) => {
+          let responseBody = ""
           
-          // Forward all headers
-          Object.keys(proxyRes.headers).forEach((key) => {
-            const value = proxyRes.headers[key]
-            if (value) {
-              res.setHeader(key, value)
-            }
-          })
-          
-          // Forward response body
           proxyRes.on("data", (chunk) => {
-            res.write(chunk)
+            responseBody += chunk.toString()
           })
           
-          proxyRes.on("end", () => {
-            res.end()
-            resolve()
+          proxyRes.on("end", async () => {
+            try {
+              // Parse the response to get JWT token
+              const authResponse = JSON.parse(responseBody)
+              
+              // If we have a token, create session immediately
+              if (authResponse.token) {
+                const token = authResponse.token
+                
+                // Decode JWT to get auth info
+                try {
+                  const base64Url = token.split('.')[1]
+                  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+                  const jsonPayload = Buffer.from(base64, 'base64').toString('utf8')
+                  const decoded = JSON.parse(jsonPayload)
+                  
+                  // Create session from JWT token
+                  const session = (req as any).session
+                  if (session) {
+                    session.auth_identity_id = decoded.auth_identity_id
+                    session.actor_type = decoded.actor_type || "admin"
+                    session.token = token
+                    
+                    if (decoded.actor_id) {
+                      session.user_id = decoded.actor_id
+                    }
+                    
+                    // Save the session (this will set the connect.sid cookie)
+                    await new Promise<void>((resolveSession, rejectSession) => {
+                      session.save((err: any) => {
+                        if (err) {
+                          console.error("[Auth Route] Error saving session:", err)
+                          rejectSession(err)
+                        } else {
+                          console.log("[Auth Route] Session created during login:", {
+                            sessionId: session.id?.substring(0, 30) + "...",
+                            authIdentityId: decoded.auth_identity_id,
+                          })
+                          resolveSession()
+                        }
+                      })
+                    })
+                  }
+                } catch (jwtError) {
+                  console.error("[Auth Route] Error decoding JWT:", jwtError)
+                }
+              }
+              
+              // Forward response
+              res.status(proxyRes.statusCode || 500)
+              Object.keys(proxyRes.headers).forEach((key) => {
+                const value = proxyRes.headers[key]
+                if (value) {
+                  res.setHeader(key, value)
+                }
+              })
+              res.json(authResponse)
+              resolve()
+            } catch (parseError) {
+              console.error("[Auth Route] Error parsing response:", parseError)
+              res.status(500).json({ message: "Internal server error" })
+              reject(parseError)
+            }
           })
         })
         

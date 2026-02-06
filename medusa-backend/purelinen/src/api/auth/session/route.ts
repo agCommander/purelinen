@@ -10,6 +10,14 @@ export async function POST(
   req: MedusaRequest,
   res: MedusaResponse
 ): Promise<void> {
+  console.log("=".repeat(50))
+  console.log("[Session Route POST] CUSTOM ROUTE CALLED!")
+  console.log("[Session Route POST] Request headers:", {
+    authorization: req.headers.authorization ? "present" : "missing",
+    cookie: req.headers.cookie ? "present" : "missing",
+  })
+  console.log("=".repeat(50))
+  
   // According to Medusa docs, POST /auth/session creates a session cookie from a JWT token
   // Check for JWT token in Authorization header or cookies
   let token: string | null = null
