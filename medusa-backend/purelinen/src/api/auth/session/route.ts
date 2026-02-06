@@ -159,10 +159,57 @@ export async function POST(
             let setCookie = res.getHeader("Set-Cookie")
             console.log("[Session Route POST] Set-Cookie header after regenerate:", setCookie ? "present" : "missing")
             
+            // If Express session middleware didn't set the cookie, set it manually
+            if (!setCookie && newSessionID) {
+              const cookieName = (newSession as any).cookie?.name || 'connect.sid'
+              const cookieOptions = (newSession as any).cookie || {}
+              
+              // Get cookie secret from Medusa's config
+              let cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+              try {
+                const configModule = req.scope.resolve("configModule")
+                if (configModule?.projectConfig?.http?.cookieSecret) {
+                  cookieSecret = configModule.projectConfig.http.cookieSecret
+                }
+              } catch (e) {
+                // Use env default
+              }
+              
+              const cookieSignature = require("cookie-signature")
+              const signedValue = "s:" + cookieSignature.sign(newSessionID, cookieSecret)
+              
+              // Determine if we should use secure cookies (HTTPS)
+              const isSecure = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
+              const useSecure = cookieOptions.secure !== undefined ? cookieOptions.secure : isSecure
+              
+              // Set cookie with same options Express session would use
+              // IMPORTANT: Use 'lax' for sameSite (not 'none') for same-domain requests
+              const sameSiteValue = 'lax' // Force 'lax' for same-domain
+              
+              res.cookie(cookieName, signedValue, {
+                httpOnly: cookieOptions.httpOnly !== false,
+                secure: useSecure,
+                sameSite: sameSiteValue,
+                path: cookieOptions.path || '/',
+                maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000), // 24 hours
+                // Explicitly don't set domain - this can cause issues
+              })
+              
+              console.log("[Session Route POST] Cookie set manually after regenerate:", {
+                httpOnly: cookieOptions.httpOnly !== false,
+                secure: useSecure,
+                sameSite: sameSiteValue,
+                path: cookieOptions.path || '/',
+                maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000),
+              })
+              
+              setCookie = res.getHeader("Set-Cookie")
+            }
+            
             if (setCookie) {
               console.log("[Session Route POST] Set-Cookie value:", Array.isArray(setCookie) ? setCookie[0]?.substring(0, 100) + "..." : setCookie?.toString().substring(0, 100) + "...")
             } else {
-              console.error("[Session Route POST] ⚠️  WARNING: Set-Cookie header missing after regenerate!")
+              console.error("[Session Route POST] ⚠️  WARNING: Set-Cookie header still missing after manual set!")
             }
             
             // Verify session is actually stored in the session store
