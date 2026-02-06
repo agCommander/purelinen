@@ -18,6 +18,17 @@ export async function POST(
   })
   console.log("=".repeat(50))
   
+  // First, check if session already exists (created during login)
+  const session = (req as any).session
+  if (session && session.auth_identity_id) {
+    console.log("[Session Route POST] Session already exists, returning success")
+    res.status(200).json({
+      auth_identity_id: session.auth_identity_id,
+      actor_type: session.actor_type || "admin",
+    })
+    return
+  }
+  
   // According to Medusa docs, POST /auth/session creates a session cookie from a JWT token
   // Check for JWT token in Authorization header or cookies
   let token: string | null = null

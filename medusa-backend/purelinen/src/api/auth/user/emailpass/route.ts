@@ -144,6 +144,14 @@ export async function POST(
                             sessionId: session.id?.substring(0, 30) + "...",
                             authIdentityId: decoded.auth_identity_id,
                           })
+                          
+                          // Check if Set-Cookie header was set by session.save()
+                          const setCookieAfterSave = res.getHeader("Set-Cookie")
+                          console.log("[Auth Route] Set-Cookie after session.save():", setCookieAfterSave ? "present" : "missing")
+                          if (setCookieAfterSave) {
+                            console.log("[Auth Route] Set-Cookie value:", Array.isArray(setCookieAfterSave) ? setCookieAfterSave[0] : setCookieAfterSave)
+                          }
+                          
                           resolveSession()
                         }
                       })
@@ -154,14 +162,28 @@ export async function POST(
                 }
               }
               
-              // Forward response
+              // Forward response - but make sure we don't overwrite Set-Cookie from session
               res.status(proxyRes.statusCode || 500)
+              
+              // Get Set-Cookie from session first (if it exists)
+              const sessionCookie = res.getHeader("Set-Cookie")
+              
+              // Forward other headers
               Object.keys(proxyRes.headers).forEach((key) => {
                 const value = proxyRes.headers[key]
-                if (value) {
+                // Don't overwrite Set-Cookie if we already have one from session
+                if (value && key.toLowerCase() !== "set-cookie") {
                   res.setHeader(key, value)
                 }
               })
+              
+              // Log final Set-Cookie header
+              const finalSetCookie = res.getHeader("Set-Cookie")
+              console.log("[Auth Route] Final Set-Cookie header:", finalSetCookie ? "present" : "missing")
+              if (finalSetCookie) {
+                console.log("[Auth Route] Final Set-Cookie value:", Array.isArray(finalSetCookie) ? finalSetCookie[0] : finalSetCookie)
+              }
+              
               res.json(authResponse)
               resolve()
             } catch (parseError) {
