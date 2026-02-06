@@ -141,6 +141,12 @@ export async function POST(
             newSession.user_id = decoded.actor_id
           }
           
+          // Touch the session to mark it as modified - this should trigger Express to set the cookie
+          if (typeof (newSession as any).touch === 'function') {
+            (newSession as any).touch()
+            console.log("[Session Route POST] Session touched to trigger cookie setting")
+          }
+          
           // Save the regenerated session (this should set the cookie automatically)
           newSession.save((saveErr: any) => {
             if (saveErr) {
