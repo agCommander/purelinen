@@ -159,26 +159,34 @@ export async function POST(
                     let setCookieAfterSave = res.getHeader("Set-Cookie")
                     console.log("[Auth Route] Set-Cookie after session.save():", setCookieAfterSave ? "present" : "missing")
                     
-                    // If Express session didn't set the cookie, set it manually with proper signing
+                    // If Express session didn't set the cookie, set it manually
+                    // Express session middleware sets cookie from req.sessionID, not session.id
                     if (!setCookieAfterSave) {
-                      // Get the cookie name from session store (usually 'connect.sid')
+                      // Get the cookie name and options from session configuration
                       const cookieName = (session as any).cookie?.name || 'connect.sid'
+                      const cookieOptions = (session as any).cookie || {}
                       
-                      // Express session signs cookies - we need to sign it manually
+                      // Use req.sessionID (not session.id) - this is what Express session uses
+                      const sessionID = (req as any).sessionID || session.id
+                      
+                      // Express session signs cookies - sign it manually using cookie secret
                       const cookieSecret = process.env.COOKIE_SECRET || "supersecret"
                       const cookieSignature = require("cookie-signature")
-                      const signedValue = "s:" + cookieSignature.sign(session.id, cookieSecret)
+                      const signedValue = "s:" + cookieSignature.sign(sessionID, cookieSecret)
                       
-                      // Set the signed cookie manually
+                      // Set the signed cookie with the same options Express session would use
                       res.cookie(cookieName, signedValue, {
-                        httpOnly: true,
-                        secure: req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https',
-                        sameSite: 'lax',
-                        path: '/',
-                        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+                        httpOnly: cookieOptions.httpOnly !== false,
+                        secure: cookieOptions.secure || (req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'),
+                        sameSite: cookieOptions.sameSite || 'lax',
+                        path: cookieOptions.path || '/',
+                        maxAge: cookieOptions.maxAge || 24 * 60 * 60 * 1000, // 24 hours
                       })
                       
-                      console.log("[Auth Route] Session cookie set manually (signed):", cookieName)
+                      console.log("[Auth Route] Session cookie set manually using req.sessionID:", {
+                        cookieName,
+                        sessionID: sessionID?.substring(0, 30) + "...",
+                      })
                       setCookieAfterSave = res.getHeader("Set-Cookie")
                     }
                     
