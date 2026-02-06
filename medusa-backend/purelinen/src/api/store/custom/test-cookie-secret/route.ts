@@ -1,8 +1,8 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 
 /**
- * Test endpoint to verify cookie secret
- * Call: GET /admin/custom/test-cookie-secret
+ * Test endpoint to verify cookie secret (public, no auth required)
+ * Call: GET /store/custom/test-cookie-secret
  */
 export async function GET(
   req: MedusaRequest,
@@ -76,6 +76,7 @@ export async function GET(
       hasSession: !!session,
       sessionID: sessionID ? sessionID.substring(0, 30) + "..." : "none",
       authIdentityId: session?.auth_identity_id,
+      cookieName: (session as any)?.cookie?.name,
     },
   })
 }
