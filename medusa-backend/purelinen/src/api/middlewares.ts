@@ -216,7 +216,8 @@ async function handleAuthSession(
 }
 
 // Log when middlewares are being registered
-console.log("[Middlewares] Registering custom middlewares")
+console.log("[Middlewares] ===== REGISTERING CUSTOM MIDDLEWARES =====")
+console.log("[Middlewares] This file is being loaded")
 
 export default defineMiddlewares({
   routes: [
@@ -231,23 +232,31 @@ export default defineMiddlewares({
       middlewares: [handleAuthSession],
     },
     {
-      // Log admin requests to debug session issues
-      matcher: /\/admin\/users\/me/,
+      // Log admin requests to debug session issues - use broader matcher
+      matcher: /\/admin/,
       middlewares: [
         async (req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) => {
-          console.log("[Admin Users Me] Request received:", {
-            method: req.method,
-            path: req.path,
-            hasCookies: !!req.headers.cookie,
-            cookieHeader: req.headers.cookie?.substring(0, 200) + "...",
-          })
-          const session = (req as any).session
-          const sessionID = (req as any).sessionID
-          console.log("[Admin Users Me] Session check:", {
-            hasSession: !!session,
-            sessionID: sessionID?.substring(0, 30) + "...",
-            authIdentityId: session?.auth_identity_id,
-          })
+          // Only log /admin/users/me to avoid spam
+          if (req.path === '/admin/users/me' || req.url?.includes('/admin/users/me')) {
+            console.log("=".repeat(60))
+            console.log("[Admin Users Me Middleware] ===== INTERCEPTED =====")
+            console.log("[Admin Users Me Middleware] Request:", {
+              method: req.method,
+              path: req.path,
+              url: req.url,
+              hasCookies: !!req.headers.cookie,
+              cookieHeader: req.headers.cookie?.substring(0, 200) + "...",
+            })
+            const session = (req as any).session
+            const sessionID = (req as any).sessionID
+            console.log("[Admin Users Me Middleware] Session check:", {
+              hasSession: !!session,
+              sessionID: sessionID?.substring(0, 30) + "...",
+              authIdentityId: session?.auth_identity_id,
+              sessionKeys: session ? Object.keys(session) : [],
+            })
+            console.log("=".repeat(60))
+          }
           next()
         }
       ],

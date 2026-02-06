@@ -137,6 +137,23 @@ export async function POST(
               console.log("[Session Route POST] Set-Cookie value:", Array.isArray(setCookie) ? setCookie[0]?.substring(0, 100) + "..." : setCookie?.toString().substring(0, 100) + "...")
             }
             
+            // Verify session is actually stored in the session store
+            const sessionStore = (req as any).sessionStore
+            if (sessionStore && sessionID) {
+              sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
+                if (storeErr) {
+                  console.error("[Session Route POST] Error retrieving session from store:", storeErr)
+                } else if (storedSession) {
+                  console.log("[Session Route POST] ✅ Session verified in store:", {
+                    sessionId: sessionID?.substring(0, 30) + "...",
+                    hasAuthIdentityId: !!storedSession.auth_identity_id,
+                  })
+                } else {
+                  console.error("[Session Route POST] ❌ Session NOT found in store after save!")
+                }
+              })
+            }
+            
             resolve()
           }
         })
