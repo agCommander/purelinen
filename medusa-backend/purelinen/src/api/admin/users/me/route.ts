@@ -12,63 +12,105 @@ export async function GET(
   req: MedusaRequest,
   res: MedusaResponse
 ): Promise<void> {
-  console.log("=".repeat(60))
+  // CRITICAL: This log MUST appear if the route is being called
+  console.log("=".repeat(80))
   console.log("[Admin Users Me Route] ===== CUSTOM ROUTE CALLED =====")
+  console.log("[Admin Users Me Route] ===== IF YOU DON'T SEE THIS, THE ROUTE ISN'T BEING CALLED =====")
   console.log("[Admin Users Me Route] Request:", {
     method: req.method,
     path: req.path,
     url: req.url,
     originalUrl: (req as any).originalUrl,
     hasCookies: !!req.headers.cookie,
-    cookieHeader: req.headers.cookie || "NO COOKIES",
+    cookieHeader: req.headers.cookie ? req.headers.cookie.substring(0, 200) + "..." : "NO COOKIES",
   })
   
   // Manually parse the cookie to see what's being sent
   const cookieHeader = req.headers.cookie || ""
   const connectSidMatch = cookieHeader.match(/connect\.sid=([^;]+)/)
-  if (connectSidMatch) {
-    const signedCookie = connectSidMatch[1]
-    console.log("[Admin Users Me Route] Found connect.sid cookie:", signedCookie.substring(0, 50) + "...")
+  
+  let session = (req as any).session
+  let sessionID = (req as any).sessionID
+  
+  // If Express session middleware didn't parse the cookie, try to load it manually
+  if (connectSidMatch && (!session || !session.auth_identity_id)) {
+    const signedCookie = decodeURIComponent(connectSidMatch[1]) // URL decode first
+    console.log("[Admin Users Me Route] Found connect.sid cookie (decoded):", signedCookie.substring(0, 50) + "...")
     
     // Try to unsign it to get the sessionID
     try {
       const cookieSignature = require("cookie-signature")
-      const cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+      
+      // Try multiple cookie secrets (from env and config)
+      let cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+      try {
+        const configModule = req.scope.resolve("configModule")
+        if (configModule?.projectConfig?.http?.cookieSecret) {
+          cookieSecret = configModule.projectConfig.http.cookieSecret
+        }
+      } catch (e) {
+        // Use env default
+      }
+      
       // Remove 's:' prefix if present
       const cookieValue = signedCookie.startsWith('s:') ? signedCookie.substring(2) : signedCookie
-      const extractedSessionID = cookieSignature.unsign(cookieValue, cookieSecret)
+      let extractedSessionID = cookieSignature.unsign(cookieValue, cookieSecret)
+      
+      if (!extractedSessionID) {
+        // Try with 's:' prefix removed differently
+        const altCookieValue = signedCookie.replace(/^s:/, '')
+        extractedSessionID = cookieSignature.unsign(altCookieValue, cookieSecret)
+      }
+      
       if (extractedSessionID) {
-        console.log("[Admin Users Me Route] Extracted sessionID from cookie:", extractedSessionID.substring(0, 30) + "...")
+        console.log("[Admin Users Me Route] ✅ Extracted sessionID from cookie:", extractedSessionID.substring(0, 30) + "...")
         
-        // Check if this session exists in the store
+        // Manually load the session from the store
         const sessionStore = (req as any).sessionStore
         if (sessionStore) {
-          sessionStore.get(extractedSessionID, (storeErr: any, storedSession: any) => {
-            if (storeErr) {
-              console.error("[Admin Users Me Route] Error getting session by extracted ID:", storeErr)
-            } else if (storedSession) {
-              console.log("[Admin Users Me Route] ✅ Session found in store by extracted ID:", {
-                sessionId: extractedSessionID.substring(0, 30) + "...",
-                hasAuthIdentityId: !!storedSession.auth_identity_id,
-                keys: Object.keys(storedSession),
-              })
-            } else {
-              console.error("[Admin Users Me Route] ❌ Session NOT in store for extracted ID!")
-            }
+          await new Promise<void>((resolve) => {
+            sessionStore.get(extractedSessionID, (storeErr: any, storedSession: any) => {
+              if (storeErr) {
+                console.error("[Admin Users Me Route] Error getting session by extracted ID:", storeErr)
+                resolve()
+              } else if (storedSession) {
+                console.log("[Admin Users Me Route] ✅ Session found in store by extracted ID:", {
+                  sessionId: extractedSessionID.substring(0, 30) + "...",
+                  hasAuthIdentityId: !!storedSession.auth_identity_id,
+                  keys: Object.keys(storedSession),
+                })
+                
+                // Manually attach the session to the request
+                if (!session) {
+                  session = storedSession
+                  ;(req as any).session = session
+                  ;(req as any).sessionID = extractedSessionID
+                  sessionID = extractedSessionID
+                  console.log("[Admin Users Me Route] ✅ Manually attached session to request")
+                } else {
+                  // Merge stored session data into existing session
+                  Object.assign(session, storedSession)
+                  console.log("[Admin Users Me Route] ✅ Merged stored session data into existing session")
+                }
+                resolve()
+              } else {
+                console.error("[Admin Users Me Route] ❌ Session NOT in store for extracted ID!")
+                resolve()
+              }
+            })
           })
         }
       } else {
-        console.error("[Admin Users Me Route] Failed to unsign cookie - invalid signature or wrong secret")
+        console.error("[Admin Users Me Route] ❌ Failed to unsign cookie - invalid signature or wrong secret")
+        console.error("[Admin Users Me Route] Cookie value (first 50 chars):", cookieValue.substring(0, 50))
+        console.error("[Admin Users Me Route] Cookie secret (first 20 chars):", cookieSecret.substring(0, 20) + "...")
       }
     } catch (e) {
       console.error("[Admin Users Me Route] Error unsigning cookie:", e)
     }
-  } else {
+  } else if (!connectSidMatch) {
     console.error("[Admin Users Me Route] ❌ No connect.sid cookie found in request!")
   }
-  
-  const session = (req as any).session
-  const sessionID = (req as any).sessionID
   
   console.log("[Admin Users Me Route] Session check:", {
     hasSession: !!session,
@@ -137,5 +179,18 @@ export async function GET(
   
   // No valid session
   console.log("[Admin Users Me Route] ❌ No valid session, returning 401")
-  res.status(401).json({ message: "Unauthorized" })
+  console.log("[Admin Users Me Route] Session state:", {
+    hasSession: !!session,
+    sessionID: sessionID?.substring(0, 30) + "..." || "NO SESSION ID",
+    sessionKeys: session ? Object.keys(session) : [],
+    authIdentityId: session?.auth_identity_id,
+  })
+  res.status(401).json({ 
+    message: "Unauthorized - CUSTOM ROUTE CALLED", 
+    sessionState: {
+      hasSession: !!session,
+      hasSessionID: !!sessionID,
+      hasAuthIdentityId: !!session?.auth_identity_id,
+    }
+  })
 }
