@@ -5,6 +5,11 @@ loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    cookieOptions: {
+      secure: true, // Set to true for HTTPS (you're behind a proxy with HTTPS)
+      sameSite: "lax", // Important: use 'lax' for same-domain requests
+      httpOnly: true,
+    },
     http: {
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
