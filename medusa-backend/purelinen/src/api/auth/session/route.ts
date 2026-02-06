@@ -111,29 +111,52 @@ export async function POST(
     // Create session from JWT token
     const session = (req as any).session
     if (session) {
-      // Regenerate session to get a new session ID - this should trigger Express session middleware to set the cookie
-      await new Promise<void>((resolve, reject) => {
-        session.regenerate((regenerateErr: any) => {
-          if (regenerateErr) {
-            console.error("[Session Route POST] Error regenerating session:", regenerateErr)
-            reject(regenerateErr)
-            return
-          }
-          
-          const newSessionID = (req as any).sessionID
-          console.log("[Session Route POST] Session regenerated, new sessionID:", newSessionID?.substring(0, 30) + "...")
-          
-          // Now set the session data
-          session.auth_identity_id = decoded.auth_identity_id
-          session.actor_type = decoded.actor_type || "admin"
-          session.token = token
-          
-          if (decoded.actor_id) {
-            session.user_id = decoded.actor_id
-          }
-          
-          // Save the session (this should set the cookie automatically after regenerate)
+      // Check if session already exists with correct data (from login route)
+      const existingSessionID = (req as any).sessionID
+      if (existingSessionID && session.auth_identity_id === decoded.auth_identity_id) {
+        console.log("[Session Route POST] Session already exists with correct auth data")
+        // Session already exists, just ensure cookie is set by touching and saving
+        if (typeof (session as any).touch === 'function') {
+          (session as any).touch()
+        }
+        
+        await new Promise<void>((resolve, reject) => {
           session.save((saveErr: any) => {
+            if (saveErr) {
+              console.error("[Session Route POST] Error saving existing session:", saveErr)
+              reject(saveErr)
+              return
+            }
+            
+            console.log("[Session Route POST] Existing session saved, cookie should be set")
+            res.status(200).json({
+              auth_identity_id: decoded.auth_identity_id,
+              actor_type: decoded.actor_type || "admin",
+            })
+            resolve()
+          })
+        })
+        return
+      }
+      
+      // Session doesn't exist or has wrong data - modify existing session
+      console.log("[Session Route POST] Modifying existing session with JWT data")
+      session.auth_identity_id = decoded.auth_identity_id
+      session.actor_type = decoded.actor_type || "admin"
+      session.token = token
+      
+      if (decoded.actor_id) {
+        session.user_id = decoded.actor_id
+      }
+      
+      // Mark session as modified
+      if (typeof (session as any).touch === 'function') {
+        (session as any).touch()
+      }
+      
+      // Save the session (this should set the cookie automatically)
+      await new Promise<void>((resolve, reject) => {
+        session.save((saveErr: any) => {
             if (saveErr) {
               console.error("[Session Route POST] Error saving regenerated session:", saveErr)
               reject(saveErr)
@@ -297,20 +320,25 @@ export async function POST(
             }
             
             // Verify session is actually stored in the session store
+            // Wait for the store to be updated (give it a moment)
             const sessionStore = (req as any).sessionStore
             if (sessionStore && sessionID) {
-              sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
-                if (storeErr) {
-                  console.error("[Session Route POST] Error retrieving session from store:", storeErr)
-                } else if (storedSession) {
-                  console.log("[Session Route POST] ✅ Session verified in store:", {
-                    sessionId: sessionID?.substring(0, 30) + "...",
-                    hasAuthIdentityId: !!storedSession.auth_identity_id,
-                  })
-                } else {
-                  console.error("[Session Route POST] ❌ Session NOT found in store after save!")
-                }
-              })
+              // Wait a bit for the store to be updated, then check
+              setTimeout(() => {
+                sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
+                  if (storeErr) {
+                    console.error("[Session Route POST] Error retrieving session from store:", storeErr)
+                  } else if (storedSession) {
+                    console.log("[Session Route POST] ✅ Session verified in store:", {
+                      sessionId: sessionID?.substring(0, 30) + "...",
+                      hasAuthIdentityId: !!storedSession.auth_identity_id,
+                    })
+                  } else {
+                    console.error("[Session Route POST] ❌ Session NOT found in store after save!")
+                    console.error("[Session Route POST] This might be a timing issue - session might be saved but not yet readable")
+                  }
+                })
+              }, 100) // Wait 100ms for store to update
             }
             
             // Return response inside the Promise callback
@@ -321,8 +349,7 @@ export async function POST(
             resolve()
           })
         })
-      })
-      return
+        return
     } else {
       console.warn("[Session Route POST] No session object found")
       res.status(500).json({ message: "Session middleware not initialized" })
