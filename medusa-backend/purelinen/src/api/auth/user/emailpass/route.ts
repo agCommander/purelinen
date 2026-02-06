@@ -147,12 +147,10 @@ export async function POST(
                     hasAuthIdentityId: !!session.auth_identity_id,
                   })
                   
-                  // Mark session as modified - Express session middleware will handle cookie setting
-                  // Based on GitHub issue #11769, manually setting cookies can cause issues
-                  // Let Express session middleware handle it automatically
+                  // Mark session as modified
                   session.touch()
                   
-                  // Save the session - Express middleware will automatically set the cookie
+                  // Save the session first
                   session.save((err: any) => {
                     if (err) {
                       console.error("[Auth Route] Error saving session:", err)
@@ -161,13 +159,44 @@ export async function POST(
                       return
                     }
                     
+                    const sessionID = (req as any).sessionID
                     console.log("[Auth Route] Session saved:", {
-                      sessionId: (req as any).sessionID?.substring(0, 30) + "...",
+                      sessionId: sessionID?.substring(0, 30) + "...",
                       authIdentityId: decoded.auth_identity_id,
                       actorType: decoded.actor_type,
                     })
                     
-                    // Forward response headers (Express session middleware should have set Set-Cookie)
+                    // Express session middleware doesn't set cookie in this callback context
+                    // Manually set it using the exact format Express session expects
+                    const cookieName = (session as any).cookie?.name || 'connect.sid'
+                    const cookieOptions = (session as any).cookie || {}
+                    const cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+                    const cookieSignature = require("cookie-signature")
+                    
+                    // Express session format: "s:<signed_session_id>"
+                    const signedValue = "s:" + cookieSignature.sign(sessionID, cookieSecret)
+                    
+                    // Determine if we should use secure cookies (HTTPS)
+                    const isSecure = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
+                    const useSecure = cookieOptions.secure !== undefined ? cookieOptions.secure : isSecure
+                    
+                    // Set cookie with same options Express session would use
+                    res.cookie(cookieName, signedValue, {
+                      httpOnly: cookieOptions.httpOnly !== false,
+                      secure: useSecure,
+                      sameSite: cookieOptions.sameSite || 'lax',
+                      path: cookieOptions.path || '/',
+                      maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000), // 24 hours
+                      // Don't set domain - let browser use default
+                    })
+                    
+                    console.log("[Auth Route] Cookie set manually:", {
+                      cookieName,
+                      sessionId: sessionID?.substring(0, 30) + "...",
+                      signed: true,
+                    })
+                    
+                    // Forward response headers
                     res.status(proxyRes.statusCode || 500)
                     Object.keys(proxyRes.headers).forEach((key) => {
                       const value = proxyRes.headers[key]
@@ -176,11 +205,12 @@ export async function POST(
                       }
                     })
                     
-                    // Log Set-Cookie header (set by Express session middleware)
+                    // Verify Set-Cookie header was set
                     const setCookie = res.getHeader("Set-Cookie")
                     console.log("[Auth Route] Set-Cookie header:", setCookie ? "present" : "missing")
                     if (setCookie) {
-                      console.log("[Auth Route] Set-Cookie value:", Array.isArray(setCookie) ? setCookie[0]?.substring(0, 100) + "..." : setCookie?.toString().substring(0, 100) + "...")
+                      const cookieValue = Array.isArray(setCookie) ? setCookie[0] : setCookie.toString()
+                      console.log("[Auth Route] Set-Cookie value:", cookieValue.substring(0, 150) + "...")
                     }
                     
                     // Send response
