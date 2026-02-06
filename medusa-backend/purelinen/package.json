@@ -59,7 +59,7 @@
     "@babel/preset-react": "^7.27.1",
     "@medusajs/test-utils": "^2.13.0",
     "@mikro-orm/cli": "6.4.16",
-    "@swc/core": "1.5.7",
+    "@swc/core": "^1.7.28",
     "@swc/jest": "^0.2.36",
     "@types/jest": "^29.5.13",
     "@types/node": "^20.0.0",
