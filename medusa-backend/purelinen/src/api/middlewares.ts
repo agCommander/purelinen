@@ -233,8 +233,8 @@ export default defineMiddlewares({
     },
     {
       // Log ALL requests to /admin/users/me - this MUST run before Medusa's route
-      // Try both regex and string matcher
-      matcher: "/admin/users/me",
+      // Use regex to ensure it matches
+      matcher: /^\/admin\/users\/me$/,
       middlewares: [
         async (req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) => {
           console.log("=".repeat(60))
