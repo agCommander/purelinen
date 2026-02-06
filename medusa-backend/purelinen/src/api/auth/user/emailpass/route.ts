@@ -79,7 +79,34 @@ export async function POST(
         return
       }
       
-      // Medusa's authenticate should handle session creation automatically
+      // Create session manually since authenticate() doesn't always create it
+      const session = (req as any).session
+      if (session) {
+        session.auth_identity_id = authIdentity.id
+        session.actor_type = "admin"
+        if (authIdentity.app_metadata?.user_id) {
+          session.user_id = authIdentity.app_metadata.user_id
+        }
+        
+        // Save the session (this will set the connect.sid cookie)
+        await new Promise<void>((resolve, reject) => {
+          session.save((err: any) => {
+            if (err) {
+              console.error("[Auth Route] Error saving session:", err)
+              reject(err)
+            } else {
+              console.log("[Auth Route] Session saved:", {
+                sessionId: session.id?.substring(0, 30) + "...",
+                authIdentityId: authIdentity.id,
+              })
+              resolve()
+            }
+          })
+        })
+      } else {
+        console.warn("[Auth Route] No session object found - session middleware may not be initialized")
+      }
+      
       // Return the response that Medusa would normally return
       res.status(200).json({
         auth_identity_id: authIdentity.id,
