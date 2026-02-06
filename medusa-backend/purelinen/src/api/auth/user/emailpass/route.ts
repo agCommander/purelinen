@@ -190,11 +190,35 @@ export async function POST(
                     // Manually set it using the exact format Express session expects
                     const cookieName = (session as any).cookie?.name || 'connect.sid'
                     const cookieOptions = (session as any).cookie || {}
-                    const cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+                    
+                    // Get cookie secret from Medusa's config (same one Express session uses)
+                    // Try to get it from the request scope first, then fall back to env
+                    let cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+                    try {
+                      // Medusa stores cookie secret in the container
+                      const configModule = req.scope.resolve("configModule")
+                      if (configModule?.projectConfig?.http?.cookieSecret) {
+                        cookieSecret = configModule.projectConfig.http.cookieSecret
+                        console.log("[Auth Route] Using cookie secret from Medusa config")
+                      }
+                    } catch (e) {
+                      console.log("[Auth Route] Using cookie secret from env:", cookieSecret.substring(0, 10) + "...")
+                    }
+                    
                     const cookieSignature = require("cookie-signature")
                     
                     // Express session format: "s:<signed_session_id>"
                     const signedValue = "s:" + cookieSignature.sign(sessionID, cookieSecret)
+                    
+                    // Verify we can unsign it (test that signature works)
+                    const unsigned = cookieSignature.unsign(signedValue.substring(2), cookieSecret)
+                    if (unsigned !== sessionID) {
+                      console.error("[Auth Route] ❌ Cookie signature verification failed! This is the problem.")
+                      console.error("[Auth Route] Expected:", sessionID?.substring(0, 30))
+                      console.error("[Auth Route] Got:", unsigned?.substring(0, 30))
+                    } else {
+                      console.log("[Auth Route] ✅ Cookie signature verified correctly")
+                    }
                     
                     // Determine if we should use secure cookies (HTTPS)
                     const isSecure = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
