@@ -6,7 +6,7 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     cookieOptions: {
-      secure: true, // Set to true for HTTPS (you're behind a proxy with HTTPS)
+      secure: false, // Temporarily set to false to test - browser is rejecting secure cookies
       sameSite: "lax", // Important: use 'lax' for same-domain requests
       httpOnly: true,
     },
