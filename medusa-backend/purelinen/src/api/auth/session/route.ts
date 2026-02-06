@@ -86,19 +86,55 @@ export async function POST(
             console.error("[Session Route POST] Error saving session:", err)
             reject(err)
           } else {
+            const sessionID = (req as any).sessionID
             console.log("[Session Route POST] Session created from JWT:", {
-              sessionId: (req as any).sessionID?.substring(0, 30) + "...",
+              sessionId: sessionID?.substring(0, 30) + "...",
               authIdentityId: decoded.auth_identity_id,
               actorType: decoded.actor_type,
             })
             
             // Check if Set-Cookie header was set by Express session middleware
-            const setCookie = res.getHeader("Set-Cookie")
+            let setCookie = res.getHeader("Set-Cookie")
             console.log("[Session Route POST] Set-Cookie header:", setCookie ? "present" : "missing")
+            
+            // If Express session middleware didn't set the cookie, set it manually
+            if (!setCookie && sessionID) {
+              const cookieName = (session as any).cookie?.name || 'connect.sid'
+              const cookieOptions = (session as any).cookie || {}
+              
+              // Get cookie secret from Medusa's config
+              let cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+              try {
+                const configModule = req.scope.resolve("configModule")
+                if (configModule?.projectConfig?.http?.cookieSecret) {
+                  cookieSecret = configModule.projectConfig.http.cookieSecret
+                }
+              } catch (e) {
+                // Use env default
+              }
+              
+              const cookieSignature = require("cookie-signature")
+              const signedValue = "s:" + cookieSignature.sign(sessionID, cookieSecret)
+              
+              // Determine if we should use secure cookies (HTTPS)
+              const isSecure = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
+              const useSecure = cookieOptions.secure !== undefined ? cookieOptions.secure : isSecure
+              
+              // Set cookie with same options Express session would use
+              res.cookie(cookieName, signedValue, {
+                httpOnly: cookieOptions.httpOnly !== false,
+                secure: useSecure,
+                sameSite: cookieOptions.sameSite || 'lax',
+                path: cookieOptions.path || '/',
+                maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000), // 24 hours
+              })
+              
+              console.log("[Session Route POST] ✅ Cookie set manually")
+              setCookie = res.getHeader("Set-Cookie")
+            }
+            
             if (setCookie) {
               console.log("[Session Route POST] Set-Cookie value:", Array.isArray(setCookie) ? setCookie[0]?.substring(0, 100) + "..." : setCookie?.toString().substring(0, 100) + "...")
-            } else {
-              console.warn("[Session Route POST] ⚠️ Set-Cookie not set! Session cookie won't be sent to browser.")
             }
             
             resolve()
