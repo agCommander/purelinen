@@ -121,12 +121,24 @@ export async function POST(
               const useSecure = cookieOptions.secure !== undefined ? cookieOptions.secure : isSecure
               
               // Set cookie with same options Express session would use
+              // IMPORTANT: Don't set domain - let browser use default (current domain)
+              // Setting domain can cause cookies not to be sent
               res.cookie(cookieName, signedValue, {
                 httpOnly: cookieOptions.httpOnly !== false,
                 secure: useSecure,
                 sameSite: cookieOptions.sameSite || 'lax',
                 path: cookieOptions.path || '/',
                 maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000), // 24 hours
+                // Explicitly don't set domain - this can cause issues
+              })
+              
+              console.log("[Session Route POST] Cookie options:", {
+                httpOnly: cookieOptions.httpOnly !== false,
+                secure: useSecure,
+                sameSite: cookieOptions.sameSite || 'lax',
+                path: cookieOptions.path || '/',
+                maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000),
+                domain: "not set (using default)",
               })
               
               console.log("[Session Route POST] ✅ Cookie set manually")
