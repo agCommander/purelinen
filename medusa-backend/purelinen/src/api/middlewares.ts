@@ -249,12 +249,39 @@ export default defineMiddlewares({
             })
             const session = (req as any).session
             const sessionID = (req as any).sessionID
+            
             console.log("[Admin Users Me Middleware] Session check:", {
               hasSession: !!session,
               sessionID: sessionID?.substring(0, 30) + "...",
               authIdentityId: session?.auth_identity_id,
               sessionKeys: session ? Object.keys(session) : [],
             })
+            
+            // Check if session store can find it
+            if (sessionID) {
+              const sessionStore = (req as any).sessionStore
+              if (sessionStore) {
+                sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
+                  if (storeErr) {
+                    console.error("[Admin Users Me Middleware] Error getting session:", storeErr)
+                  } else if (storedSession) {
+                    console.log("[Admin Users Me Middleware] ✅ Session found in store:", {
+                      sessionId: sessionID?.substring(0, 30) + "...",
+                      hasAuthIdentityId: !!storedSession.auth_identity_id,
+                      keys: Object.keys(storedSession),
+                    })
+                  } else {
+                    console.error("[Admin Users Me Middleware] ❌ Session NOT in store!")
+                    console.error("[Admin Users Me Middleware] This is why Medusa returns 401!")
+                  }
+                })
+              } else {
+                console.error("[Admin Users Me Middleware] No session store available!")
+              }
+            } else {
+              console.error("[Admin Users Me Middleware] No sessionID - cookie might not be parsed correctly")
+            }
+            
             console.log("=".repeat(60))
           }
           next()
