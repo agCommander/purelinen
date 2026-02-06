@@ -227,13 +227,7 @@ export default defineMiddlewares({
     },
     {
       // Intercept auth/session to handle JWT and create session
-      // Try multiple matcher patterns to ensure we catch it
       matcher: /\/auth\/session/,
-      middlewares: [handleAuthSession],
-    },
-    {
-      // Also try matching with a function for more control
-      matcher: (path: string) => path.includes('/auth/session'),
       middlewares: [handleAuthSession],
     },
   ],
