@@ -120,12 +120,16 @@ export async function GET(
   try {
     // Check for session
     const session = (req as any).session
+    const sessionID = (req as any).sessionID
     
+    console.log("[Session Route GET] CUSTOM ROUTE CALLED!")
     console.log("[Session Route GET] Session check:", {
       hasSession: !!session,
+      sessionID: sessionID?.substring(0, 30) + "...",
       sessionKeys: session ? Object.keys(session) : [],
       authIdentityId: session?.auth_identity_id,
       actorType: session?.actor_type,
+      cookies: req.headers.cookie ? "present" : "missing",
     })
     
     if (session && (session.auth_identity_id || session.token)) {

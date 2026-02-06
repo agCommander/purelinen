@@ -140,6 +140,16 @@ export async function POST(
                     session.user_id = decoded.actor_id
                   }
                   
+                  // Log session info before saving
+                  console.log("[Auth Route] Session before save:", {
+                    sessionId: session.id?.substring(0, 30) + "...",
+                    reqSessionID: (req as any).sessionID?.substring(0, 30) + "...",
+                    hasAuthIdentityId: !!session.auth_identity_id,
+                  })
+                  
+                  // Mark session as modified so it gets saved
+                  session.touch()
+                  
                   // Save the session and send response INSIDE the callback (as suggested)
                   // This ensures the session is fully saved before responding
                   session.save((err: any) => {
@@ -175,10 +185,11 @@ export async function POST(
                       const signedValue = "s:" + cookieSignature.sign(sessionID, cookieSecret)
                       
                       // Set the signed cookie with the same options Express session would use
+                      // Use 'lax' for sameSite (not 'none') to ensure cookie is sent
                       res.cookie(cookieName, signedValue, {
                         httpOnly: cookieOptions.httpOnly !== false,
                         secure: cookieOptions.secure || (req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'),
-                        sameSite: cookieOptions.sameSite || 'lax',
+                        sameSite: 'lax', // Use 'lax' instead of 'none' to ensure cookie is sent
                         path: cookieOptions.path || '/',
                         maxAge: cookieOptions.maxAge || 24 * 60 * 60 * 1000, // 24 hours
                       })
