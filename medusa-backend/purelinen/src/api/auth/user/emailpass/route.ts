@@ -133,7 +133,7 @@ export async function POST(
                       session.user_id = decoded.actor_id
                     }
                     
-                    // Save the session (this will set the connect.sid cookie)
+                    // Save the session and manually set the cookie
                     await new Promise<void>((resolveSession, rejectSession) => {
                       session.save((err: any) => {
                         if (err) {
@@ -145,12 +145,22 @@ export async function POST(
                             authIdentityId: decoded.auth_identity_id,
                           })
                           
-                          // Check if Set-Cookie header was set by session.save()
-                          const setCookieAfterSave = res.getHeader("Set-Cookie")
-                          console.log("[Auth Route] Set-Cookie after session.save():", setCookieAfterSave ? "present" : "missing")
-                          if (setCookieAfterSave) {
-                            console.log("[Auth Route] Set-Cookie value:", Array.isArray(setCookieAfterSave) ? setCookieAfterSave[0] : setCookieAfterSave)
-                          }
+                          // Manually set the session cookie since session.save() doesn't always set it
+                          // Use the same cookie name that Express session uses (usually 'connect.sid')
+                          const cookieName = 'connect.sid'
+                          const cookieValue = session.id
+                          
+                          // Get the session store to sign the cookie if needed
+                          // For now, set it directly - Medusa's session middleware should handle signing
+                          res.cookie(cookieName, cookieValue, {
+                            httpOnly: true,
+                            secure: req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https',
+                            sameSite: 'lax',
+                            path: '/',
+                            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+                          })
+                          
+                          console.log("[Auth Route] Session cookie set manually:", cookieName)
                           
                           resolveSession()
                         }
