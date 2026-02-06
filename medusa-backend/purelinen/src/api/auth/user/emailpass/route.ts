@@ -89,6 +89,7 @@ export async function POST(
         }
         
         // Save the session (this will set the connect.sid cookie)
+        // The cookie will be set with proper attributes by Medusa's session middleware
         await new Promise<void>((resolve, reject) => {
           session.save((err: any) => {
             if (err) {
@@ -98,6 +99,7 @@ export async function POST(
               console.log("[Auth Route] Session saved:", {
                 sessionId: session.id?.substring(0, 30) + "...",
                 authIdentityId: authIdentity.id,
+                cookieSet: !!res.getHeader("Set-Cookie"),
               })
               resolve()
             }
