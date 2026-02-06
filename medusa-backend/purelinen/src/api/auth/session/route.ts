@@ -1,3 +1,6 @@
+// This file MUST be loaded - if you see this in compiled output, the route exists
+console.log("[Session Route] Custom /auth/session route file loaded")
+
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { Modules } from "@medusajs/framework/utils"
 
