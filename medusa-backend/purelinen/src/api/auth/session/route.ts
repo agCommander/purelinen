@@ -200,6 +200,19 @@ export async function POST(
               const cookieSignature = require("cookie-signature")
               const signedValue = "s:" + cookieSignature.sign(newSessionID, cookieSecret)
               
+              // Verify we can unsign it with the same secret (for debugging)
+              const cookieValueToVerify = signedValue.startsWith('s:') ? signedValue.substring(2) : signedValue
+              const verifiedSessionID = cookieSignature.unsign(cookieValueToVerify, cookieSecret)
+              if (verifiedSessionID === newSessionID) {
+                console.log("[Session Route POST] ✅ Cookie signature verified - can be unsigned correctly")
+              } else {
+                console.error("[Session Route POST] ❌ Cookie signature verification FAILED!")
+                console.error("[Session Route POST] Expected sessionID:", newSessionID?.substring(0, 30) + "...")
+                console.error("[Session Route POST] Verified sessionID:", verifiedSessionID?.substring(0, 30) + "..." || "null")
+              }
+              
+              console.log("[Session Route POST] Using cookieSecret (first 20 chars):", cookieSecret.substring(0, 20) + "...")
+              
               // Set cookie using options from projectConfig
               // IMPORTANT: Don't set domain - let browser use default (current domain)
               // Setting domain can cause issues with subdomains
