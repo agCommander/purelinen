@@ -79,42 +79,58 @@ export async function POST(
         return
       }
       
-      // Create session manually since authenticate() doesn't always create it
-      const session = (req as any).session
-      if (session) {
-        session.auth_identity_id = authIdentity.id
-        session.actor_type = "admin"
-        if (authIdentity.app_metadata?.user_id) {
-          session.user_id = authIdentity.app_metadata.user_id
-        }
-        
-        // Save the session (this will set the connect.sid cookie)
-        // The cookie will be set with proper attributes by Medusa's session middleware
-        await new Promise<void>((resolve, reject) => {
-          session.save((err: any) => {
-            if (err) {
-              console.error("[Auth Route] Error saving session:", err)
-              reject(err)
-            } else {
-              console.log("[Auth Route] Session saved:", {
-                sessionId: session.id?.substring(0, 30) + "...",
-                authIdentityId: authIdentity.id,
-                cookieSet: !!res.getHeader("Set-Cookie"),
-              })
-              resolve()
+      // According to Medusa docs, we should return a JWT token here
+      // The client will then call POST /auth/session with the token to create the session cookie
+      // Let Medusa's default handler create the JWT token by proxying to the admin endpoint
+      // For now, return what Medusa would return (JWT token)
+      // The admin SDK will handle calling /auth/session with this token
+      
+      // Get JWT token from Medusa's auth response
+      // We need to call the actual admin endpoint to get the proper response with JWT
+      const http = require("http")
+      const postData = JSON.stringify(req.body)
+      
+      return new Promise<void>((resolve, reject) => {
+        const proxyReq = http.request({
+          hostname: "localhost",
+          port: 9000,
+          path: "/auth/admin/emailpass",
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Length": Buffer.byteLength(postData),
+          },
+        }, (proxyRes) => {
+          res.status(proxyRes.statusCode || 500)
+          
+          // Forward all headers
+          Object.keys(proxyRes.headers).forEach((key) => {
+            const value = proxyRes.headers[key]
+            if (value) {
+              res.setHeader(key, value)
             }
           })
+          
+          // Forward response body
+          proxyRes.on("data", (chunk) => {
+            res.write(chunk)
+          })
+          
+          proxyRes.on("end", () => {
+            res.end()
+            resolve()
+          })
         })
-      } else {
-        console.warn("[Auth Route] No session object found - session middleware may not be initialized")
-      }
-      
-      // Return the response that Medusa would normally return
-      res.status(200).json({
-        auth_identity_id: authIdentity.id,
-        actor_type: "admin",
+        
+        proxyReq.on("error", (error) => {
+          console.error("[Auth Route] Proxy error:", error)
+          res.status(500).json({ message: "Internal server error" })
+          reject(error)
+        })
+        
+        proxyReq.write(postData)
+        proxyReq.end()
       })
-      return
     } catch (error) {
       console.error("[Auth Route] Error:", error)
       res.status(500).json({ 
