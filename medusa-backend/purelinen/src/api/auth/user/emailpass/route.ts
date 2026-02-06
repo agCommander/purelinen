@@ -165,6 +165,24 @@ export async function POST(
                       authIdentityId: decoded.auth_identity_id,
                     })
                     
+                    // Verify session is actually stored by trying to reload it
+                    // This helps debug if the session store is working
+                    const sessionStore = (req as any).sessionStore
+                    if (sessionStore && session.id) {
+                      sessionStore.get(session.id, (err: any, storedSession: any) => {
+                        if (err) {
+                          console.error("[Auth Route] Error getting session from store:", err)
+                        } else if (storedSession) {
+                          console.log("[Auth Route] Session verified in store:", {
+                            sessionId: session.id?.substring(0, 30) + "...",
+                            hasAuthIdentityId: !!storedSession.auth_identity_id,
+                          })
+                        } else {
+                          console.warn("[Auth Route] Session NOT found in store after save!")
+                        }
+                      })
+                    }
+                    
                     // Check if Set-Cookie was set by session.save()
                     let setCookieAfterSave = res.getHeader("Set-Cookie")
                     console.log("[Auth Route] Set-Cookie after session.save():", setCookieAfterSave ? "present" : "missing")
