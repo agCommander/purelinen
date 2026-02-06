@@ -154,7 +154,7 @@ export async function POST(
           const newSessionID = (req as any).sessionID
           console.log("[Session Route POST] Session regenerated, new sessionID:", newSessionID?.substring(0, 30) + "...")
           
-          // Now set the session data
+          // Now set the session data BEFORE saving
           session.auth_identity_id = decoded.auth_identity_id
           session.actor_type = decoded.actor_type || "admin"
           session.token = token
@@ -163,10 +163,20 @@ export async function POST(
             session.user_id = decoded.actor_id
           }
           
-          // Mark session as modified
+          console.log("[Session Route POST] Session data set before save:", {
+            authIdentityId: session.auth_identity_id,
+            actorType: session.actor_type,
+            hasToken: !!session.token,
+          })
+          
+          // Mark session as modified to ensure it's saved
           if (typeof (session as any).touch === 'function') {
             (session as any).touch()
           }
+          
+          // CRITICAL: Ensure session is marked as modified
+          ;(session as any).isNew = false
+          ;(session as any).isModified = true
           
           // Save the session (this should set the cookie automatically after regenerate)
           session.save((saveErr: any) => {
@@ -177,10 +187,10 @@ export async function POST(
             }
             
             const sessionID = (req as any).sessionID
-            console.log("[Session Route POST] Session saved:", {
+            console.log("[Session Route POST] Session saved, verifying data was persisted:", {
               sessionId: sessionID?.substring(0, 30) + "...",
-              authIdentityId: decoded.auth_identity_id,
-              actorType: decoded.actor_type,
+              authIdentityId: session.auth_identity_id,
+              actorType: session.actor_type,
             })
             
             // Check if Set-Cookie header was set by Express session middleware
@@ -347,7 +357,7 @@ export async function POST(
               console.error("[Session Route POST] ⚠️  WARNING: Set-Cookie header still missing after manual set!")
             }
             
-            // Verify session is actually stored in the session store
+            // Verify session is actually stored in the session store with the correct data
             // Wait for the store to be updated (give it a moment)
             const sessionStore = (req as any).sessionStore
             if (sessionStore && sessionID) {
@@ -360,13 +370,23 @@ export async function POST(
                     console.log("[Session Route POST] ✅ Session verified in store:", {
                       sessionId: sessionID?.substring(0, 30) + "...",
                       hasAuthIdentityId: !!storedSession.auth_identity_id,
+                      authIdentityId: storedSession.auth_identity_id,
+                      actorType: storedSession.actor_type,
+                      sessionKeys: Object.keys(storedSession),
                     })
+                    
+                    // CRITICAL: If session data is missing, log a warning
+                    if (!storedSession.auth_identity_id) {
+                      console.error("[Session Route POST] ❌ WARNING: Session data NOT persisted to store!")
+                      console.error("[Session Route POST] Session object has:", Object.keys(storedSession))
+                      console.error("[Session Route POST] Expected auth_identity_id:", decoded.auth_identity_id)
+                    }
                   } else {
                     console.error("[Session Route POST] ❌ Session NOT found in store after save!")
                     console.error("[Session Route POST] This might be a timing issue - session might be saved but not yet readable")
                   }
                 })
-              }, 100) // Wait 100ms for store to update
+              }, 200) // Wait 200ms for store to update (increased from 100ms)
             }
             
             // Return response inside the Promise callback
