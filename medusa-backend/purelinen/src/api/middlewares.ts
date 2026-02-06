@@ -116,8 +116,20 @@ async function handleAuthSession(
   res: MedusaResponse,
   next: MedusaNextFunction
 ) {
+  // Log ALL requests to see what we're getting
+  console.log("[Auth Session Middleware] Request:", {
+    method: req.method,
+    path: req.path,
+    url: req.url,
+    originalUrl: (req as any).originalUrl,
+  })
+  
   // Intercept POST /auth/session to handle JWT token and create session
-  if (req.method === 'POST' && (req.path === '/auth/session' || req.url?.includes('/auth/session'))) {
+  const isSessionPath = req.path === '/auth/session' || 
+                       req.url?.includes('/auth/session') ||
+                       (req as any).originalUrl?.includes('/auth/session')
+  
+  if (req.method === 'POST' && isSessionPath) {
     console.log("=".repeat(60))
     console.log("[Auth Session Middleware] Intercepting POST /auth/session")
     
@@ -203,6 +215,9 @@ async function handleAuthSession(
   next()
 }
 
+// Log when middlewares are being registered
+console.log("[Middlewares] Registering custom middlewares")
+
 export default defineMiddlewares({
   routes: [
     {
@@ -212,7 +227,13 @@ export default defineMiddlewares({
     },
     {
       // Intercept auth/session to handle JWT and create session
+      // Try multiple matcher patterns to ensure we catch it
       matcher: /\/auth\/session/,
+      middlewares: [handleAuthSession],
+    },
+    {
+      // Also try matching with a function for more control
+      matcher: (path: string) => path.includes('/auth/session'),
       middlewares: [handleAuthSession],
     },
   ],
