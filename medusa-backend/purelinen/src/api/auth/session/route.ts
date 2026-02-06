@@ -201,7 +201,12 @@ export async function POST(
               const signedValue = "s:" + cookieSignature.sign(newSessionID, cookieSecret)
               
               // Set cookie using options from projectConfig
-              res.cookie(cookieName, signedValue, cookieOptions)
+              // IMPORTANT: Don't set domain - let browser use default (current domain)
+              // Setting domain can cause issues with subdomains
+              res.cookie(cookieName, signedValue, {
+                ...cookieOptions,
+                domain: undefined, // Explicitly don't set domain
+              })
               
               console.log("[Session Route POST] Cookie set manually using projectConfig.cookieOptions:", cookieOptions)
               
@@ -209,7 +214,23 @@ export async function POST(
             }
             
             if (setCookie) {
-              console.log("[Session Route POST] Set-Cookie value:", Array.isArray(setCookie) ? setCookie[0]?.substring(0, 100) + "..." : setCookie?.toString().substring(0, 100) + "...")
+              const cookieValue = Array.isArray(setCookie) ? setCookie[0] : setCookie?.toString()
+              console.log("[Session Route POST] Set-Cookie value (full):", cookieValue)
+              console.log("[Session Route POST] Set-Cookie value (first 200 chars):", cookieValue?.substring(0, 200) + "...")
+              
+              // Check if cookie has all required attributes
+              if (cookieValue) {
+                const hasSecure = cookieValue.includes('Secure')
+                const hasHttpOnly = cookieValue.includes('HttpOnly')
+                const hasSameSite = cookieValue.includes('SameSite')
+                const hasPath = cookieValue.includes('Path=')
+                console.log("[Session Route POST] Cookie attributes check:", {
+                  hasSecure,
+                  hasHttpOnly,
+                  hasSameSite,
+                  hasPath,
+                })
+              }
             } else {
               console.error("[Session Route POST] ⚠️  WARNING: Set-Cookie header still missing after manual set!")
             }
