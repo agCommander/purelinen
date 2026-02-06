@@ -11,14 +11,32 @@ export async function POST(
   res: MedusaResponse
 ): Promise<void> {
   // According to Medusa docs, POST /auth/session creates a session cookie from a JWT token
-  // Check for JWT token in Authorization header
+  // Check for JWT token in Authorization header or cookies
+  let token: string | null = null
+  
+  // First, try Authorization header
   const authHeader = req.headers.authorization
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ message: "Authorization header with Bearer token required" })
-    return
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.substring(7) // Remove "Bearer "
+    console.log("[Session Route POST] Found JWT in Authorization header")
+  } else {
+    // Try cookies (admin SDK might store JWT in cookies)
+    const cookies = req.headers.cookie || ""
+    const jwtMatch = cookies.match(/_medusa_jwt=([^;]+)/)
+    if (jwtMatch) {
+      token = jwtMatch[1]
+      console.log("[Session Route POST] Found JWT in cookies")
+    }
   }
   
-  const token = authHeader.substring(7) // Remove "Bearer "
+  if (!token) {
+    console.log("[Session Route POST] No JWT token found. Headers:", {
+      authorization: req.headers.authorization ? "present" : "missing",
+      cookie: req.headers.cookie ? "present" : "missing",
+    })
+    res.status(401).json({ message: "JWT token required in Authorization header or _medusa_jwt cookie" })
+    return
+  }
   
   // Decode JWT to get auth info (we'll verify it's valid by checking if it exists)
   try {
