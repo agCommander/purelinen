@@ -232,58 +232,100 @@ export default defineMiddlewares({
       middlewares: [handleAuthSession],
     },
     {
-      // Log admin requests to debug session issues - use broader matcher
-      matcher: /\/admin/,
+      // Log ALL requests to /admin/users/me - this MUST run before Medusa's route
+      matcher: /\/admin\/users\/me/,
       middlewares: [
         async (req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) => {
-          // Only log /admin/users/me to avoid spam
-          if (req.path === '/admin/users/me' || req.url?.includes('/admin/users/me')) {
-            console.log("=".repeat(60))
-            console.log("[Admin Users Me Middleware] ===== INTERCEPTED =====")
-            console.log("[Admin Users Me Middleware] Request:", {
-              method: req.method,
-              path: req.path,
-              url: req.url,
-              hasCookies: !!req.headers.cookie,
-              cookieHeader: req.headers.cookie?.substring(0, 200) + "...",
-            })
-            const session = (req as any).session
-            const sessionID = (req as any).sessionID
+          console.log("=".repeat(60))
+          console.log("[Admin Users Me Middleware] ===== INTERCEPTED (BEFORE MEDUSA) =====")
+          console.log("[Admin Users Me Middleware] Request:", {
+            method: req.method,
+            path: req.path,
+            url: req.url,
+            originalUrl: (req as any).originalUrl,
+            hasCookies: !!req.headers.cookie,
+            cookieHeader: req.headers.cookie || "NO COOKIES",
+          })
+          
+          // Parse the cookie to see what sessionID is being sent
+          const cookieHeader = req.headers.cookie || ""
+          const connectSidMatch = cookieHeader.match(/connect\.sid=([^;]+)/)
+          if (connectSidMatch) {
+            const signedCookie = connectSidMatch[1]
+            console.log("[Admin Users Me Middleware] Found connect.sid cookie:", signedCookie.substring(0, 50) + "...")
             
-            console.log("[Admin Users Me Middleware] Session check:", {
-              hasSession: !!session,
-              sessionID: sessionID?.substring(0, 30) + "...",
-              authIdentityId: session?.auth_identity_id,
-              sessionKeys: session ? Object.keys(session) : [],
-            })
-            
-            // Check if session store can find it
-            if (sessionID) {
-              const sessionStore = (req as any).sessionStore
-              if (sessionStore) {
-                sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
-                  if (storeErr) {
-                    console.error("[Admin Users Me Middleware] Error getting session:", storeErr)
-                  } else if (storedSession) {
-                    console.log("[Admin Users Me Middleware] ✅ Session found in store:", {
-                      sessionId: sessionID?.substring(0, 30) + "...",
-                      hasAuthIdentityId: !!storedSession.auth_identity_id,
-                      keys: Object.keys(storedSession),
-                    })
-                  } else {
-                    console.error("[Admin Users Me Middleware] ❌ Session NOT in store!")
-                    console.error("[Admin Users Me Middleware] This is why Medusa returns 401!")
-                  }
-                })
+            // Try to unsign it to get the sessionID
+            try {
+              const cookieSignature = require("cookie-signature")
+              const cookieSecret = process.env.COOKIE_SECRET || "supersecret"
+              // Remove 's:' prefix if present
+              const cookieValue = signedCookie.startsWith('s:') ? signedCookie.substring(2) : signedCookie
+              const sessionID = cookieSignature.unsign(cookieValue, cookieSecret)
+              if (sessionID) {
+                console.log("[Admin Users Me Middleware] Extracted sessionID from cookie:", sessionID.substring(0, 30) + "...")
+                
+                // Check if this session exists in the store
+                const sessionStore = (req as any).sessionStore
+                if (sessionStore) {
+                  sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
+                    if (storeErr) {
+                      console.error("[Admin Users Me Middleware] Error getting session:", storeErr)
+                    } else if (storedSession) {
+                      console.log("[Admin Users Me Middleware] ✅ Session found in store by extracted ID:", {
+                        sessionId: sessionID.substring(0, 30) + "...",
+                        hasAuthIdentityId: !!storedSession.auth_identity_id,
+                        keys: Object.keys(storedSession),
+                      })
+                    } else {
+                      console.error("[Admin Users Me Middleware] ❌ Session NOT in store for extracted ID!")
+                    }
+                  })
+                }
               } else {
-                console.error("[Admin Users Me Middleware] No session store available!")
+                console.error("[Admin Users Me Middleware] Failed to unsign cookie - invalid signature or wrong secret")
               }
-            } else {
-              console.error("[Admin Users Me Middleware] No sessionID - cookie might not be parsed correctly")
+            } catch (e) {
+              console.error("[Admin Users Me Middleware] Error unsigning cookie:", e)
             }
-            
-            console.log("=".repeat(60))
+          } else {
+            console.error("[Admin Users Me Middleware] ❌ No connect.sid cookie found in request!")
           }
+          
+          const session = (req as any).session
+          const sessionID = (req as any).sessionID
+          
+          console.log("[Admin Users Me Middleware] Express session state:", {
+            hasSession: !!session,
+            sessionID: sessionID?.substring(0, 30) + "..." || "NO SESSION ID",
+            authIdentityId: session?.auth_identity_id,
+            sessionKeys: session ? Object.keys(session) : [],
+          })
+          
+          // Check if session store can find it using Express's sessionID
+          if (sessionID) {
+            const sessionStore = (req as any).sessionStore
+            if (sessionStore) {
+              sessionStore.get(sessionID, (storeErr: any, storedSession: any) => {
+                if (storeErr) {
+                  console.error("[Admin Users Me Middleware] Error getting session:", storeErr)
+                } else if (storedSession) {
+                  console.log("[Admin Users Me Middleware] ✅ Session found in store by Express sessionID:", {
+                    sessionId: sessionID.substring(0, 30) + "...",
+                    hasAuthIdentityId: !!storedSession.auth_identity_id,
+                    keys: Object.keys(storedSession),
+                  })
+                } else {
+                  console.error("[Admin Users Me Middleware] ❌ Session NOT in store for Express sessionID!")
+                }
+              })
+            } else {
+              console.error("[Admin Users Me Middleware] No session store available!")
+            }
+          } else {
+            console.error("[Admin Users Me Middleware] No Express sessionID - cookie might not be parsed correctly")
+          }
+          
+          console.log("=".repeat(60))
           next()
         }
       ],
