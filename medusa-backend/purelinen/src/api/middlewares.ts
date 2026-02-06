@@ -230,5 +230,27 @@ export default defineMiddlewares({
       matcher: /\/auth\/session/,
       middlewares: [handleAuthSession],
     },
+    {
+      // Log admin requests to debug session issues
+      matcher: /\/admin\/users\/me/,
+      middlewares: [
+        async (req: MedusaRequest, res: MedusaResponse, next: MedusaNextFunction) => {
+          console.log("[Admin Users Me] Request received:", {
+            method: req.method,
+            path: req.path,
+            hasCookies: !!req.headers.cookie,
+            cookieHeader: req.headers.cookie?.substring(0, 200) + "...",
+          })
+          const session = (req as any).session
+          const sessionID = (req as any).sessionID
+          console.log("[Admin Users Me] Session check:", {
+            hasSession: !!session,
+            sessionID: sessionID?.substring(0, 30) + "...",
+            authIdentityId: session?.auth_identity_id,
+          })
+          next()
+        }
+      ],
+    },
   ],
 })

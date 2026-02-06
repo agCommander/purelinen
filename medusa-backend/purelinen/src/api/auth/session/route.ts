@@ -173,6 +173,7 @@ export async function GET(
     path: req.path,
     url: req.url,
     cookies: req.headers.cookie ? "present" : "missing",
+    cookieHeader: req.headers.cookie?.substring(0, 200) + "...",
   })
   console.log("=".repeat(60))
   
