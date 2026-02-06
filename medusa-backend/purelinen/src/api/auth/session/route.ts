@@ -111,33 +111,29 @@ export async function POST(
     // Create session from JWT token
     const session = (req as any).session
     if (session) {
-      session.auth_identity_id = decoded.auth_identity_id
-      session.actor_type = decoded.actor_type || "admin"
-      session.token = token
-      
-      if (decoded.actor_id) {
-        session.user_id = decoded.actor_id
-      }
-      
-      // Instead of regenerating, modify the existing session
-      // This should allow Express session middleware to set the cookie automatically
-      session.auth_identity_id = decoded.auth_identity_id
-      session.actor_type = decoded.actor_type || "admin"
-      session.token = token
-      
-      if (decoded.actor_id) {
-        session.user_id = decoded.actor_id
-      }
-      
-      // Touch the session to mark it as modified - this should trigger Express to set the cookie
-      if (typeof (session as any).touch === 'function') {
-        (session as any).touch()
-        console.log("[Session Route POST] Session touched to trigger cookie setting")
-      }
-      
-      // Save the session (this should set the cookie automatically)
+      // Regenerate session to get a new session ID - this should trigger Express session middleware to set the cookie
       await new Promise<void>((resolve, reject) => {
-        session.save((saveErr: any) => {
+        session.regenerate((regenerateErr: any) => {
+          if (regenerateErr) {
+            console.error("[Session Route POST] Error regenerating session:", regenerateErr)
+            reject(regenerateErr)
+            return
+          }
+          
+          const newSessionID = (req as any).sessionID
+          console.log("[Session Route POST] Session regenerated, new sessionID:", newSessionID?.substring(0, 30) + "...")
+          
+          // Now set the session data
+          session.auth_identity_id = decoded.auth_identity_id
+          session.actor_type = decoded.actor_type || "admin"
+          session.token = token
+          
+          if (decoded.actor_id) {
+            session.user_id = decoded.actor_id
+          }
+          
+          // Save the session (this should set the cookie automatically after regenerate)
+          session.save((saveErr: any) => {
             if (saveErr) {
               console.error("[Session Route POST] Error saving regenerated session:", saveErr)
               reject(saveErr)
@@ -145,7 +141,7 @@ export async function POST(
             }
             
             const sessionID = (req as any).sessionID
-            console.log("[Session Route POST] Session saved:", {
+            console.log("[Session Route POST] Session saved after regenerate:", {
               sessionId: sessionID?.substring(0, 30) + "...",
               authIdentityId: decoded.auth_identity_id,
               actorType: decoded.actor_type,
@@ -317,13 +313,14 @@ export async function POST(
               })
             }
             
+            // Return response inside the Promise callback
+            res.status(200).json({
+              auth_identity_id: decoded.auth_identity_id,
+              actor_type: decoded.actor_type || "admin",
+            })
             resolve()
           })
         })
-      
-      res.status(200).json({
-        auth_identity_id: decoded.auth_identity_id,
-        actor_type: decoded.actor_type || "admin",
       })
       return
     } else {
