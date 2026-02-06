@@ -87,10 +87,20 @@ export async function POST(
             reject(err)
           } else {
             console.log("[Session Route POST] Session created from JWT:", {
-              sessionId: session.id?.substring(0, 30) + "...",
+              sessionId: (req as any).sessionID?.substring(0, 30) + "...",
               authIdentityId: decoded.auth_identity_id,
               actorType: decoded.actor_type,
             })
+            
+            // Check if Set-Cookie header was set by Express session middleware
+            const setCookie = res.getHeader("Set-Cookie")
+            console.log("[Session Route POST] Set-Cookie header:", setCookie ? "present" : "missing")
+            if (setCookie) {
+              console.log("[Session Route POST] Set-Cookie value:", Array.isArray(setCookie) ? setCookie[0]?.substring(0, 100) + "..." : setCookie?.toString().substring(0, 100) + "...")
+            } else {
+              console.warn("[Session Route POST] ⚠️ Set-Cookie not set! Session cookie won't be sent to browser.")
+            }
+            
             resolve()
           }
         })
