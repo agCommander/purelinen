@@ -106,7 +106,7 @@ export async function POST(
             responseBody += chunk.toString()
           })
           
-          proxyRes.on("end", async () => {
+              proxyRes.on("end", async () => {
             try {
               // Parse the response to get JWT token
               const authResponse = JSON.parse(responseBody)
@@ -124,76 +124,78 @@ export async function POST(
                   
                   // Create session from JWT token
                   const session = (req as any).session
-                  if (session) {
-                    session.auth_identity_id = decoded.auth_identity_id
-                    session.actor_type = decoded.actor_type || "admin"
-                    session.token = token
-                    
-                    if (decoded.actor_id) {
-                      session.user_id = decoded.actor_id
+                  if (!session) {
+                    console.error("[Auth Route] No session object - session middleware not initialized")
+                    res.status(500).json({ message: "Session middleware not initialized" })
+                    reject(new Error("Session middleware not initialized"))
+                    return
+                  }
+                  
+                  // Set session data
+                  session.auth_identity_id = decoded.auth_identity_id
+                  session.actor_type = decoded.actor_type || "admin"
+                  session.token = token
+                  
+                  if (decoded.actor_id) {
+                    session.user_id = decoded.actor_id
+                  }
+                  
+                  // Save the session and send response INSIDE the callback (as suggested)
+                  // This ensures the session is fully saved before responding
+                  session.save((err: any) => {
+                    if (err) {
+                      console.error("[Auth Route] Error saving session:", err)
+                      res.status(500).json({ message: "Error saving session" })
+                      reject(err)
+                      return
                     }
                     
-                    // Save the session and manually set the cookie
-                    await new Promise<void>((resolveSession, rejectSession) => {
-                      session.save((err: any) => {
-                        if (err) {
-                          console.error("[Auth Route] Error saving session:", err)
-                          rejectSession(err)
-                        } else {
-                          console.log("[Auth Route] Session created during login:", {
-                            sessionId: session.id?.substring(0, 30) + "...",
-                            authIdentityId: decoded.auth_identity_id,
-                          })
-                          
-                          // Manually set the session cookie since session.save() doesn't always set it
-                          // Use the same cookie name that Express session uses (usually 'connect.sid')
-                          const cookieName = 'connect.sid'
-                          const cookieValue = session.id
-                          
-                          // Get the session store to sign the cookie if needed
-                          // For now, set it directly - Medusa's session middleware should handle signing
-                          res.cookie(cookieName, cookieValue, {
-                            httpOnly: true,
-                            secure: req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https',
-                            sameSite: 'lax',
-                            path: '/',
-                            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-                          })
-                          
-                          console.log("[Auth Route] Session cookie set manually:", cookieName)
-                          
-                          resolveSession()
-                        }
-                      })
+                    console.log("[Auth Route] Session created during login:", {
+                      sessionId: session.id?.substring(0, 30) + "...",
+                      authIdentityId: decoded.auth_identity_id,
                     })
-                  }
+                    
+                    // Check if Set-Cookie was set by session.save()
+                    const setCookieAfterSave = res.getHeader("Set-Cookie")
+                    console.log("[Auth Route] Set-Cookie after session.save():", setCookieAfterSave ? "present" : "missing")
+                    
+                    // Forward response headers (but preserve Set-Cookie from session)
+                    res.status(proxyRes.statusCode || 500)
+                    
+                    // Forward other headers (don't overwrite Set-Cookie)
+                    Object.keys(proxyRes.headers).forEach((key) => {
+                      const value = proxyRes.headers[key]
+                      if (value && key.toLowerCase() !== "set-cookie") {
+                        res.setHeader(key, value)
+                      }
+                    })
+                    
+                    // Log final Set-Cookie header
+                    const finalSetCookie = res.getHeader("Set-Cookie")
+                    console.log("[Auth Route] Final Set-Cookie header:", finalSetCookie ? "present" : "missing")
+                    if (finalSetCookie) {
+                      console.log("[Auth Route] Final Set-Cookie value:", Array.isArray(finalSetCookie) ? finalSetCookie[0] : finalSetCookie)
+                    }
+                    
+                    // Send response AFTER session is saved
+                    res.json(authResponse)
+                    resolve()
+                  })
+                  return // Don't continue - response is sent in callback
                 } catch (jwtError) {
                   console.error("[Auth Route] Error decoding JWT:", jwtError)
+                  // Fall through to send response without session
                 }
               }
               
-              // Forward response - but make sure we don't overwrite Set-Cookie from session
+              // If no token or error, send response without session
               res.status(proxyRes.statusCode || 500)
-              
-              // Get Set-Cookie from session first (if it exists)
-              const sessionCookie = res.getHeader("Set-Cookie")
-              
-              // Forward other headers
               Object.keys(proxyRes.headers).forEach((key) => {
                 const value = proxyRes.headers[key]
-                // Don't overwrite Set-Cookie if we already have one from session
-                if (value && key.toLowerCase() !== "set-cookie") {
+                if (value) {
                   res.setHeader(key, value)
                 }
               })
-              
-              // Log final Set-Cookie header
-              const finalSetCookie = res.getHeader("Set-Cookie")
-              console.log("[Auth Route] Final Set-Cookie header:", finalSetCookie ? "present" : "missing")
-              if (finalSetCookie) {
-                console.log("[Auth Route] Final Set-Cookie value:", Array.isArray(finalSetCookie) ? finalSetCookie[0] : finalSetCookie)
-              }
-              
               res.json(authResponse)
               resolve()
             } catch (parseError) {
