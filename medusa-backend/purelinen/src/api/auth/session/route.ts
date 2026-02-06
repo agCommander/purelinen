@@ -139,32 +139,45 @@ export async function POST(
         return
       }
       
-      // Session doesn't exist or has wrong data - modify existing session
-      console.log("[Session Route POST] Modifying existing session with JWT data")
-      session.auth_identity_id = decoded.auth_identity_id
-      session.actor_type = decoded.actor_type || "admin"
-      session.token = token
+      // Session doesn't exist or has wrong data - regenerate to get a fresh session
+      // This should trigger Express session middleware to set the cookie automatically
+      console.log("[Session Route POST] Regenerating session to trigger Express session middleware to set cookie")
       
-      if (decoded.actor_id) {
-        session.user_id = decoded.actor_id
-      }
-      
-      // Mark session as modified
-      if (typeof (session as any).touch === 'function') {
-        (session as any).touch()
-      }
-      
-      // Save the session (this should set the cookie automatically)
       await new Promise<void>((resolve, reject) => {
-        session.save((saveErr: any) => {
+        session.regenerate((regenerateErr: any) => {
+          if (regenerateErr) {
+            console.error("[Session Route POST] Error regenerating session:", regenerateErr)
+            reject(regenerateErr)
+            return
+          }
+          
+          const newSessionID = (req as any).sessionID
+          console.log("[Session Route POST] Session regenerated, new sessionID:", newSessionID?.substring(0, 30) + "...")
+          
+          // Now set the session data
+          session.auth_identity_id = decoded.auth_identity_id
+          session.actor_type = decoded.actor_type || "admin"
+          session.token = token
+          
+          if (decoded.actor_id) {
+            session.user_id = decoded.actor_id
+          }
+          
+          // Mark session as modified
+          if (typeof (session as any).touch === 'function') {
+            (session as any).touch()
+          }
+          
+          // Save the session (this should set the cookie automatically after regenerate)
+          session.save((saveErr: any) => {
             if (saveErr) {
-              console.error("[Session Route POST] Error saving regenerated session:", saveErr)
+              console.error("[Session Route POST] Error saving session:", saveErr)
               reject(saveErr)
               return
             }
             
             const sessionID = (req as any).sessionID
-            console.log("[Session Route POST] Session saved after regenerate:", {
+            console.log("[Session Route POST] Session saved:", {
               sessionId: sessionID?.substring(0, 30) + "...",
               authIdentityId: decoded.auth_identity_id,
               actorType: decoded.actor_type,
@@ -173,6 +186,21 @@ export async function POST(
             // Check if Set-Cookie header was set by Express session middleware
             let setCookie = res.getHeader("Set-Cookie")
             console.log("[Session Route POST] Set-Cookie header after save:", setCookie ? "present" : "missing")
+            
+            // If Express session middleware set the cookie, use it and don't set manually
+            if (setCookie) {
+              console.log("[Session Route POST] ✅ Express session middleware set the cookie automatically!")
+              console.log("[Session Route POST] Set-Cookie value (first 100 chars):", 
+                (Array.isArray(setCookie) ? setCookie[0] : setCookie?.toString())?.substring(0, 100) + "...")
+              
+              // Return response - cookie is already set by Express session middleware
+              res.status(200).json({
+                auth_identity_id: decoded.auth_identity_id,
+                actor_type: decoded.actor_type || "admin",
+              })
+              resolve()
+              return
+            }
             
             // If Express session middleware didn't set the cookie, set it manually
             // Use cookieOptions from projectConfig to ensure consistency
@@ -347,9 +375,10 @@ export async function POST(
               actor_type: decoded.actor_type || "admin",
             })
             resolve()
-          })
-        })
-        return
+          }) // closes session.save
+        }) // closes session.regenerate
+      }) // closes Promise
+      return
     } else {
       console.warn("[Session Route POST] No session object found")
       res.status(500).json({ message: "Session middleware not initialized" })
