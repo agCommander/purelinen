@@ -142,8 +142,8 @@ export async function GET(
     })
     
     // Check if cookie is being sent
-    const cookies = req.headers.cookie || ""
-    const connectSidMatch = cookies.match(/connect\.sid=([^;]+)/)
+    const cookieHeader = req.headers.cookie || ""
+    const connectSidMatch = cookieHeader.match(/connect\.sid=([^;]+)/)
     if (connectSidMatch) {
       console.log("[Session Route GET] Found connect.sid cookie:", connectSidMatch[1].substring(0, 50) + "...")
       
@@ -223,8 +223,8 @@ export async function GET(
     }
     
     // No valid session - check if there's a JWT token in cookies that we can use
-    const cookies = req.headers.cookie || ""
-    const jwtMatch = cookies.match(/_medusa_jwt=([^;]+)/)
+    const cookieHeaderForJWT = req.headers.cookie || ""
+    const jwtMatch = cookieHeaderForJWT.match(/_medusa_jwt=([^;]+)/)
     
     if (jwtMatch) {
       const jwtToken = jwtMatch[1]
