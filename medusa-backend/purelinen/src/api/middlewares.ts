@@ -111,8 +111,34 @@ async function ensureVariantPrices(
   next()
 }
 
+function stripEmptyQueryParams(req: MedusaRequest) {
+  const query = req.query || {}
+  for (const [key, value] of Object.entries(query)) {
+    if (value === "") {
+      delete (query as Record<string, unknown>)[key]
+      continue
+    }
+
+    if (Array.isArray(value) && value.every((entry) => entry === "")) {
+      delete (query as Record<string, unknown>)[key]
+    }
+  }
+}
+
 export default defineMiddlewares({
   routes: [
+    {
+      // Remove empty query params so they don't trigger filters (e.g. q=)
+      matcher: /\/admin\/products/,
+      middlewares: [
+        (req: MedusaRequest, _res: MedusaResponse, next: MedusaNextFunction) => {
+          if (req.method === "GET") {
+            stripEmptyQueryParams(req)
+          }
+          next()
+        },
+      ],
+    },
     {
       // Match all admin product API routes (including nested routes)
       matcher: /\/admin\/products/,
