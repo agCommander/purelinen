@@ -1,0 +1,35 @@
+# Set correct MIME types
+<IfModule mod_mime.c>
+    AddType application/javascript .jsx
+    AddType text/css .css
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Explicitly serve entry.jsx and index.css from root before proxying
+    RewriteRule ^entry\.jsx$ entry.jsx [L]
+    RewriteRule ^index\.css$ index.css [L]
+    
+    # Proxy all other requests to Node.js backend
+    RewriteCond %{REQUEST_URI} !^/\.well-known/
+    RewriteRule ^(.*)$ http://localhost:9000/$1 [P,L]
+</IfModule>
+
+# CRITICAL: Forward headers to Medusa so it knows it's behind a proxy
+# This tells Medusa the original request was HTTPS, allowing it to set Secure cookies
+<IfModule mod_headers.c>
+    # Tell Medusa the original request was HTTPS (CRITICAL for Secure cookies)
+    RequestHeader set X-Forwarded-Proto "https"
+    # Tell Medusa the original hostname
+    RequestHeader set X-Forwarded-Host "api-new.purelinen.com.au"
+    # Forward the original client IP
+    RequestHeader set X-Forwarded-For "%{REMOTE_ADDR}e"
+</IfModule>
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the "ea-php74" package as the default "PHP" programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php74 .php .php7 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit

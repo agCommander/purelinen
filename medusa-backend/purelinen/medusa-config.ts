@@ -6,9 +6,10 @@ module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     cookieOptions: {
-      secure: false, // Temporarily set to false to test - browser is rejecting secure cookies
+      secure: process.env.NODE_ENV === 'production', // true in production (HTTPS), false in development
       sameSite: "lax", // Important: use 'lax' for same-domain requests
       httpOnly: true,
+      domain: process.env.COOKIE_DOMAIN || undefined, // Set if needed for subdomain cookies
     },
     http: {
       storeCors: process.env.STORE_CORS!,
