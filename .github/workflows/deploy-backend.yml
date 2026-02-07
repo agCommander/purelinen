@@ -50,7 +50,8 @@ jobs:
             npm run build
             
             # Restart PM2
-            pm2 restart purelinen-backend || pm2 start ecosystem.config.js
+            pm2 delete purelinen-backend
+            pm2 start ecosystem.config.js
             
             # Save PM2 config
             pm2 save
