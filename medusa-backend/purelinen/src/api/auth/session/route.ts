@@ -27,6 +27,11 @@ export async function POST(
   if (session && session.auth_context?.auth_identity_id) {
     console.log("[Session Route POST] Session already exists, returning success")
     
+    // Ensure admin actor_type matches Medusa's expected "user"
+    if (session.auth_context.actor_type !== "user") {
+      session.auth_context.actor_type = "user"
+    }
+
     // IMPORTANT: Even if session exists, we need to ensure the cookie is set!
     // Check if Set-Cookie header is present
     let setCookie = res.getHeader("Set-Cookie")
@@ -68,7 +73,7 @@ export async function POST(
     
     res.status(200).json({
       auth_identity_id: session.auth_context?.auth_identity_id,
-      actor_type: session.auth_context?.actor_type || "user",
+      actor_type: "user",
     })
     return
   }
@@ -125,6 +130,9 @@ export async function POST(
       const existingSessionID = (req as any).sessionID
       if (existingSessionID && session.auth_context?.auth_identity_id === decoded.auth_identity_id) {
         console.log("[Session Route POST] Session already exists with correct auth data")
+        if (session.auth_context?.actor_type !== "user") {
+          session.auth_context.actor_type = "user"
+        }
         // Session already exists, just ensure cookie is set by touching and saving
         if (typeof (session as any).touch === 'function') {
           (session as any).touch()
@@ -141,7 +149,7 @@ export async function POST(
             console.log("[Session Route POST] Existing session saved, cookie should be set")
             res.status(200).json({
               auth_identity_id: decoded.auth_identity_id,
-              actor_type: decoded.actor_type || "user",
+              actor_type: "user",
             })
             resolve()
           })
@@ -156,7 +164,7 @@ export async function POST(
       // Set the session data in the shape Medusa expects
       session.auth_context = {
         actor_id: decoded.actor_id || "",
-        actor_type: decoded.actor_type || "user",
+        actor_type: "user",
         auth_identity_id: decoded.auth_identity_id || "",
         app_metadata: decoded.app_metadata || {},
         user_metadata: decoded.user_metadata || {},
@@ -204,7 +212,7 @@ export async function POST(
               // Return response - cookie is already set by Express session middleware
               res.status(200).json({
                 auth_identity_id: decoded.auth_identity_id,
-                actor_type: decoded.actor_type || "user",
+                actor_type: "user",
               })
               resolve()
               return
@@ -390,7 +398,7 @@ export async function POST(
             // Return response inside the Promise callback
               res.status(200).json({
                 auth_identity_id: decoded.auth_identity_id,
-                actor_type: decoded.actor_type || "user",
+                actor_type: "user",
               })
             resolve()
           }) // closes session.save

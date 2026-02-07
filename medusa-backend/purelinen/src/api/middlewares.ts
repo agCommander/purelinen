@@ -166,7 +166,7 @@ async function handleAuthSession(
         if (session) {
           session.auth_context = {
             actor_id: decoded.actor_id || "",
-            actor_type: decoded.actor_type || "user",
+            actor_type: "user",
             auth_identity_id: decoded.auth_identity_id || "",
             app_metadata: decoded.app_metadata || {},
             user_metadata: decoded.user_metadata || {},
@@ -184,7 +184,7 @@ async function handleAuthSession(
             console.log("[Auth Session Middleware] ✅ Session created from JWT")
             res.status(200).json({
               auth_identity_id: decoded.auth_identity_id,
-              actor_type: decoded.actor_type || "user",
+              actor_type: "user",
             })
             // Don't call next() - we've handled the request
             return
