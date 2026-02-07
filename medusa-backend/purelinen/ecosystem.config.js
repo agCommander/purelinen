@@ -10,7 +10,6 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         PORT: 9000,
-        DATABASE_URL: 'postgres://medusa_user:x2X%216BubaYdZ4%26DrvP%23l@127.0.0.1:5432/purelinen_medusa',
       },
       error_file: './logs/pm2-error.log',
       out_file: './logs/pm2-out.log',
