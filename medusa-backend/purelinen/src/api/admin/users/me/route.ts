@@ -33,7 +33,7 @@ export async function GET(
   let sessionID = (req as any).sessionID
   
   // If Express session middleware didn't parse the cookie, try to load it manually
-  if (connectSidMatch && (!session || !session.auth_identity_id)) {
+  if (connectSidMatch && (!session || !session.auth_context?.auth_identity_id)) {
     const signedCookie = decodeURIComponent(connectSidMatch[1]) // URL decode first
     console.log("[Admin Users Me Route] Found connect.sid cookie (decoded):", signedCookie.substring(0, 50) + "...")
     
@@ -76,7 +76,7 @@ export async function GET(
               } else if (storedSession) {
                 console.log("[Admin Users Me Route] ✅ Session found in store by extracted ID:", {
                   sessionId: extractedSessionID.substring(0, 30) + "...",
-                  hasAuthIdentityId: !!storedSession.auth_identity_id,
+                  hasAuthIdentityId: !!storedSession.auth_context?.auth_identity_id,
                   keys: Object.keys(storedSession),
                 })
                 
@@ -115,8 +115,8 @@ export async function GET(
   console.log("[Admin Users Me Route] Session check:", {
     hasSession: !!session,
     sessionID: sessionID?.substring(0, 30) + "...",
-    authIdentityId: session?.auth_identity_id,
-    actorType: session?.actor_type,
+    authIdentityId: session?.auth_context?.auth_identity_id,
+    actorType: session?.auth_context?.actor_type,
     sessionKeys: session ? Object.keys(session) : [],
   })
   
@@ -130,7 +130,7 @@ export async function GET(
         } else if (storedSession) {
           console.log("[Admin Users Me Route] ✅ Session found in store:", {
             sessionId: sessionID?.substring(0, 30) + "...",
-            hasAuthIdentityId: !!storedSession.auth_identity_id,
+            hasAuthIdentityId: !!storedSession.auth_context?.auth_identity_id,
             keys: Object.keys(storedSession),
           })
         } else {
@@ -141,13 +141,13 @@ export async function GET(
   }
   
   // If we have a valid session, return user info
-  if (session && session.auth_identity_id) {
+  if (session && session.auth_context?.auth_identity_id) {
     try {
       const authModuleService = req.scope.resolve(Modules.AUTH)
       const userModuleService = req.scope.resolve(Modules.USER)
       
       const authIdentities = await authModuleService.listAuthIdentities({
-        id: session.auth_identity_id
+        id: session.auth_context.auth_identity_id
       })
       
       if (authIdentities && authIdentities.length > 0) {
@@ -183,14 +183,14 @@ export async function GET(
     hasSession: !!session,
     sessionID: sessionID?.substring(0, 30) + "..." || "NO SESSION ID",
     sessionKeys: session ? Object.keys(session) : [],
-    authIdentityId: session?.auth_identity_id,
+    authIdentityId: session?.auth_context?.auth_identity_id,
   })
   res.status(401).json({ 
     message: "Unauthorized - CUSTOM ROUTE CALLED", 
     sessionState: {
       hasSession: !!session,
       hasSessionID: !!sessionID,
-      hasAuthIdentityId: !!session?.auth_identity_id,
+      hasAuthIdentityId: !!session?.auth_context?.auth_identity_id,
     }
   })
 }

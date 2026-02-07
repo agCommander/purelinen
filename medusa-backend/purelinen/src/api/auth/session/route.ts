@@ -3,6 +3,7 @@ console.log("[Session Route] Custom /auth/session route file loaded")
 
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { Modules } from "@medusajs/framework/utils"
+import { verify } from "jsonwebtoken"
 
 /**
  * Session endpoint:
@@ -23,7 +24,7 @@ export async function POST(
   
   // First, check if session already exists (created during login)
   const session = (req as any).session
-  if (session && session.auth_identity_id) {
+  if (session && session.auth_context?.auth_identity_id) {
     console.log("[Session Route POST] Session already exists, returning success")
     
     // IMPORTANT: Even if session exists, we need to ensure the cookie is set!
@@ -66,8 +67,8 @@ export async function POST(
     }
     
     res.status(200).json({
-      auth_identity_id: session.auth_identity_id,
-      actor_type: session.actor_type || "admin",
+      auth_identity_id: session.auth_context?.auth_identity_id,
+      actor_type: session.auth_context?.actor_type || "user",
     })
     return
   }
@@ -100,20 +101,29 @@ export async function POST(
     return
   }
   
-  // Decode JWT to get auth info (we'll verify it's valid by checking if it exists)
+  // Verify JWT to get auth info
   try {
-    // Simple JWT decode (without verification for now - Medusa will verify on use)
-    const base64Url = token.split('.')[1]
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-    const jsonPayload = Buffer.from(base64, 'base64').toString('utf8')
-    const decoded = JSON.parse(jsonPayload)
+    const configModule = req.scope.resolve("configModule")
+    const httpConfig = configModule?.projectConfig?.http || {}
+    const jwtSecret = httpConfig.jwtSecret || process.env.JWT_SECRET || "supersecret"
+    const jwtPublicKey = httpConfig.jwtPublicKey
+    const jwtVerifyOptions = httpConfig.jwtVerifyOptions ?? httpConfig.jwtOptions
+
+    const decoded = verify(token, jwtPublicKey ?? jwtSecret, jwtVerifyOptions) as {
+      actor_id?: string
+      actor_type?: string
+      auth_identity_id?: string
+      app_metadata?: Record<string, unknown>
+      user_metadata?: Record<string, unknown>
+      [key: string]: unknown
+    }
     
     // Create session from JWT token
     const session = (req as any).session
     if (session) {
       // Check if session already exists with correct data (from login route)
       const existingSessionID = (req as any).sessionID
-      if (existingSessionID && session.auth_identity_id === decoded.auth_identity_id) {
+      if (existingSessionID && session.auth_context?.auth_identity_id === decoded.auth_identity_id) {
         console.log("[Session Route POST] Session already exists with correct auth data")
         // Session already exists, just ensure cookie is set by touching and saving
         if (typeof (session as any).touch === 'function') {
@@ -131,7 +141,7 @@ export async function POST(
             console.log("[Session Route POST] Existing session saved, cookie should be set")
             res.status(200).json({
               auth_identity_id: decoded.auth_identity_id,
-              actor_type: decoded.actor_type || "admin",
+              actor_type: decoded.actor_type || "user",
             })
             resolve()
           })
@@ -143,18 +153,19 @@ export async function POST(
       // DON'T use regenerate() - it creates a new session that doesn't save custom properties
       console.log("[Session Route POST] Modifying existing session (NOT regenerating)")
       
-      // Set the session data
-      session.auth_identity_id = decoded.auth_identity_id
-      session.actor_type = decoded.actor_type || "admin"
+      // Set the session data in the shape Medusa expects
+      session.auth_context = {
+        actor_id: decoded.actor_id || "",
+        actor_type: decoded.actor_type || "user",
+        auth_identity_id: decoded.auth_identity_id || "",
+        app_metadata: decoded.app_metadata || {},
+        user_metadata: decoded.user_metadata || {},
+      }
       session.token = token
       
-      if (decoded.actor_id) {
-        session.user_id = decoded.actor_id
-      }
-      
       console.log("[Session Route POST] Session data set:", {
-        authIdentityId: session.auth_identity_id,
-        actorType: session.actor_type,
+        authIdentityId: session.auth_context?.auth_identity_id,
+        actorType: session.auth_context?.actor_type,
         hasToken: !!session.token,
         sessionID: (req as any).sessionID?.substring(0, 30) + "...",
       })
@@ -176,8 +187,8 @@ export async function POST(
             const sessionID = (req as any).sessionID
             console.log("[Session Route POST] Session saved, verifying data was persisted:", {
               sessionId: sessionID?.substring(0, 30) + "...",
-              authIdentityId: session.auth_identity_id,
-              actorType: session.actor_type,
+              authIdentityId: session.auth_context?.auth_identity_id,
+              actorType: session.auth_context?.actor_type,
             })
             
             // Check if Set-Cookie header was set by Express session middleware
@@ -193,7 +204,7 @@ export async function POST(
               // Return response - cookie is already set by Express session middleware
               res.status(200).json({
                 auth_identity_id: decoded.auth_identity_id,
-                actor_type: decoded.actor_type || "admin",
+                actor_type: decoded.actor_type || "user",
               })
               resolve()
               return
@@ -356,14 +367,14 @@ export async function POST(
                   } else if (storedSession) {
                     console.log("[Session Route POST] ✅ Session verified in store:", {
                       sessionId: sessionID?.substring(0, 30) + "...",
-                      hasAuthIdentityId: !!storedSession.auth_identity_id,
-                      authIdentityId: storedSession.auth_identity_id,
-                      actorType: storedSession.actor_type,
+                      hasAuthIdentityId: !!storedSession.auth_context?.auth_identity_id,
+                      authIdentityId: storedSession.auth_context?.auth_identity_id,
+                      actorType: storedSession.auth_context?.actor_type,
                       sessionKeys: Object.keys(storedSession),
                     })
                     
                     // CRITICAL: If session data is missing, log a warning
-                    if (!storedSession.auth_identity_id) {
+                    if (!storedSession.auth_context?.auth_identity_id) {
                       console.error("[Session Route POST] ❌ WARNING: Session data NOT persisted to store!")
                       console.error("[Session Route POST] Session object has:", Object.keys(storedSession))
                       console.error("[Session Route POST] Expected auth_identity_id:", decoded.auth_identity_id)
@@ -377,10 +388,10 @@ export async function POST(
             }
             
             // Return response inside the Promise callback
-            res.status(200).json({
-              auth_identity_id: decoded.auth_identity_id,
-              actor_type: decoded.actor_type || "admin",
-            })
+              res.status(200).json({
+                auth_identity_id: decoded.auth_identity_id,
+                actor_type: decoded.actor_type || "user",
+              })
             resolve()
           }) // closes session.save
         }) // closes Promise
@@ -424,8 +435,8 @@ export async function GET(
       hasSession: !!session,
       sessionID: sessionID?.substring(0, 30) + "...",
       sessionKeys: session ? Object.keys(session) : [],
-      authIdentityId: session?.auth_identity_id,
-      actorType: session?.actor_type,
+      authIdentityId: session?.auth_context?.auth_identity_id,
+      actorType: session?.auth_context?.actor_type,
       cookies: req.headers.cookie ? "present" : "missing",
     })
     
@@ -444,7 +455,7 @@ export async function GET(
           } else if (storedSession) {
             console.log("[Session Route GET] ✅ Session found in store:", {
               sessionId: sessionID?.substring(0, 30) + "...",
-              hasAuthIdentityId: !!storedSession.auth_identity_id,
+              hasAuthIdentityId: !!storedSession.auth_context?.auth_identity_id,
               keys: Object.keys(storedSession),
             })
           } else {
@@ -456,10 +467,10 @@ export async function GET(
       console.log("[Session Route GET] No connect.sid cookie found in request")
     }
     
-    if (session && (session.auth_identity_id || session.token)) {
-      const authIdentityId = session.auth_identity_id
+    if (session && (session.auth_context?.auth_identity_id || session.token)) {
+      const authIdentityId = session.auth_context?.auth_identity_id
       const token = session.token
-      const actorType = session.actor_type || "admin"
+      const actorType = session.auth_context?.actor_type || "user"
       
       if (authIdentityId) {
         // Get user from auth identity

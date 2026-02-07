@@ -164,13 +164,14 @@ async function handleAuthSession(
         // Create session from JWT
         const session = (req as any).session
         if (session) {
-          session.auth_identity_id = decoded.auth_identity_id
-          session.actor_type = decoded.actor_type || "admin"
-          session.token = token
-          
-          if (decoded.actor_id) {
-            session.user_id = decoded.actor_id
+          session.auth_context = {
+            actor_id: decoded.actor_id || "",
+            actor_type: decoded.actor_type || "user",
+            auth_identity_id: decoded.auth_identity_id || "",
+            app_metadata: decoded.app_metadata || {},
+            user_metadata: decoded.user_metadata || {},
           }
+          session.token = token
           
           // Save session
           session.save((err: any) => {
@@ -183,7 +184,7 @@ async function handleAuthSession(
             console.log("[Auth Session Middleware] ✅ Session created from JWT")
             res.status(200).json({
               auth_identity_id: decoded.auth_identity_id,
-              actor_type: decoded.actor_type || "admin",
+              actor_type: decoded.actor_type || "user",
             })
             // Don't call next() - we've handled the request
             return
@@ -207,7 +208,7 @@ async function handleAuthSession(
     console.log("[Auth Session Middleware] Session check:", {
       hasSession: !!session,
       sessionID: sessionID?.substring(0, 30) + "...",
-      authIdentityId: session?.auth_identity_id,
+      authIdentityId: session?.auth_context?.auth_identity_id,
     })
     console.log("=".repeat(60))
   }
@@ -289,7 +290,7 @@ export default defineMiddlewares({
           let storedSession: any = null
           
           // If Express session middleware didn't parse the cookie, try to load it manually
-          if (connectSidMatch && (!session || !session.auth_identity_id)) {
+          if (connectSidMatch && (!session || !session.auth_context?.auth_identity_id)) {
             const signedCookie = decodeURIComponent(connectSidMatch[1]) // URL decode first
             console.log("[Admin Users Me Middleware] Found connect.sid cookie (decoded):", signedCookie.substring(0, 50) + "...")
             
@@ -332,7 +333,7 @@ export default defineMiddlewares({
                       } else if (sess) {
                         console.log("[Admin Users Me Middleware] ✅ Session found in store:", {
                           sessionId: extractedSessionID.substring(0, 30) + "...",
-                          hasAuthIdentityId: !!sess.auth_identity_id,
+                          hasAuthIdentityId: !!sess.auth_context?.auth_identity_id,
                           keys: Object.keys(sess),
                         })
                         storedSession = sess
@@ -355,7 +356,7 @@ export default defineMiddlewares({
           
           // Use stored session if we found it, otherwise use Express session
           const activeSession = storedSession || session
-          const activeAuthIdentityId = activeSession?.auth_identity_id
+          const activeAuthIdentityId = activeSession?.auth_context?.auth_identity_id
           
           console.log("[Admin Users Me Middleware] Final session state:", {
             hasActiveSession: !!activeSession,
