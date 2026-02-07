@@ -1,9 +1,10 @@
 // This file MUST be loaded - if you see this in compiled output, the route exists
-console.log("[Session Route] Custom /auth/session route file loaded")
-
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { Modules } from "@medusajs/framework/utils"
 import { verify } from "jsonwebtoken"
+
+const debug = process.env.DEBUG_AUTH_SESSION === "true"
+debug && console.log("[Session Route] Custom /auth/session route file loaded")
 
 /**
  * Session endpoint:
@@ -40,18 +41,18 @@ export async function POST(
     }
   }
 
-  console.log("=".repeat(50))
-  console.log("[Session Route POST] CUSTOM ROUTE CALLED!")
-  console.log("[Session Route POST] Request headers:", {
+  debug && console.log("=".repeat(50))
+  debug && console.log("[Session Route POST] CUSTOM ROUTE CALLED!")
+  debug && console.log("[Session Route POST] Request headers:", {
     authorization: req.headers.authorization ? "present" : "missing",
     cookie: req.headers.cookie ? "present" : "missing",
   })
-  console.log("=".repeat(50))
+  debug && console.log("=".repeat(50))
   
   // First, check if session already exists (created during login)
   const session = (req as any).session
   if (session && session.auth_context?.auth_identity_id) {
-    console.log("[Session Route POST] Session already exists, returning success")
+    debug && console.log("[Session Route POST] Session already exists, returning success")
     
     // Ensure admin actor_type matches Medusa's expected "user"
     if (session.auth_context.actor_type !== "user") {
@@ -62,7 +63,7 @@ export async function POST(
         session.auth_context.auth_identity_id
       )
     }
-    console.log("[Session Route POST] Existing session auth_context:", {
+    debug && console.log("[Session Route POST] Existing session auth_context:", {
       actorId: session.auth_context.actor_id,
       actorType: session.auth_context.actor_type,
       authIdentityId: session.auth_context.auth_identity_id,
@@ -114,7 +115,7 @@ export async function POST(
           maxAge: cookieOptions.maxAge || (24 * 60 * 60 * 1000),
         })
         
-        console.log("[Session Route POST] ✅ Cookie set for existing session")
+        debug && console.log("[Session Route POST] ✅ Cookie set for existing session")
         setCookie = res.getHeader("Set-Cookie")
       }
     }
@@ -134,19 +135,19 @@ export async function POST(
   const authHeader = req.headers.authorization
   if (authHeader && authHeader.startsWith("Bearer ")) {
     token = authHeader.substring(7) // Remove "Bearer "
-    console.log("[Session Route POST] Found JWT in Authorization header")
+    debug && console.log("[Session Route POST] Found JWT in Authorization header")
   } else {
     // Try cookies (admin SDK might store JWT in cookies)
     const cookies = req.headers.cookie || ""
     const jwtMatch = cookies.match(/_medusa_jwt=([^;]+)/)
     if (jwtMatch) {
       token = jwtMatch[1]
-      console.log("[Session Route POST] Found JWT in cookies")
+      debug && console.log("[Session Route POST] Found JWT in cookies")
     }
   }
   
   if (!token) {
-    console.log("[Session Route POST] No JWT token found. Headers:", {
+    debug && console.log("[Session Route POST] No JWT token found. Headers:", {
       authorization: req.headers.authorization ? "present" : "missing",
       cookie: req.headers.cookie ? "present" : "missing",
     })
@@ -177,7 +178,7 @@ export async function POST(
       // Check if session already exists with correct data (from login route)
       const existingSessionID = (req as any).sessionID
       if (existingSessionID && session.auth_context?.auth_identity_id === decoded.auth_identity_id) {
-        console.log("[Session Route POST] Session already exists with correct auth data")
+        debug && console.log("[Session Route POST] Session already exists with correct auth data")
         if (session.auth_context?.actor_type !== "user") {
           session.auth_context.actor_type = "user"
         }
@@ -199,7 +200,7 @@ export async function POST(
               return
             }
             
-            console.log("[Session Route POST] Existing session saved, cookie should be set")
+            debug && console.log("[Session Route POST] Existing session saved, cookie should be set")
             res.status(200).json({
               auth_identity_id: decoded.auth_identity_id,
               actor_type: "user",
@@ -212,7 +213,7 @@ export async function POST(
       
       // Session doesn't exist or has wrong data - modify existing session
       // DON'T use regenerate() - it creates a new session that doesn't save custom properties
-      console.log("[Session Route POST] Modifying existing session (NOT regenerating)")
+      debug && console.log("[Session Route POST] Modifying existing session (NOT regenerating)")
       
       // Set the session data in the shape Medusa expects
       const resolvedActorId = await ensureActorId(
@@ -229,7 +230,7 @@ export async function POST(
       }
       session.token = token
       
-      console.log("[Session Route POST] Session data set:", {
+      debug && console.log("[Session Route POST] Session data set:", {
         authIdentityId: session.auth_context?.auth_identity_id,
         actorType: session.auth_context?.actor_type,
         hasToken: !!session.token,
@@ -251,7 +252,7 @@ export async function POST(
             }
             
             const sessionID = (req as any).sessionID
-            console.log("[Session Route POST] Session saved, verifying data was persisted:", {
+            debug && console.log("[Session Route POST] Session saved, verifying data was persisted:", {
               sessionId: sessionID?.substring(0, 30) + "...",
               authIdentityId: session.auth_context?.auth_identity_id,
               actorType: session.auth_context?.actor_type,
@@ -259,12 +260,12 @@ export async function POST(
             
             // Check if Set-Cookie header was set by Express session middleware
             let setCookie = res.getHeader("Set-Cookie")
-            console.log("[Session Route POST] Set-Cookie header after save:", setCookie ? "present" : "missing")
+            debug && console.log("[Session Route POST] Set-Cookie header after save:", setCookie ? "present" : "missing")
             
             // If Express session middleware set the cookie, use it and don't set manually
             if (setCookie) {
-              console.log("[Session Route POST] ✅ Express session middleware set the cookie automatically!")
-              console.log("[Session Route POST] Set-Cookie value (first 100 chars):", 
+              debug && console.log("[Session Route POST] ✅ Express session middleware set the cookie automatically!")
+              debug && console.log("[Session Route POST] Set-Cookie value (first 100 chars):", 
                 (Array.isArray(setCookie) ? setCookie[0] : setCookie?.toString())?.substring(0, 100) + "...")
               
               // Return response - cookie is already set by Express session middleware
@@ -284,7 +285,7 @@ export async function POST(
               const sessionCookie = (session as any).cookie
               const cookieName = sessionCookie?.name || 'connect.sid'
               
-              console.log("[Session Route POST] Cookie name check:", {
+              debug && console.log("[Session Route POST] Cookie name check:", {
                 fromSessionCookie: sessionCookie?.name,
                 using: cookieName,
                 default: 'connect.sid',
@@ -321,14 +322,14 @@ export async function POST(
                   cookieSecret = configModule.projectConfig.http.cookieSecret
                   cookieSecretSource = "configModule.projectConfig.http.cookieSecret"
                 }
-                console.log("[Session Route POST] Cookie secret from configModule:", {
+                debug && console.log("[Session Route POST] Cookie secret from configModule:", {
                   source: cookieSecretSource,
                   value: cookieSecret.substring(0, 20) + "...",
                   length: cookieSecret.length,
                 })
               } catch (e) {
                 console.warn("[Session Route POST] Could not read cookieSecret from configModule:", e)
-                console.log("[Session Route POST] Using cookie secret from process.env:", {
+                debug && console.log("[Session Route POST] Using cookie secret from process.env:", {
                   value: cookieSecret.substring(0, 20) + "...",
                   length: cookieSecret.length,
                 })
@@ -338,7 +339,7 @@ export async function POST(
               // Express session stores the secret in the session store or cookie options
               const expressSessionCookie = (session as any).cookie
               if (expressSessionCookie) {
-                console.log("[Session Route POST] Express session cookie config:", {
+                debug && console.log("[Session Route POST] Express session cookie config:", {
                   name: expressSessionCookie.name || "undefined (using default 'connect.sid')",
                   httpOnly: expressSessionCookie.httpOnly,
                   secure: expressSessionCookie.secure,
@@ -354,14 +355,14 @@ export async function POST(
               // Check if we can access the session store's secret
               const sessionStore = (req as any).sessionStore
               if (sessionStore) {
-                console.log("[Session Route POST] Session store type:", sessionStore.constructor?.name || "unknown")
+                debug && console.log("[Session Route POST] Session store type:", sessionStore.constructor?.name || "unknown")
                 // Some session stores expose the secret, but MemoryStore doesn't
               }
               
               // IMPORTANT: Check what cookie name Express session middleware is actually using
               // It might be different from 'connect.sid'
               const actualCookieName = expressSessionCookie?.name || 'connect.sid'
-              console.log("[Session Route POST] Using cookie name:", actualCookieName)
+              debug && console.log("[Session Route POST] Using cookie name:", actualCookieName)
               
               // Verify we're using the same cookie name
               if (cookieName !== actualCookieName) {
@@ -377,14 +378,14 @@ export async function POST(
               const cookieValueToVerify = signedValue.startsWith('s:') ? signedValue.substring(2) : signedValue
               const verifiedSessionID = cookieSignature.unsign(cookieValueToVerify, cookieSecret)
               if (verifiedSessionID === sessionID) {
-                console.log("[Session Route POST] ✅ Cookie signature verified - can be unsigned correctly")
+                debug && console.log("[Session Route POST] ✅ Cookie signature verified - can be unsigned correctly")
               } else {
                 console.error("[Session Route POST] ❌ Cookie signature verification FAILED!")
                 console.error("[Session Route POST] Expected sessionID:", sessionID?.substring(0, 30) + "...")
                 console.error("[Session Route POST] Verified sessionID:", verifiedSessionID?.substring(0, 30) + "..." || "null")
               }
               
-              console.log("[Session Route POST] Using cookieSecret (first 20 chars):", cookieSecret.substring(0, 20) + "...")
+              debug && console.log("[Session Route POST] Using cookieSecret (first 20 chars):", cookieSecret.substring(0, 20) + "...")
               
               // Set cookie using options from projectConfig
               // IMPORTANT: Don't set domain - let browser use default (current domain)
@@ -394,15 +395,15 @@ export async function POST(
                 domain: undefined, // Explicitly don't set domain
               })
               
-              console.log("[Session Route POST] Cookie set manually using projectConfig.cookieOptions:", cookieOptions)
+              debug && console.log("[Session Route POST] Cookie set manually using projectConfig.cookieOptions:", cookieOptions)
               
               setCookie = res.getHeader("Set-Cookie")
             }
             
             if (setCookie) {
               const cookieValue = Array.isArray(setCookie) ? setCookie[0] : setCookie?.toString()
-              console.log("[Session Route POST] Set-Cookie value (full):", cookieValue)
-              console.log("[Session Route POST] Set-Cookie value (first 200 chars):", cookieValue?.substring(0, 200) + "...")
+              debug && console.log("[Session Route POST] Set-Cookie value (full):", cookieValue)
+              debug && console.log("[Session Route POST] Set-Cookie value (first 200 chars):", cookieValue?.substring(0, 200) + "...")
               
               // Check if cookie has all required attributes
               if (cookieValue) {
@@ -410,7 +411,7 @@ export async function POST(
                 const hasHttpOnly = cookieValue.includes('HttpOnly')
                 const hasSameSite = cookieValue.includes('SameSite')
                 const hasPath = cookieValue.includes('Path=')
-                console.log("[Session Route POST] Cookie attributes check:", {
+                debug && console.log("[Session Route POST] Cookie attributes check:", {
                   hasSecure,
                   hasHttpOnly,
                   hasSameSite,
@@ -431,7 +432,7 @@ export async function POST(
                   if (storeErr) {
                     console.error("[Session Route POST] Error retrieving session from store:", storeErr)
                   } else if (storedSession) {
-                    console.log("[Session Route POST] ✅ Session verified in store:", {
+                    debug && console.log("[Session Route POST] ✅ Session verified in store:", {
                       sessionId: sessionID?.substring(0, 30) + "...",
                       hasAuthIdentityId: !!storedSession.auth_context?.auth_identity_id,
                       authIdentityId: storedSession.auth_context?.auth_identity_id,
@@ -481,23 +482,23 @@ export async function GET(
   req: MedusaRequest,
   res: MedusaResponse
 ): Promise<void> {
-  console.log("=".repeat(60))
-  console.log("[Session Route GET] ===== CUSTOM ROUTE CALLED =====")
-  console.log("[Session Route GET] Request details:", {
+  debug && console.log("=".repeat(60))
+  debug && console.log("[Session Route GET] ===== CUSTOM ROUTE CALLED =====")
+  debug && console.log("[Session Route GET] Request details:", {
     method: req.method,
     path: req.path,
     url: req.url,
     cookies: req.headers.cookie ? "present" : "missing",
     cookieHeader: req.headers.cookie?.substring(0, 200) + "...",
   })
-  console.log("=".repeat(60))
+  debug && console.log("=".repeat(60))
   
   try {
     // Check for session
     const session = (req as any).session
     const sessionID = (req as any).sessionID
     
-    console.log("[Session Route GET] Session check:", {
+    debug && console.log("[Session Route GET] Session check:", {
       hasSession: !!session,
       sessionID: sessionID?.substring(0, 30) + "...",
       sessionKeys: session ? Object.keys(session) : [],
@@ -510,7 +511,7 @@ export async function GET(
     const cookieHeader = req.headers.cookie || ""
     const connectSidMatch = cookieHeader.match(/connect\.sid=([^;]+)/)
     if (connectSidMatch) {
-      console.log("[Session Route GET] Found connect.sid cookie:", connectSidMatch[1].substring(0, 50) + "...")
+      debug && console.log("[Session Route GET] Found connect.sid cookie:", connectSidMatch[1].substring(0, 50) + "...")
       
       // Try to verify the session store can find it
       const sessionStore = (req as any).sessionStore
@@ -519,7 +520,7 @@ export async function GET(
           if (storeErr) {
             console.error("[Session Route GET] Error retrieving session from store:", storeErr)
           } else if (storedSession) {
-            console.log("[Session Route GET] ✅ Session found in store:", {
+            debug && console.log("[Session Route GET] ✅ Session found in store:", {
               sessionId: sessionID?.substring(0, 30) + "...",
               hasAuthIdentityId: !!storedSession.auth_context?.auth_identity_id,
               keys: Object.keys(storedSession),
@@ -530,7 +531,7 @@ export async function GET(
         })
       }
     } else {
-      console.log("[Session Route GET] No connect.sid cookie found in request")
+      debug && console.log("[Session Route GET] No connect.sid cookie found in request")
     }
     
     if (session && (session.auth_context?.auth_identity_id || session.token)) {
@@ -593,7 +594,7 @@ export async function GET(
     
     if (jwtMatch) {
       const jwtToken = jwtMatch[1]
-      console.log("[Session Route GET] Found JWT in cookies, but no session. Session needs to be created via POST /auth/session first.")
+      debug && console.log("[Session Route GET] Found JWT in cookies, but no session. Session needs to be created via POST /auth/session first.")
     }
     
     // No valid session
