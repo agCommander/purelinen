@@ -62,6 +62,23 @@ export async function POST(
         session.auth_context.auth_identity_id
       )
     }
+    console.log("[Session Route POST] Existing session auth_context:", {
+      actorId: session.auth_context.actor_id,
+      actorType: session.auth_context.actor_type,
+      authIdentityId: session.auth_context.auth_identity_id,
+    })
+
+    // Persist any updates to auth_context before responding
+    await new Promise<void>((resolve, reject) => {
+      session.save((saveErr: any) => {
+        if (saveErr) {
+          console.error("[Session Route POST] Error saving existing session:", saveErr)
+          reject(saveErr)
+          return
+        }
+        resolve()
+      })
+    })
 
     // IMPORTANT: Even if session exists, we need to ensure the cookie is set!
     // Check if Set-Cookie header is present
