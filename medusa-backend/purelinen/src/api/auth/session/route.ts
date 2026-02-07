@@ -14,6 +14,32 @@ export async function POST(
   req: MedusaRequest,
   res: MedusaResponse
 ): Promise<void> {
+  const ensureActorId = async (
+    authIdentityId?: string,
+    currentActorId?: string
+  ): Promise<string> => {
+    if (currentActorId) {
+      return currentActorId
+    }
+
+    if (!authIdentityId) {
+      return ""
+    }
+
+    try {
+      const authModuleService = req.scope.resolve(Modules.AUTH)
+      const authIdentities = await authModuleService.listAuthIdentities({
+        id: [authIdentityId],
+      })
+      const authIdentity = authIdentities?.[0]
+      const userId = authIdentity?.app_metadata?.user_id
+      return typeof userId === "string" ? userId : ""
+    } catch (error) {
+      console.error("[Session Route POST] Failed to resolve actor_id:", error)
+      return ""
+    }
+  }
+
   console.log("=".repeat(50))
   console.log("[Session Route POST] CUSTOM ROUTE CALLED!")
   console.log("[Session Route POST] Request headers:", {
@@ -30,6 +56,11 @@ export async function POST(
     // Ensure admin actor_type matches Medusa's expected "user"
     if (session.auth_context.actor_type !== "user") {
       session.auth_context.actor_type = "user"
+    }
+    if (!session.auth_context.actor_id) {
+      session.auth_context.actor_id = await ensureActorId(
+        session.auth_context.auth_identity_id
+      )
     }
 
     // IMPORTANT: Even if session exists, we need to ensure the cookie is set!
@@ -133,6 +164,11 @@ export async function POST(
         if (session.auth_context?.actor_type !== "user") {
           session.auth_context.actor_type = "user"
         }
+        if (!session.auth_context.actor_id) {
+          session.auth_context.actor_id = await ensureActorId(
+            session.auth_context.auth_identity_id
+          )
+        }
         // Session already exists, just ensure cookie is set by touching and saving
         if (typeof (session as any).touch === 'function') {
           (session as any).touch()
@@ -162,8 +198,13 @@ export async function POST(
       console.log("[Session Route POST] Modifying existing session (NOT regenerating)")
       
       // Set the session data in the shape Medusa expects
+      const resolvedActorId = await ensureActorId(
+        decoded.auth_identity_id,
+        decoded.actor_id
+      )
+
       session.auth_context = {
-        actor_id: decoded.actor_id || "",
+        actor_id: resolvedActorId,
         actor_type: "user",
         auth_identity_id: decoded.auth_identity_id || "",
         app_metadata: decoded.app_metadata || {},
