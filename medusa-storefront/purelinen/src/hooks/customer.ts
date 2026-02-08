@@ -37,7 +37,12 @@ export const loginFormSchema = z.object({
 
 export const useLogin = (
   options?: UseMutationOptions<
-    { success: boolean; redirectUrl?: string; message?: string },
+    {
+      success: boolean
+      redirectUrl?: string
+      message?: string
+      requiresB2BStep2?: boolean
+    },
     Error,
     z.infer<typeof loginFormSchema>
   >
