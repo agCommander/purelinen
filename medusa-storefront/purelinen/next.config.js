@@ -29,6 +29,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "api-new.purelinen.com.au",
+      },
+      {
+        protocol: "https",
         hostname: "fashion-starter-demo.s3.eu-central-1.amazonaws.com",
       },
       {
