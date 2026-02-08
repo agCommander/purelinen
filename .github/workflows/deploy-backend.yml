@@ -34,6 +34,18 @@ jobs:
             # Pull from root where git is initialized
             cd /home/purelinen/public_html/subdomains/newpl
             
+            # Backup backend static folder (git stash --include-untracked removes it)
+            if [ -d "medusa-backend/purelinen/static" ]; then
+              rm -rf /home/purelinen/public_html/subdomains/newpl/medusa-backend-static-backup
+              cp -R medusa-backend/purelinen/static /home/purelinen/public_html/subdomains/newpl/medusa-backend-static-backup
+            fi
+
+            # Backup storefront images (public/images/content)
+            if [ -d "medusa-storefront/purelinen/public/images/content" ]; then
+              rm -rf /home/purelinen/public_html/subdomains/newpl/storefront-images-content-backup
+              cp -R medusa-storefront/purelinen/public/images/content /home/purelinen/public_html/subdomains/newpl/storefront-images-content-backup
+            fi
+            
             # Handle untracked files that might conflict
             git stash --include-untracked || true
             
@@ -42,6 +54,19 @@ jobs:
             
             # Then go to backend directory
             cd medusa-backend/purelinen
+
+            # Restore backend static folder after deploy
+            if [ -d "/home/purelinen/public_html/subdomains/newpl/medusa-backend-static-backup" ]; then
+              rm -rf static
+              cp -R /home/purelinen/public_html/subdomains/newpl/medusa-backend-static-backup static
+            fi
+
+            # Restore storefront images after deploy
+            if [ -d "/home/purelinen/public_html/subdomains/newpl/storefront-images-content-backup" ]; then
+              rm -rf /home/purelinen/public_html/subdomains/newpl/medusa-storefront/purelinen/public/images/content
+              mkdir -p /home/purelinen/public_html/subdomains/newpl/medusa-storefront/purelinen/public/images
+              cp -R /home/purelinen/public_html/subdomains/newpl/storefront-images-content-backup /home/purelinen/public_html/subdomains/newpl/medusa-storefront/purelinen/public/images/content
+            fi
             
             # Install dependencies
             npm install --legacy-peer-deps
@@ -52,6 +77,15 @@ jobs:
             # Restart PM2
             pm2 delete purelinen-backend
             pm2 start ecosystem.config.js
+
+            # Ensure newpl proxy .htaccess exists (deploy may overwrite)
+            cat > /home/purelinen/public_html/subdomains/newpl/public_html/.htaccess << 'EOF'
+            <IfModule mod_rewrite.c>
+                RewriteEngine On
+                RewriteCond %{REQUEST_URI} !^/\.well-known/
+                RewriteRule ^(.*)$ http://localhost:8000/$1 [P,L]
+            </IfModule>
+            EOF
             
             # Save PM2 config
             pm2 save

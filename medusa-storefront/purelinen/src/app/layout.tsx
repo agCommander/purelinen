@@ -26,7 +26,7 @@ export default function RootLayout(props: { children: React.ReactNode }) {
         <ReactQueryProvider>
           <main className="relative">{props.children}</main>
         </ReactQueryProvider>
-        <SpeedInsights />
+        {process.env.VERCEL === "1" && <SpeedInsights />}
       </body>
     </html>
   )
