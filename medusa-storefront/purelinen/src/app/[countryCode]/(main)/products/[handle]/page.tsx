@@ -10,6 +10,8 @@ import {
 import { getColorMap } from "@lib/data/colors"
 import ProductTemplate from "@modules/products/templates"
 
+export const dynamic = "force-dynamic"
+
 type Props = {
   params: Promise<{ countryCode: string; handle: string }>
 }
